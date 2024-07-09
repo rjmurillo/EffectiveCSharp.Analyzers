@@ -9,8 +9,18 @@ public class SpanAnalyzerTests
     {
         return new object[][]
         {
+            // This should fire
             ["""var arr = {|ECS1000:new int[10]|};"""],
+
+            // This should not fire because it's wrapped by a Span
             ["""var arr = new Span<int>(new int[10]);"""],
+
+            // This should not fire because it's suppressed
+            ["""
+             #pragma warning disable ECS1000 // Use Span<T> for performance
+             var arr = new int[10];
+             #pragma warning restore ECS1000 // Use Span<T> for performance
+             """],
         }.WithReferenceAssemblyGroups();
     }
 
@@ -48,6 +58,7 @@ public class SpanAnalyzerTests
                           """;
 
         string fixedCode = """
+
                            using System;
 
                            class Program
