@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>EffectiveCSharp.Analyzers</RootNamespace>
+    <AssemblyName>$(RootNamespace)</AssemblyName>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeBuildOutput>false</IncludeBuildOutput><!-- Don't place the output assembly in the package's lib/ folder -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking><!-- Don't add the TargetFramework as a package dependency -->
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules><!-- Resolves RS1036 -->
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package metadata">
+    <PackageId>EffectiveCSharp.Analyzers</PackageId>
+    <Authors>Richard Murillo</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/rjmurillo/effectivecsharpanalyzers</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Roslyn analyzers that help to harness the full power of the C# language to write exceptionally robust, efficient, and well-performing code.</Description>
+    <PackageReleaseNotes>A changelog is available at https://github.com/rjmurillo/effectivecsharpanalyzers/releases</PackageReleaseNotes>
+    <Copyright>2024 Richard Murillo</Copyright>
+    <PackageTags>effective, csharp, best practices, optimization, coding standards, performance, techniques, improvement</PackageTags>
+    <DevelopmentDependency>true</DevelopmentDependency>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources.Designer.cs" DesignTime="True" AutoGen="True" DependentUpon="Resources.resx" />
+    <EmbeddedResource Update="Resources.resx" Generator="ResXFileCodeGenerator" LastGenOutput="Resources.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(RepoRoot)\README.md" Pack="true" PackagePath="/" />
+    <None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="" />
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="tools\install.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="tools\uninstall.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
