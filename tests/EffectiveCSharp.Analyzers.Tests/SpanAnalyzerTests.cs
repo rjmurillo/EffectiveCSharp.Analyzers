@@ -45,8 +45,6 @@ public class SpanAnalyzerTests
     public async Task TestArraySpanFix()
     {
         string testCode = """
-                          using System;
-
                           class Program
                           {
                               void Method()
@@ -58,9 +56,6 @@ public class SpanAnalyzerTests
                           """;
 
         string fixedCode = """
-
-                           using System;
-
                            class Program
                            {
                                void Method()
