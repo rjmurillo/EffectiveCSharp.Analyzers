@@ -34,7 +34,7 @@ internal class {name}
     }
 
     [Benchmark]
-    public async Task Ecs1000WithDiagnostics()
+    public async Task Ecs0002WithDiagnostics()
     {
         ImmutableArray<Diagnostic> diagnostics =
             (await TestCompilation!
@@ -50,7 +50,7 @@ internal class {name}
     }
 
     [Benchmark(Baseline = true)]
-    public async Task Ecs1000Baseline()
+    public async Task Ecs0002Baseline()
     {
         ImmutableArray<Diagnostic> diagnostics =
             (await BaselineCompilation!
