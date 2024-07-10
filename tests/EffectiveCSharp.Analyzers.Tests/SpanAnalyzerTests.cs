@@ -15,6 +15,9 @@ public class SpanAnalyzerTests
             // This should not fire because it's wrapped by a Span
             ["""var arr = new Span<int>(new int[10]);"""],
 
+            // This should not fire because it's wrapped by a ReadOnlySpan
+            ["""var arr = new ReadOnlySpan<int>(new int[10]);"""],
+
             // This should not fire because it's suppressed
             ["""
              #pragma warning disable ECS1000 // Use Span<T> for performance
