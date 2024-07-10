@@ -1,8 +1,4 @@
-﻿using System.Composition;
-using System.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
-
-namespace EffectiveCSharp.Analyzers;
+﻿namespace EffectiveCSharp.Analyzers;
 
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(SpanCodeFixProvider))]
 [Shared]

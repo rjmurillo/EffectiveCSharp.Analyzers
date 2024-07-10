@@ -9,9 +9,8 @@ namespace EffectiveCSharp.Analyzers.Benchmarks.Helpers;
 // See https://github.com/dotnet/roslyn-sdk/issues/1165 for discussion on providing these or similar helpers in the testing packages.
 internal static class CompilationCreator
 {
-    private static readonly ReferenceAssemblies ReferenceAssemblies = ReferenceAssemblies.Net.Net80.AddPackages([new PackageIdentity("Moq", "4.18.4")]);
+    private static readonly ReferenceAssemblies ReferenceAssemblies = ReferenceAssemblies.Net.Net80;
 
-    [SuppressMessage("Maintainability", "AV1500:Member or local function contains too many statements", Justification = "Minimizing divergence from upstream code.")]
     public static async Task<(Project Project, AnalyzerOptions Options)> CreateProjectAsync(
         (string, string)[] sourceFiles,
         (string, string)[]? globalOptions,
@@ -22,13 +21,13 @@ internal static class CompilationCreator
         CompilationOptions compilationOptions,
         ParseOptions parseOptions)
     {
-        ProjectState projectState = new ProjectState(name, language, defaultPrefix, defaultExtension);
+        ProjectState projectState = new(name, language, defaultPrefix, defaultExtension);
         foreach ((string filename, string content) in sourceFiles)
         {
             projectState.Sources.Add((defaultPrefix + filename + "." + defaultExtension, content));
         }
 
-        EvaluatedProjectState evaluatedProj = new EvaluatedProjectState(projectState, ReferenceAssemblies);
+        EvaluatedProjectState evaluatedProj = new(projectState, ReferenceAssemblies);
 
         Project project = await CreateProjectAsync(evaluatedProj, compilationOptions, parseOptions).ConfigureAwait(false);
 
@@ -43,9 +42,6 @@ internal static class CompilationCreator
         return (project, project.AnalyzerOptions);
     }
 
-    [SuppressMessage("Maintainability", "AV1500:Member or local function contains too many statements", Justification = "Minimizing divergence with upstream code")]
-    [SuppressMessage("Maintainability", "AV1551:Method overload should call another overload", Justification = "Minimizing divergence with upstream code")]
-    [SuppressMessage("Maintainability", "AV1555:Avoid using non-(nullable-)boolean named arguments", Justification = "Minimizing divergence with upstream code")]
     private static async Task<Project> CreateProjectAsync(
         EvaluatedProjectState primaryProject,
         CompilationOptions compilationOptions,
@@ -75,8 +71,6 @@ internal static class CompilationCreator
         return solution.GetProject(projectId)!;
     }
 
-    [SuppressMessage("Maintainability", "AV1500:Member or local function contains too many statements", Justification = "Minimizing divergence from upstream")]
-    [SuppressMessage("Maintainability", "AV1561:Signature contains too many parameters", Justification = "Minimizing divergence from upstream")]
     private static async Task<Solution> CreateSolutionAsync(
         ProjectId projectId,
         EvaluatedProjectState projectState,
