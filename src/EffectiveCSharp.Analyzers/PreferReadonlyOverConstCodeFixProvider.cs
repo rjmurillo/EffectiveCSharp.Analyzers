@@ -1,5 +1,9 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
+/// <summary>
+/// A <see cref="CodeFixProvider"/> that provides a code fix for the <see cref="PreferReadonlyOverConstAnalyzer"/>.
+/// </summary>
+/// <seealso cref="Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider" />
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PreferReadonlyOverConstCodeFixProvider))]
 [Shared]
 public class PreferReadonlyOverConstCodeFixProvider : CodeFixProvider

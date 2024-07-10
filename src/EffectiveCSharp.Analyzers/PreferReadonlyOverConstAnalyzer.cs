@@ -1,5 +1,9 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
+/// <summary>
+/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #2 - Prefer readonly over const.
+/// </summary>
+/// <seealso cref="Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PreferReadonlyOverConstAnalyzer : DiagnosticAnalyzer
 {

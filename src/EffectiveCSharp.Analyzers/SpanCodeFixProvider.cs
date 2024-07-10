@@ -1,5 +1,9 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
+/// <summary>
+/// A <see cref="CodeFixProvider"/> that provides a code fix for the <see cref="SpanAnalyzer"/>.
+/// </summary>
+/// <seealso cref="Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider" />
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(SpanCodeFixProvider))]
 [Shared]
 public class SpanCodeFixProvider : CodeFixProvider
@@ -52,7 +56,9 @@ public class SpanCodeFixProvider : CodeFixProvider
         SyntaxNode? newRoot = root?.ReplaceNode(arrayCreation, SyntaxFactory.ParseExpression(spanText));
 
         Debug.Assert(newRoot != null, nameof(newRoot) + " != null");
-        return document.WithSyntaxRoot(newRoot).Project.Solution;
+        return newRoot != null
+            ? document.WithSyntaxRoot(newRoot).Project.Solution
+            : document.Project.Solution;
     }
 
     private async Task<Solution> UseSpanElementAccessAsync(Document document, ElementAccessExpressionSyntax elementAccess, CancellationToken cancellationToken)
@@ -62,8 +68,10 @@ public class SpanCodeFixProvider : CodeFixProvider
         string spanAccessText = $"{spanExpression}.Slice({indexArgument}, 1)[0]";
 
         SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        SyntaxNode? newRoot = root.ReplaceNode(elementAccess, SyntaxFactory.ParseExpression(spanAccessText));
+        SyntaxNode? newRoot = root?.ReplaceNode(elementAccess, SyntaxFactory.ParseExpression(spanAccessText));
 
-        return document.WithSyntaxRoot(newRoot).Project.Solution;
+        return newRoot != null
+            ? document.WithSyntaxRoot(newRoot).Project.Solution
+            : document.Project.Solution;
     }
 }

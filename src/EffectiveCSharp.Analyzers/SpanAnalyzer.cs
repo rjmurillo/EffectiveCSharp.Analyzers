@@ -1,5 +1,9 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
+/// <summary>
+/// Analyzer that suggests using <see cref="Span{T}"/> instead of arrays for better performance.
+/// </summary>
+/// <seealso cref="Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class SpanAnalyzer : DiagnosticAnalyzer
 {
