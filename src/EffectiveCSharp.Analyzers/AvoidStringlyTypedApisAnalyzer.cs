@@ -7,10 +7,13 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AvoidStringlyTypedApisAnalyzer : DiagnosticAnalyzer
 {
-    internal const string DiagnosticId = DiagnosticIds.AvoidStringlyTypedApis;
+    private const string DiagnosticId = DiagnosticIds.AvoidStringlyTypedApis;
     private const string Title = "Avoid stringly-typed APIs";
     private const string MessageFormat = "Use 'nameof({0})' instead of the string literal \"{0}\"";
-    private const string Description = "Replace string literals representing member names with the nameof operator to ensure type safety.";
+
+    private const string Description =
+        "Replace string literals representing member names with the nameof operator to ensure type safety.";
+
     private const string Category = "Refactoring";
 
     private static readonly DiagnosticDescriptor Rule = new(
@@ -21,7 +24,8 @@ public class AvoidStringlyTypedApisAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: Description,
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers{ThisAssembly.GitCommitId}/docs/{DiagnosticId}.md");
+        helpLinkUri:
+        $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers{ThisAssembly.GitCommitId}/docs/{DiagnosticId}.md");
 
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
@@ -45,7 +49,8 @@ public class AvoidStringlyTypedApisAnalyzer : DiagnosticAnalyzer
 
         SemanticModel semanticModel = context.SemanticModel;
 
-        if (containingClass != null && semanticModel.GetDeclaredSymbol(containingClass, context.CancellationToken) is { } containingTypeSymbol)
+        if (containingClass != null
+            && semanticModel.GetDeclaredSymbol(containingClass, context.CancellationToken) is { } containingTypeSymbol)
         {
             IEnumerable<string> memberNames = containingTypeSymbol.GetMembers().Select(member => member.Name);
 
@@ -56,7 +61,8 @@ public class AvoidStringlyTypedApisAnalyzer : DiagnosticAnalyzer
             }
         }
 
-        if (containingMethod != null && semanticModel.GetDeclaredSymbol(containingMethod, context.CancellationToken) is { } methodSymbol)
+        if (containingMethod != null
+            && semanticModel.GetDeclaredSymbol(containingMethod, context.CancellationToken) is { } methodSymbol)
         {
             IEnumerable<string> parameterNames = methodSymbol.Parameters.Select(parameter => parameter.Name);
 
