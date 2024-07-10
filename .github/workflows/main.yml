@@ -62,14 +62,6 @@ jobs:
     - name: Build
       run: dotnet build --no-restore --configuration Release /bl:./artifacts/logs/release/build.release.binlog
 
-    - name: Upload build log files
-      uses: actions/upload-artifact@v4
-      if: success() || failure()
-      with:
-        name: build-log
-        path: |
-          ./artifacts/logs/release/build.release.binlog
-
     - name: Test
       run: dotnet test --no-build --configuration Release --settings ./build/targets/tests/test.runsettings
 
@@ -109,6 +101,7 @@ jobs:
 
     - name: Upload binlogs
       uses: actions/upload-artifact@v4
+      if: success() || failure()
       with:
         name: binlogs-${{ matrix.os }}
         path: ./artifacts/logs
