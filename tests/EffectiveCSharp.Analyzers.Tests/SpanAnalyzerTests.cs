@@ -29,7 +29,7 @@ public class SpanAnalyzerTests
 
     [Theory]
     [MemberData(nameof(TestData))]
-    public async Task SpanAnalyzer(string referenceAssemblyGroup, string source)
+    public async Task Analyzer(string referenceAssemblyGroup, string source)
     {
         await Verifier.VerifyAnalyzerAsync(
             $$"""
@@ -45,7 +45,7 @@ public class SpanAnalyzerTests
     }
 
     [Fact(Skip = "Reporting an analyzer failure when the unit test code above shows it is correct")]
-    public async Task TestArraySpanFix()
+    public async Task CodeFix()
     {
         string testCode = """
                           class Program
