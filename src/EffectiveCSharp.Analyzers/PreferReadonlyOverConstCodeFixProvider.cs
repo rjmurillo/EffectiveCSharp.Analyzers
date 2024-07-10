@@ -21,7 +21,7 @@ public class PreferReadonlyOverConstCodeFixProvider : CodeFixProvider
     {
         SyntaxNode? root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-        Diagnostic diagnostic = context.Diagnostics.First();
+        Diagnostic diagnostic = context.Diagnostics[0];
         TextSpan diagnosticSpan = diagnostic.Location.SourceSpan;
 
         if (root?.FindNode(diagnosticSpan) is FieldDeclarationSyntax declaration)
@@ -69,11 +69,8 @@ public class PreferReadonlyOverConstCodeFixProvider : CodeFixProvider
         SyntaxNode? newRoot = root?.ReplaceNode(constDeclaration, readonlyDeclaration);
 
         // Ensure newRoot is not null before returning the new solution
-        if (newRoot == null)
-        {
-            throw new InvalidOperationException("Failed to replace node in the syntax tree.");
-        }
-
-        return document.WithSyntaxRoot(newRoot).Project.Solution;
+        return newRoot == null
+            ? document.Project.Solution
+            : document.WithSyntaxRoot(newRoot).Project.Solution;
     }
 }

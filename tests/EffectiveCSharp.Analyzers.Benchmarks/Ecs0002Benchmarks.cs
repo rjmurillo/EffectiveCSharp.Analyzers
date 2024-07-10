@@ -15,7 +15,7 @@ public class Ecs0002Benchmarks
         List<(string Name, string Content)> sources = [];
         for (int index = 0; index < Constants.NumberOfCodeFiles; index++)
         {
-            string name = "TypeName" + index;
+            string name = $"TypeName{index}";
             sources.Add((name, @$"
 using System;
 

@@ -21,7 +21,7 @@ public class SpanCodeFixProvider : CodeFixProvider
     {
         SyntaxNode? root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-        Diagnostic diagnostic = context.Diagnostics.First();
+        Diagnostic diagnostic = context.Diagnostics[0];
         TextSpan diagnosticSpan = diagnostic.Location.SourceSpan;
         SyntaxNode? declaration = root?.FindNode(diagnosticSpan);
 
@@ -55,7 +55,6 @@ public class SpanCodeFixProvider : CodeFixProvider
         SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
         SyntaxNode? newRoot = root?.ReplaceNode(arrayCreation, SyntaxFactory.ParseExpression(spanText));
 
-        Debug.Assert(newRoot != null, nameof(newRoot) + " != null");
         return newRoot != null
             ? document.WithSyntaxRoot(newRoot).Project.Solution
             : document.Project.Solution;
