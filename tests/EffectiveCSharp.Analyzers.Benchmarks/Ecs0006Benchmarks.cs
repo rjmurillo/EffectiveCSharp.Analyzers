@@ -2,7 +2,7 @@
 
 [InProcess]
 [MemoryDiagnoser]
-public class Ecs0002Benchmarks
+public class Ecs0006Benchmarks
 {
     private static CompilationWithAnalyzers? BaselineCompilation { get; set; }
 
@@ -19,22 +19,30 @@ public class Ecs0002Benchmarks
             sources.Add((name, @$"
 using System;
 
-internal class {name}
+public class {name}
 {{
-    private const int MyConst = 42;
+  public static void ExceptionMessage(object thisCantBeNull)
+  {{
+      if (thisCantBeNull == null)
+      {{
+          throw new ArgumentNullException(
+              ""thisCantBeNull"",
+              ""We told you this cant be null"");
+      }}
+  }}
 }}
 "));
         }
 
         (BaselineCompilation, TestCompilation) =
             BenchmarkCSharpCompilationFactory
-            .CreateAsync<PreferReadonlyOverConstAnalyzer>(sources.ToArray())
+            .CreateAsync<AvoidStringlyTypedApisAnalyzer>(sources.ToArray())
             .GetAwaiter()
             .GetResult();
     }
 
     [Benchmark]
-    public async Task Ecs0002WithDiagnostics()
+    public async Task Ecs0006WithDiagnostics()
     {
         ImmutableArray<Diagnostic> diagnostics =
             (await TestCompilation!
@@ -50,7 +58,7 @@ internal class {name}
     }
 
     [Benchmark(Baseline = true)]
-    public async Task Ecs0002Baseline()
+    public async Task Ecs0006Baseline()
     {
         ImmutableArray<Diagnostic> diagnostics =
             (await BaselineCompilation!
