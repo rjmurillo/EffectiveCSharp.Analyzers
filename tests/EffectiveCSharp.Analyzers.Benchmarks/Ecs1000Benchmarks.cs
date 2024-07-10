@@ -2,7 +2,7 @@
 
 [InProcess]
 [MemoryDiagnoser]
-public class Ecs1001Benchmarks
+public class Ecs1000Benchmarks
 {
     private static CompilationWithAnalyzers? BaselineCompilation { get; set; }
 
@@ -38,7 +38,7 @@ internal class {name}
     }
 
     [Benchmark]
-    public async Task Ecs1001WithDiagnostics()
+    public async Task Ecs1000WithDiagnostics()
     {
         ImmutableArray<Diagnostic> diagnostics =
             (await TestCompilation!
@@ -54,7 +54,7 @@ internal class {name}
     }
 
     [Benchmark(Baseline = true)]
-    public async Task Ecs1001Baseline()
+    public async Task Ecs1000Baseline()
     {
         ImmutableArray<Diagnostic> diagnostics =
             (await BaselineCompilation!
