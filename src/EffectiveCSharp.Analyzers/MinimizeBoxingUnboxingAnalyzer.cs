@@ -98,7 +98,8 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
         if (targetType?.IsReferenceType == true
             && valueType?.IsValueType == true
-            && !IsConstant(simpleAssignmentOperation.Value))
+            && !IsConstant(simpleAssignmentOperation.Value)
+            && !IsParameterToPropertyAssignment(simpleAssignmentOperation))
         {
             Diagnostic diagnostic = simpleAssignmentOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
@@ -157,7 +158,8 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
     {
         if (propertyReferenceOperation.Type?.IsValueType == true
             && context.ContainingSymbol?.ContainingType?.IsReferenceType == true
-            && !IsConstant(propertyReferenceOperation))
+            && !IsConstant(propertyReferenceOperation)
+            && !IsAssignmentToValueType(propertyReferenceOperation))
         {
             Diagnostic diagnostic = propertyReferenceOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
@@ -188,8 +190,31 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
     private static bool IsNameOf(IInvocationOperation invocationOperation)
     {
-        return invocationOperation.Syntax is InvocationExpressionSyntax invocationSyntax &&
-               invocationSyntax.Expression is IdentifierNameSyntax identifierNameSyntax &&
-               identifierNameSyntax.Identifier.Text == "nameof";
+        return invocationOperation.Syntax is InvocationExpressionSyntax { Expression: IdentifierNameSyntax
+        {
+            Identifier.Text: "nameof"
+        }
+        };
+    }
+
+    private static bool IsParameterToPropertyAssignment(ISimpleAssignmentOperation simpleAssignmentOperation)
+    {
+        return simpleAssignmentOperation.Value.Kind == OperationKind.ParameterReference
+               && simpleAssignmentOperation.Target.Kind == OperationKind.PropertyReference;
+    }
+
+    private static bool IsAssignmentToValueType(IPropertyReferenceOperation propertyReferenceOperation)
+    {
+        IOperation? parent = propertyReferenceOperation.Parent;
+
+        if (parent is ISimpleAssignmentOperation assignment)
+        {
+            ITypeSymbol? targetType = assignment.Target.Type;
+            ITypeSymbol? valueType = assignment.Value.Type;
+
+            return targetType?.IsValueType == true && valueType?.IsValueType == true;
+        }
+
+        return false;
     }
 }

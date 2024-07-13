@@ -136,6 +136,18 @@ public class AvoidBoxingUnboxingTests
                 }
                 """
                 ],
+
+            // Regression test: we are too aggressive when assigning ctor params to read-only properties
+            [
+            """
+            public int Arg { get; }
+
+            public MyClass(int arg)
+            {
+                Arg = arg;
+            }
+            """
+                    ],
         }.WithReferenceAssemblyGroups();
     }
 
@@ -176,7 +188,7 @@ internal class Program
     var p2 = {|ECS0009:attendees[0]|};
     p2.Name = ""New Name"";
 
-    // Writes ""Old Name"":
+    // Writes ""Old Name"" because we pulled a copy of the struct
     Console.WriteLine({|ECS0009:attendees[0]|}.ToString());
   }
 }
