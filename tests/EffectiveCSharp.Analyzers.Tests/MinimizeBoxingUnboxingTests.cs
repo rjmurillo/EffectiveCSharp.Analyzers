@@ -202,4 +202,28 @@ public struct Person
             ,
             ReferenceAssemblyCatalog.Net80);
     }
+
+    [Fact]
+    public async Task AnalyzerRecordType()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            @"
+using System;
+
+namespace MyNamespace;
+
+public record MyRecord(bool Flag);
+
+public class MyClass
+{
+  public void Method(MyRecord rec)
+  {
+    if (rec.Flag)
+    {
+      Console.WriteLine(""Flag is true"");
+    }
+  }
+}
+", ReferenceAssemblyCatalog.Net80);
+    }
 }

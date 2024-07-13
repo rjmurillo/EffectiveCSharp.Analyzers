@@ -159,7 +159,8 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
         if (propertyReferenceOperation.Type?.IsValueType == true
             && context.ContainingSymbol?.ContainingType?.IsReferenceType == true
             && !IsConstant(propertyReferenceOperation)
-            && !IsAssignmentToValueType(propertyReferenceOperation))
+            && !IsAssignmentToValueType(propertyReferenceOperation)
+            && !IsPartOfRecordOrClass(propertyReferenceOperation))
         {
             Diagnostic diagnostic = propertyReferenceOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
@@ -216,5 +217,10 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
         }
 
         return false;
+    }
+
+    private static bool IsPartOfRecordOrClass(IPropertyReferenceOperation propertyReferenceOperation)
+    {
+        return propertyReferenceOperation.Member.ContainingType.IsReferenceType;
     }
 }
