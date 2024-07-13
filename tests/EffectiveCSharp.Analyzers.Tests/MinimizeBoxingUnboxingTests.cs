@@ -41,6 +41,12 @@ public class AvoidBoxingUnboxingTests
                 #pragma warning restore ECS0009 // Minimize boxing and unboxing
                 """
             ],
+
+            [
+                """
+                var dt = new DateTimeOffset(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
+                """
+                ],
         }.WithReferenceAssemblyGroups();
     }
 
