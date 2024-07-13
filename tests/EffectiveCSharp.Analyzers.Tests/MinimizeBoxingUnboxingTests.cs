@@ -178,6 +178,11 @@ public class AvoidBoxingUnboxingTests
     [Fact]
     public async Task AnalyzerValueType()
     {
+        // We need to ensure the detection of boxing in cases where a value type
+        // is being assigned or accessed in a way that results in boxing
+        //
+        // In this case, we are boxing the value type when we assign it to a variable p2
+        // when we pull the value type Person from the reference type List<Person>
         await Verifier.VerifyAnalyzerAsync(
             @"
 internal class Program

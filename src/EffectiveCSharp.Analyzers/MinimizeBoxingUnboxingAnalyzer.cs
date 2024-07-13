@@ -26,7 +26,14 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterOperationAction(AnalyzeOperation, OperationKind.Conversion, OperationKind.SimpleAssignment, OperationKind.Argument, OperationKind.Return, OperationKind.PropertyReference, OperationKind.FieldReference, OperationKind.Invocation, OperationKind.ArrayElementReference, OperationKind.ObjectCreation, OperationKind.ArrayElementReference);
+        context.RegisterOperationAction(
+            AnalyzeOperation,
+            OperationKind.Conversion,
+            OperationKind.SimpleAssignment,
+            OperationKind.Argument,
+            OperationKind.Return,
+            OperationKind.Invocation,
+            OperationKind.ArrayElementReference);
     }
 
     private static void AnalyzeOperation(OperationAnalysisContext context)
@@ -41,32 +48,12 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
                 AnalyzeSimpleAssignmentOperation(simpleAssignmentOperation, context);
                 break;
 
-            case IVariableDeclarationOperation variableDeclarationOperation:
-                AnalyzeVariableDeclarationOperation(variableDeclarationOperation, context);
-                break;
-
             case IArgumentOperation argumentOperation:
                 AnalyzeArgumentOperation(argumentOperation, context);
                 break;
 
             case IReturnOperation returnOperation:
                 AnalyzeReturnOperation(returnOperation, context);
-                break;
-
-            case IPropertyReferenceOperation propertyReferenceOperation:
-                AnalyzePropertyReferenceOperation(propertyReferenceOperation, context);
-                break;
-
-            case IFieldReferenceOperation fieldReferenceOperation:
-                AnalyzeFieldReferenceOperation(fieldReferenceOperation, context);
-                break;
-
-            case IMemberReferenceOperation memberReferenceOperation:
-                AnalyzeMemberReferenceOperation(memberReferenceOperation, context);
-                break;
-
-            case IObjectCreationOperation objectCreationOperation:
-                AnalyzeObjectCreationOperation(objectCreationOperation, context);
                 break;
 
             case IInvocationOperation invocationOperation:
@@ -81,8 +68,11 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
     private static void AnalyzeArrayElementReferenceOperation(IArrayElementReferenceOperation arrayElementReferenceOperation, OperationAnalysisContext context)
     {
-        if (arrayElementReferenceOperation.Type?.IsValueType == true
-            && context.ContainingSymbol?.ContainingType?.IsReferenceType == true)
+        if (arrayElementReferenceOperation.ArrayReference.Type is INamedTypeSymbol namedTypeSymbol &&
+            namedTypeSymbol.ConstructedFrom.SpecialType == SpecialType.System_Collections_Generic_IList_T &&
+            arrayElementReferenceOperation.ArrayReference is ILocalReferenceOperation localReferenceOperation &&
+            localReferenceOperation.Type is INamedTypeSymbol listTypeSymbol &&
+            listTypeSymbol.TypeArguments[0].IsValueType)
         {
             Diagnostic diagnostic = arrayElementReferenceOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
@@ -91,22 +81,9 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
     private static void AnalyzeInvocationOperation(IInvocationOperation invocationOperation, OperationAnalysisContext context)
     {
-        if (invocationOperation.TargetMethod.ReturnType?.IsValueType == true
-            && invocationOperation.TargetMethod.ReturnType.IsReferenceType
-            && !IsNameOf(invocationOperation))
+        if (invocationOperation.IsInvocationToBoxedType())
         {
             Diagnostic diagnostic = invocationOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
-    private static void AnalyzeObjectCreationOperation(IObjectCreationOperation objectCreationOperation, OperationAnalysisContext context)
-    {
-        // Skip any type creation that doesn't involve value types being boxed to object
-        if (objectCreationOperation.Type is { IsValueType: true }
-            && objectCreationOperation.Arguments.Any(arg => (arg.Value).IsBoxingOperation()))
-        {
-            Diagnostic diagnostic = objectCreationOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
         }
     }
@@ -122,34 +99,18 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
     private static void AnalyzeSimpleAssignmentOperation(ISimpleAssignmentOperation simpleAssignmentOperation, OperationAnalysisContext context)
     {
-        ITypeSymbol? targetType = simpleAssignmentOperation.Target.Type;
-        ITypeSymbol? valueType = simpleAssignmentOperation.Value.Type;
-
-        if (targetType?.IsReferenceType == true
-            && valueType?.IsValueType == true
-            && !simpleAssignmentOperation.Value.IsConstant()
-            && !IsParameterToPropertyAssignment(simpleAssignmentOperation))
+        if (simpleAssignmentOperation.Value.IsBoxingOperation()
+            || simpleAssignmentOperation.IsAssignmentToBoxedType())
         {
             Diagnostic diagnostic = simpleAssignmentOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
         }
     }
 
-    private static void AnalyzeVariableDeclarationOperation(IVariableDeclarationOperation variableDeclarationOperation, OperationAnalysisContext context)
-    {
-        foreach (IVariableDeclaratorOperation? declarator in variableDeclarationOperation.Declarators)
-        {
-            if (declarator.Initializer?.Value is IConversionOperation conversionOperation)
-            {
-                AnalyzeConversionOperation(conversionOperation, context);
-            }
-        }
-    }
-
     private static void AnalyzeArgumentOperation(IArgumentOperation argumentOperation, OperationAnalysisContext context)
     {
-        if (argumentOperation.Value.Type?.IsValueType == true
-            && argumentOperation.Parameter?.Type.IsReferenceType == true)
+        if (argumentOperation.Value.IsBoxingOperation()
+            || argumentOperation.IsArgumentToBoxedType())
         {
             Diagnostic diagnostic = argumentOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
@@ -158,62 +119,11 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
     private static void AnalyzeReturnOperation(IReturnOperation returnOperation, OperationAnalysisContext context)
     {
-        if (context.ContainingSymbol is IMethodSymbol methodSymbol
-            && returnOperation.ReturnedValue.Type?.IsValueType == true
-            && methodSymbol.ReturnType.IsReferenceType
-            && !returnOperation.ReturnedValue.IsConstant())
+        if (returnOperation.ReturnedValue.IsBoxingOperation()
+            || returnOperation.IsReturnToBoxedType())
         {
             Diagnostic diagnostic = returnOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
         }
-    }
-
-    private static void AnalyzeMemberReferenceOperation(IMemberReferenceOperation memberReferenceOperation, OperationAnalysisContext context)
-    {
-        if (memberReferenceOperation.Member.ContainingType.IsValueType)
-        {
-            IOperation? parentOperation = memberReferenceOperation.Parent;
-
-            if (parentOperation is IPropertyReferenceOperation { Instance: IConversionOperation conversion }
-                && conversion.Type.IsReferenceType)
-            {
-                Diagnostic diagnostic = memberReferenceOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-                context.ReportDiagnostic(diagnostic);
-            }
-        }
-    }
-
-    private static void AnalyzePropertyReferenceOperation(IPropertyReferenceOperation propertyReferenceOperation, OperationAnalysisContext context)
-    {
-        if (propertyReferenceOperation.Parent.IsBoxingOperation())
-        {
-            Diagnostic diagnostic = propertyReferenceOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
-    private static void AnalyzeFieldReferenceOperation(IFieldReferenceOperation fieldReferenceOperation, OperationAnalysisContext context)
-    {
-        if (fieldReferenceOperation.Parent.IsBoxingOperation()
-            && !fieldReferenceOperation.IsConstant())
-        {
-            Diagnostic diagnostic = fieldReferenceOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
-    private static bool IsNameOf(IInvocationOperation invocationOperation)
-    {
-        return invocationOperation.Syntax is InvocationExpressionSyntax { Expression: IdentifierNameSyntax
-        {
-            Identifier.Text: "nameof"
-        }
-        };
-    }
-
-    private static bool IsParameterToPropertyAssignment(ISimpleAssignmentOperation simpleAssignmentOperation)
-    {
-        return simpleAssignmentOperation.Value.Kind == OperationKind.ParameterReference
-               && simpleAssignmentOperation.Target.Kind == OperationKind.PropertyReference;
     }
 }
