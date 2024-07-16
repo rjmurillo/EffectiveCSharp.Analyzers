@@ -1,4 +1,4 @@
-﻿using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.BeAwareOfValueTypeCopyInReferenceTypes>;
+﻿using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.BeAwareOfValueTypeCopyInReferenceTypesAnalyzer>;
 
 namespace EffectiveCSharp.Analyzers.Tests;
 

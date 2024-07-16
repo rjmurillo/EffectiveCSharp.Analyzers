@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.CodeAnalysis;
+﻿using System.Collections;
 
 namespace EffectiveCSharp.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class BeAwareOfValueTypeCopyInReferenceTypes : DiagnosticAnalyzer
+public class BeAwareOfValueTypeCopyInReferenceTypesAnalyzer : DiagnosticAnalyzer
 {
     private const string Id = DiagnosticIds.BeAwareOfValueTypeCopyInReferenceTypes;
 
