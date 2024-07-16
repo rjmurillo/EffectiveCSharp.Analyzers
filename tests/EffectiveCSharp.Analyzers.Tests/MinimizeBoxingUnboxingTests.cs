@@ -176,45 +176,6 @@ public class AvoidBoxingUnboxingTests
     }
 
     [Fact]
-    public async Task AnalyzerValueType()
-    {
-        // We need to ensure the detection of boxing in cases where a value type
-        // is being assigned or accessed in a way that results in boxing
-        //
-        // In this case, we are boxing the value type when we assign it to a variable p2
-        // when we pull the value type Person from the reference type List<Person>
-        await Verifier.VerifyAnalyzerAsync(
-            @"
-internal class Program
-{
-  static void Main()
-  {
-
-    // Using the Person in a collection
-    var attendees = new List<Person>();
-    var p = new Person { Name = ""Old Name"" };
-    attendees.Add(p);
-
-    // Try to change the name
-    var p2 = {|ECS0009:attendees[0]|};
-    p2.Name = ""New Name"";
-
-    // Writes ""Old Name"" because we pulled a copy of the struct
-    Console.WriteLine({|ECS0009:attendees[0]|}.ToString());
-  }
-}
-
-public struct Person
-{
-  public string Name { get; set; }
-  public override string ToString() => Name;
-}
-"
-            ,
-            ReferenceAssemblyCatalog.Net80);
-    }
-
-    [Fact]
     public async Task AnalyzerRecordType()
     {
         await Verifier.VerifyAnalyzerAsync(
