@@ -24,5 +24,7 @@ internal class Test<TAnalyzer, TCodeFixProvider> : CSharpCodeFixTest<TAnalyzer, 
 
         TestState.Sources.Add(globalUsings);
         FixedState.Sources.Add(globalUsings);
+
+        MarkupOptions = MarkupOptions.UseFirstDescriptor;
     }
 }
