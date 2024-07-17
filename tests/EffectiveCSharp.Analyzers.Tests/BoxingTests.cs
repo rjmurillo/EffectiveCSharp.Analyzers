@@ -1,4 +1,4 @@
-﻿using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.MinimizeBoxingUnboxingAnalyzer>;
+﻿using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.Tests.CompositeAnalyzer>;
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
