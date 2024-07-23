@@ -14,8 +14,8 @@ public class SpanAnalyzer : DiagnosticAnalyzer
         messageFormat: "Consider using Span<T> instead of array for better performance",
         category: "Performance",
         defaultSeverity: DiagnosticSeverity.Info,
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md",
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);

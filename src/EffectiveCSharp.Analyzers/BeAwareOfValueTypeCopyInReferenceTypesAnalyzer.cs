@@ -2,6 +2,10 @@
 
 namespace EffectiveCSharp.Analyzers;
 
+/// <summary>
+/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #9 - Minimize boxing and unboxing.
+/// </summary>
+/// <seealso cref="Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class BeAwareOfValueTypeCopyInReferenceTypesAnalyzer : DiagnosticAnalyzer
 {
@@ -11,10 +15,10 @@ public class BeAwareOfValueTypeCopyInReferenceTypesAnalyzer : DiagnosticAnalyzer
         id: Id,
         title: "Be aware of value type copy in reference types",
         messageFormat: "Consider using an alternative implementation to avoid copying value type '{0}' to the heap",
-        description: "Detects when value types may be stored on the heap.",
         category: "Performance",
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
+        description: "Detects when value types may be stored on the heap.",
         helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers{ThisAssembly.GitCommitId}/docs/{Id}.md");
 
     /// <inheritdoc />
@@ -57,13 +61,5 @@ public class BeAwareOfValueTypeCopyInReferenceTypesAnalyzer : DiagnosticAnalyzer
             Diagnostic diagnostic = elementAccess.GetLocation().CreateDiagnostic(Rule, elementType.Name);
             context.ReportDiagnostic(diagnostic);
         }
-    }
-
-    private bool IsCollection(ITypeSymbol typeSymbol)
-    {
-        // You can expand this method to check for other collection types
-        return typeSymbol.AllInterfaces.Any(i =>
-            (i.MetadataName == nameof(IEnumerable) && i.ContainingNamespace.Name == "System.Collections") ||
-            (i.MetadataName == nameof(IEnumerable) && i.ContainingNamespace.Name == "System.Collections.Generic"));
     }
 }

@@ -16,13 +16,14 @@ public class Ecs0009Benchmarks
         for (int index = 0; index < Constants.NumberOfCodeFiles; index++)
         {
             string name = $"TypeName{index}";
-            sources.Add((name, @$"
+            sources.Add((name, $$"""
+
 using System;
 
-internal class {name}
-{{
+internal class {{name}}
+{
     public void Method()
-    {{
+    {
         int i = 1;
         object o = i; // boxing
 
@@ -33,33 +34,34 @@ internal class {name}
         int thirdNumber = 6;
 
         Method(
-            ""A few numbers: {{0}}, {{1}}, {{2}}"",
+            "A few numbers: {0}, {1}, {2}",
             firstNumber,
             secondNumber,
             thirdNumber);
 
         // Using the Person in a collection
         var attendees = new List<Person>();
-        var p = new Person {{ Name = ""Old Name"" }};
+        var p = new Person { Name = "Old Name" };
         attendees.Add(p);
 
         // Try to change the name
         var p2 = attendees[0];
-        p2.Name = ""New Name"";
+        p2.Name = "New Name";
 
-        // Writes ""Old Name"":
+        // Writes "Old Name":
         Console.WriteLine(attendees[0].ToString());
-    }}
+    }
 
-    void Method(params object?[]? arg) {{ }}
-}}
+    void Method(params object?[]? arg) { }
+}
 
 public struct Person
-{{
-  public string Name {{ get; set; }}
+{
+  public string Name { get; set; }
   public override string ToString() => Name;
-}}
-"));
+}
+
+"""));
         }
 
         (BaselineCompilation, TestCompilation) =
@@ -80,7 +82,7 @@ public struct Person
             .GetAllDiagnostics();
 
         // We have 4 instances in our test sample
-        if (diagnostics.Length != Constants.NumberOfCodeFiles * 4 )
+        if (diagnostics.Length != Constants.NumberOfCodeFiles * 4)
         {
             throw new InvalidOperationException($"Expected '{Constants.NumberOfCodeFiles:N0}' analyzer diagnostics but found '{diagnostics.Length}'");
         }

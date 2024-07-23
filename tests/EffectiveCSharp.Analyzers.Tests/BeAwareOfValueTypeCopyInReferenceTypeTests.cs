@@ -2,6 +2,9 @@
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
+#pragma warning disable SA1001  // The harness has literal code as a string, which can be weirdly formatted
+#pragma warning disable SA1113
+
 public class BeAwareOfValueTypeCopyInReferenceTypeTests
 {
     [Fact]
@@ -13,7 +16,7 @@ public class BeAwareOfValueTypeCopyInReferenceTypeTests
         // In this case, we are copying the value type when we bring it in and out
         // the reference type List<Person>.
         await Verifier.VerifyAnalyzerAsync(
-            @"
+            """
 internal class Program
 {
   static void Main()
@@ -21,14 +24,14 @@ internal class Program
 
     // Using the Person in a collection
     var attendees = new List<Person>();
-    var p = new Person { Name = ""Old Name"" };
+    var p = new Person { Name = "Old Name" };
     attendees.Add(p);
 
     // Try to change the name
     var p2 = {|ECS0009:attendees[0]|};
-    p2.Name = ""New Name"";
+    p2.Name = "New Name";
 
-    // Writes ""Old Name"" because we pulled a copy of the struct
+    // Writes "Old Name" because we pulled a copy of the struct
     Console.WriteLine({|ECS0009:attendees[0]|}.ToString());
   }
 }
@@ -38,8 +41,7 @@ public struct Person
   public string Name { get; set; }
   public override string ToString() => Name;
 }
-"
-            ,
-            ReferenceAssemblyCatalog.Net80);
+"""
+            , ReferenceAssemblyCatalog.Net80);
     }
 }

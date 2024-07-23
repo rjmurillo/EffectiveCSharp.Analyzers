@@ -2,6 +2,8 @@
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
+#pragma warning disable SA1204  // Static members are grouped with their Theory
+
 public class AvoidBoxingUnboxingTests
 {
     public static IEnumerable<object[]> TestData()
@@ -179,7 +181,7 @@ public class AvoidBoxingUnboxingTests
     public async Task AnalyzerRecordType()
     {
         await Verifier.VerifyAnalyzerAsync(
-            @"
+            """
 using System;
 
 namespace MyNamespace;
@@ -192,10 +194,11 @@ public class MyClass
   {
     if (rec.Flag)
     {
-      Console.WriteLine(""Flag is true"");
+      Console.WriteLine("Flag is true");
     }
   }
 }
-", ReferenceAssemblyCatalog.Net80);
+""",
+            ReferenceAssemblyCatalog.Net80);
     }
 }

@@ -50,7 +50,7 @@ internal static class DiagnosticExtensions
         params object?[]? messageArgs)
         => location.CreateDiagnostic(rule, ImmutableArray<Location>.Empty, properties, messageArgs);
 
-    //[DebuggerStepThrough]
+    [DebuggerStepThrough]
     internal static Diagnostic CreateDiagnostic(
         this Location location,
         DiagnosticDescriptor rule,

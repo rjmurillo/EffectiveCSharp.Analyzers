@@ -2,6 +2,13 @@
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
+#pragma warning disable MA0048  // There are multiple types of tests here, keeping them in the same file
+#pragma warning disable SA1649
+#pragma warning disable SA1402
+#pragma warning disable SA1001  // The harness has literal code as a string, which can be weirdly formatted
+#pragma warning disable SA1113
+#pragma warning disable SA1115
+
 public class HeapAllocationTests
 {
     [Fact]
