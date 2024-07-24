@@ -26,13 +26,24 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterOperationAction(AnalyzeOperation, OperationKind.Conversion);
-        context.RegisterSyntaxNodeAction(AnalyzeNode, SyntaxKind.ElementAccessExpression);
+        context.RegisterCompilationStartAction(compilationStartAnalysisContext =>
+        {
+            INamedTypeSymbol? dictionarySymbol = compilationStartAnalysisContext.Compilation.GetTypeByMetadataName("System.Collections.Generic.Dictionary`2");
+            INamedTypeSymbol? listSymbol = compilationStartAnalysisContext.Compilation.GetTypeByMetadataName("System.Collections.Generic.List`1");
+
+            compilationStartAnalysisContext.RegisterOperationAction(AnalyzeOperation, OperationKind.Conversion);
+            compilationStartAnalysisContext.RegisterSyntaxNodeAction(
+                syntaxNodeContext => AnalyzeNode(syntaxNodeContext, dictionarySymbol, listSymbol),
+                SyntaxKind.ElementAccessExpression);
+        });
     }
 
-    private static void AnalyzeNode(SyntaxNodeAnalysisContext context)
+    private void AnalyzeNode(SyntaxNodeAnalysisContext context, INamedTypeSymbol? dictionarySymbol, INamedTypeSymbol? listSymbol)
     {
-        ElementAccessExpressionSyntax elementAccess = (ElementAccessExpressionSyntax)context.Node;
+        if (context.Node is not ElementAccessExpressionSyntax elementAccess)
+        {
+            return;
+        }
 
         // Get the type of the accessed object
         TypeInfo typeInfo = context.SemanticModel.GetTypeInfo(elementAccess.Expression, context.CancellationToken);
@@ -42,21 +53,29 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        string constructedTypeName = namedType.ConstructedFrom.ToString();
-        ITypeSymbol? elementType = null;
-
-        // Check if it's a List<T>
-        if (string.Equals(constructedTypeName, "System.Collections.Generic.List<T>", StringComparison.Ordinal))
+        INamedTypeSymbol baseType = namedType.ConstructedFrom;
+        if (SymbolEqualityComparer.Default.Equals(baseType, dictionarySymbol))
         {
-            elementType = namedType.TypeArguments[0];
+            ITypeSymbol keyType = namedType.TypeArguments[0]; // The TKey in Dictionary<TKey, TValue>
+            NewFunction(keyType);
+
+            ITypeSymbol valueType = namedType.TypeArguments[1]; // The TValue in Dictionary<TKey, TValue>
+            NewFunction(valueType);
+        }
+        else if (SymbolEqualityComparer.Default.Equals(baseType, listSymbol))
+        {
+            ITypeSymbol elementType = namedType.TypeArguments[0]; // The T in List<T>
+            NewFunction(elementType);
         }
 
-        // Check if the element type is a value type
-        if (elementType is { IsValueType: true })
+        void NewFunction(ITypeSymbol? typeSymbol)
         {
-            // Create and report a diagnostic if the element is accessed directly
-            Diagnostic diagnostic = elementAccess.GetLocation().CreateDiagnostic(Rule, elementType.Name);
-            context.ReportDiagnostic(diagnostic);
+            if (typeSymbol is { IsValueType: true })
+            {
+                // Create and report a diagnostic if the element is accessed directly
+                Diagnostic diagnostic = elementAccess.GetLocation().CreateDiagnostic(Rule, typeSymbol.Name);
+                context.ReportDiagnostic(diagnostic);
+            }
         }
     }
 
