@@ -57,25 +57,40 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
         if (SymbolEqualityComparer.Default.Equals(baseType, dictionarySymbol))
         {
             ITypeSymbol keyType = namedType.TypeArguments[0]; // The TKey in Dictionary<TKey, TValue>
-            NewFunction(keyType);
+            if (NewFunction(keyType))
+            {
+                return;
+            }
 
             ITypeSymbol valueType = namedType.TypeArguments[1]; // The TValue in Dictionary<TKey, TValue>
-            NewFunction(valueType);
+            if (NewFunction(valueType))
+            {
+                return;
+            }
         }
         else if (SymbolEqualityComparer.Default.Equals(baseType, listSymbol))
         {
             ITypeSymbol elementType = namedType.TypeArguments[0]; // The T in List<T>
-            NewFunction(elementType);
+            if (NewFunction(elementType))
+            {
+                return;
+            }
         }
 
-        void NewFunction(ITypeSymbol? typeSymbol)
+        return;
+
+        bool NewFunction(ITypeSymbol? typeSymbol)
         {
             if (typeSymbol is { IsValueType: true })
             {
                 // Create and report a diagnostic if the element is accessed directly
                 Diagnostic diagnostic = elementAccess.GetLocation().CreateDiagnostic(Rule, typeSymbol.Name);
                 context.ReportDiagnostic(diagnostic);
+
+                return true;
             }
+
+            return false;
         }
     }
 
