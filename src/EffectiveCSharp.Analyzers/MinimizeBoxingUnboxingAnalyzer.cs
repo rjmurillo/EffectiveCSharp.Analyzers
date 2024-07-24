@@ -63,15 +63,16 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
             case IArrayElementReferenceOperation arrayElementReferenceOperation:
                 AnalyzeArrayElementReferenceOperation(arrayElementReferenceOperation, context);
                 break;
+
+            default:
+                throw new NotSupportedException($"Unsupported operation kind: {context.Operation.Kind}");
         }
     }
 
     private static void AnalyzeArrayElementReferenceOperation(IArrayElementReferenceOperation arrayElementReferenceOperation, OperationAnalysisContext context)
     {
-        if (arrayElementReferenceOperation.ArrayReference.Type is INamedTypeSymbol namedTypeSymbol
-            && namedTypeSymbol.ConstructedFrom.SpecialType == SpecialType.System_Collections_Generic_IList_T
-            && arrayElementReferenceOperation.ArrayReference is ILocalReferenceOperation localReferenceOperation
-            && localReferenceOperation.Type is INamedTypeSymbol listTypeSymbol
+        if (arrayElementReferenceOperation.ArrayReference.Type is INamedTypeSymbol { ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IList_T }
+            && arrayElementReferenceOperation.ArrayReference is ILocalReferenceOperation { Type: INamedTypeSymbol listTypeSymbol }
             && listTypeSymbol.TypeArguments[0].IsValueType)
         {
             Diagnostic diagnostic = arrayElementReferenceOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
