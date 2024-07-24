@@ -3,6 +3,8 @@ using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<Effect
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
+#pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
+
 public class AvoidStringlyTypedApisTests
 {
     public static TheoryData<string, string> TestData()
@@ -53,35 +55,35 @@ public class AvoidStringlyTypedApisTests
     [Fact]
     public async Task CodeFix()
     {
-        string testCode = """
-                          public class MyClass
-                          {
-                            public static void ExceptionMessage(object thisCantBeNull)
-                            {
-                                if (thisCantBeNull == null)
+        const string testCode = """
+                                public class MyClass
                                 {
-                                    throw new ArgumentNullException(
-                                        {|ECS0006:"thisCantBeNull"|},
-                                        "We told you this cant be null");
+                                  public static void ExceptionMessage(object thisCantBeNull)
+                                  {
+                                      if (thisCantBeNull == null)
+                                      {
+                                          throw new ArgumentNullException(
+                                              {|ECS0006:"thisCantBeNull"|},
+                                              "We told you this cant be null");
+                                      }
+                                  }
                                 }
-                            }
-                          }
-                          """;
+                                """;
 
-        string fixedCode = """
-                           public class MyClass
-                           {
-                             public static void ExceptionMessage(object thisCantBeNull)
-                             {
-                                 if (thisCantBeNull == null)
+        const string fixedCode = """
+                                 public class MyClass
                                  {
-                                     throw new ArgumentNullException(
-                                         nameof(thisCantBeNull),
-                                         "We told you this cant be null");
+                                   public static void ExceptionMessage(object thisCantBeNull)
+                                   {
+                                       if (thisCantBeNull == null)
+                                       {
+                                           throw new ArgumentNullException(
+                                               nameof(thisCantBeNull),
+                                               "We told you this cant be null");
+                                       }
+                                   }
                                  }
-                             }
-                           }
-                           """;
+                                 """;
 
         await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
     }

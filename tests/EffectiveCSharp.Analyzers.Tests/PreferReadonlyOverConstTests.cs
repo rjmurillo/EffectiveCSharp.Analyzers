@@ -3,6 +3,8 @@ using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<Effect
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
+#pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
+
 public class PreferReadonlyOverConstTests
 {
     public static TheoryData<string, string> TestData()
@@ -43,19 +45,19 @@ public class PreferReadonlyOverConstTests
     [Fact]
     public async Task CodeFix()
     {
-        string testCode = """
-                          class Program
-                          {
-                              {|ECS0002:private const int StartValue = 5;|}
-                          }
-                          """;
+        const string testCode = """
+                                class Program
+                                {
+                                    {|ECS0002:private const int StartValue = 5;|}
+                                }
+                                """;
 
-        string fixedCode = """
-                           class Program
-                           {
-                               private static readonly int StartValue = 5;
-                           }
-                           """;
+        const string fixedCode = """
+                                 class Program
+                                 {
+                                     private static readonly int StartValue = 5;
+                                 }
+                                 """;
 
         await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
     }

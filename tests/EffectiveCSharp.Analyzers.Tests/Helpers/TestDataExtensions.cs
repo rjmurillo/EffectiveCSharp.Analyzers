@@ -4,7 +4,7 @@ internal static class TestDataExtensions
 {
     public static TheoryData<string, string> WithReferenceAssemblyGroups(this TheoryData<string> data)
     {
-        TheoryData<string, string> retVal = new();
+        TheoryData<string, string> retVal = [];
 
         foreach (object[]? theoryDataItem in data)
         {

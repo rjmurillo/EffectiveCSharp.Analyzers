@@ -3,6 +3,8 @@ using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<Effect
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
+#pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
+
 public class SpanAnalyzerTests
 {
     public static TheoryData<string, string> TestData()
@@ -57,7 +59,7 @@ public class SpanAnalyzerTests
     [Fact(Skip = "Reporting an analyzer failure when the unit test code above shows it is correct")]
     public async Task CodeFix()
     {
-        string testCode = """
+        const string testCode = """
                           class Program
                           {
                               void Method()
@@ -68,16 +70,16 @@ public class SpanAnalyzerTests
                           }
                           """;
 
-        string fixedCode = """
-                           class Program
-                           {
-                               void Method()
-                               {
-                                   var arr = new Span<int>(new int[10]);
-                                   var val = arr.Slice(5, 1)[0];
-                               }
-                           }
-                           """;
+        const string fixedCode = """
+                                 class Program
+                                 {
+                                     void Method()
+                                     {
+                                         var arr = new Span<int>(new int[10]);
+                                         var val = arr.Slice(5, 1)[0];
+                                     }
+                                 }
+                                 """;
 
         await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
     }

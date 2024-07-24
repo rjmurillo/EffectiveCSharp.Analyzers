@@ -8,6 +8,7 @@ namespace EffectiveCSharp.Analyzers.Tests;
 #pragma warning disable S125    // There's code in comments as examples
 #pragma warning disable MA0051  // Some test methods are "too long"
 #pragma warning disable MA0007  // There are multiple types of tests defined in theory data
+#pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
 
 public class AvoidBoxingUnboxingTests
 {
