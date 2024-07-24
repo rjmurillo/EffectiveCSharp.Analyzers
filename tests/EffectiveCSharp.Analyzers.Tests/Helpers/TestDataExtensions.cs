@@ -6,13 +6,13 @@ internal static class TestDataExtensions
     {
         TheoryData<string, string> retVal = new();
 
-        foreach (object[]? item in data)
+        foreach (object[]? theoryDataItem in data)
         {
-            foreach (object f in item)
+            foreach (object entry in theoryDataItem)
             {
-                foreach (var g in ReferenceAssemblyCatalog.Catalog.Keys)
+                foreach (string referenceAssembly in ReferenceAssemblyCatalog.Catalog.Keys)
                 {
-                    retVal.Add(g, (string)f);
+                    retVal.Add(referenceAssembly, (string)entry);
                 }
             }
         }

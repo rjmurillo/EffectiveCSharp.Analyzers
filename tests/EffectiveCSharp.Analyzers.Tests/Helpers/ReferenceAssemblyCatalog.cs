@@ -30,13 +30,21 @@ internal static class ReferenceAssemblyCatalog
     // 6 LTS (ends Nov 12, 2024)
     // NOTE: 7, 5, Core 3.1, 3.0, 2.2, 2.1, 2.0, 1.1, and 1.0 are no longer supported
     public static string Net48 => nameof(ReferenceAssemblies.NetFramework.Net48);
+
     public static string Net472 => nameof(ReferenceAssemblies.NetFramework.Net472);
+
     public static string Net471 => nameof(ReferenceAssemblies.NetFramework.Net471);
+
     public static string Net47 => nameof(ReferenceAssemblies.NetFramework.Net47);
+
     public static string Net462 => nameof(ReferenceAssemblies.NetFramework.Net462);
+
     public static string Net35 => nameof(ReferenceAssemblies.NetFramework.Net35);
+
     public static string Net60 => nameof(ReferenceAssemblies.Net.Net60);
+
     public static string Net80 => nameof(ReferenceAssemblies.Net.Net80);
+
     public static string Net90 => nameof(ReferenceAssemblies.Net.Net90);
 
     public static IReadOnlyDictionary<string, ReferenceAssemblies> Catalog { get; } = new Dictionary<string, ReferenceAssemblies>(StringComparer.Ordinal)
