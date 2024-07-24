@@ -19,7 +19,6 @@ internal class Test<TAnalyzer, TCodeFixProvider> : CSharpCodeFixTest<TAnalyzer, 
             """
             global using System;
             global using System.Collections.Generic;
-            global using System.Threading.Tasks;
             """;
 
         TestState.Sources.Add(globalUsings);

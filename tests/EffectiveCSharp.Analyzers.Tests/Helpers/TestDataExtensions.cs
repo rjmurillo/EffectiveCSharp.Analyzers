@@ -10,7 +10,10 @@ internal static class TestDataExtensions
         {
             foreach (object f in item)
             {
-                retVal.Add(ReferenceAssemblyCatalog.Net80, (string)f);
+                foreach (var g in ReferenceAssemblyCatalog.Catalog.Keys)
+                {
+                    retVal.Add(g, (string)f);
+                }
             }
         }
 
