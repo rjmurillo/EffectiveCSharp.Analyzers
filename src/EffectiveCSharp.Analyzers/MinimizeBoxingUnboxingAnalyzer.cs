@@ -81,7 +81,8 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
         bool ReportDiagnosticOnValueType(ITypeSymbol? typeSymbol)
         {
-            if (typeSymbol is { IsValueType: true })
+            // Check if the struct is read/write; if so, there can be bad things that happen to warn
+            if (typeSymbol is { IsValueType: true, IsReadOnly: false })
             {
                 // Create and report a diagnostic if the element is accessed directly
                 Diagnostic diagnostic = elementAccess.GetLocation().CreateDiagnostic(Rule, typeSymbol.Name);
