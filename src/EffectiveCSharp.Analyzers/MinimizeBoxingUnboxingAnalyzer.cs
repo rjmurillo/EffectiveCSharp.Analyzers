@@ -98,14 +98,13 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
     private static void AnalyzeOperation(OperationAnalysisContext context)
     {
-        switch (context.Operation)
+        if (context.Operation is IConversionOperation conversionOperation)
         {
-            case IConversionOperation conversionOperation:
-                AnalyzeConversionOperation(conversionOperation, context);
-                break;
-
-            default:
-                throw new NotSupportedException($"Unsupported operation kind: {context.Operation.Kind}");
+            AnalyzeConversionOperation(conversionOperation, context);
+        }
+        else
+        {
+            throw new NotSupportedException($"Unsupported operation kind: {context.Operation.Kind}");
         }
     }
 
