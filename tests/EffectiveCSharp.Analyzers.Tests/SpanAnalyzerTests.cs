@@ -13,10 +13,18 @@ public class SpanAnalyzerTests
             "var arr = {|ECS1000:new int[10]|};",
 
             // This should not fire because it's wrapped by a Span
-            "var arr = new Span<int>(new int[10]);",
+            """
+            #if NET6_0_OR_GREATER
+            var arr = new Span<int>(new int[10]);
+            #endif
+            """,
 
             // This should not fire because it's wrapped by a ReadOnlySpan
-            "var arr = new ReadOnlySpan<int>(new int[10]);",
+            """
+            #if NET6_0_OR_GREATER
+            var arr = new ReadOnlySpan<int>(new int[10]);
+            #endif
+            """,
 
             // This should not fire because it's suppressed
             """
