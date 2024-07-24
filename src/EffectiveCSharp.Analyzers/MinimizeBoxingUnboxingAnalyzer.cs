@@ -57,13 +57,13 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
         if (SymbolEqualityComparer.Default.Equals(baseType, dictionarySymbol))
         {
             ITypeSymbol keyType = namedType.TypeArguments[0]; // The TKey in Dictionary<TKey, TValue>
-            if (NewFunction(keyType))
+            if (ReportDiagnosticOnValueType(keyType))
             {
                 return;
             }
 
             ITypeSymbol valueType = namedType.TypeArguments[1]; // The TValue in Dictionary<TKey, TValue>
-            if (NewFunction(valueType))
+            if (ReportDiagnosticOnValueType(valueType))
             {
                 return;
             }
@@ -71,7 +71,7 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
         else if (SymbolEqualityComparer.Default.Equals(baseType, listSymbol))
         {
             ITypeSymbol elementType = namedType.TypeArguments[0]; // The T in List<T>
-            if (NewFunction(elementType))
+            if (ReportDiagnosticOnValueType(elementType))
             {
                 return;
             }
@@ -79,7 +79,7 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
         return;
 
-        bool NewFunction(ITypeSymbol? typeSymbol)
+        bool ReportDiagnosticOnValueType(ITypeSymbol? typeSymbol)
         {
             if (typeSymbol is { IsValueType: true })
             {
