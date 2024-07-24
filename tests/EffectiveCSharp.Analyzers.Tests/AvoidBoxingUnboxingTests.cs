@@ -358,4 +358,42 @@ public class MyClass
             """
             , ReferenceAssemblyCatalog.Net80);
     }
+
+    [Fact]
+    public async Task Implicit_boxing_in_Dictionary_As_Value()
+    {
+        // We need to ensure the detection of boxing in cases where a value type
+        // is being assigned or accessed in a way that results in copy semantics
+        //
+        // In this case, we are copying the value type when we bring it in and out
+        // the reference type List<Person>.
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            internal class Program
+            {
+              static void Main()
+              {
+            
+                // Using the Person in a collection
+                var attendees = new Dictionary<int, Person>();
+                var p = new Person { Name = "Old Name" };
+                attendees.Add(1, p);
+            
+                // Try to change the name
+                var p2 = {|ECS0009:attendees[1]|};
+                p2.Name = "New Name";
+            
+                // Writes "Old Name" because we pulled a copy of the struct
+                Console.WriteLine({|ECS0009:attendees[1]|}.ToString());
+              }
+            }
+
+            public struct Person
+            {
+              public string Name { get; set; }
+              public override string ToString() => Name;
+            }
+            """
+            , ReferenceAssemblyCatalog.Net80);
+    }
 }
