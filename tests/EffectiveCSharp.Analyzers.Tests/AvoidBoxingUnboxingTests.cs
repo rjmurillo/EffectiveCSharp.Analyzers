@@ -201,4 +201,161 @@ public class MyClass
 """,
             ReferenceAssemblyCatalog.Net80);
     }
+
+    [Fact]
+    public async Task Return_Boxing_Detected()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class TestClass
+            {
+                public object ReturnBoxing()
+                {
+                    int i = 42;
+                    return {|ECS0009:i|};
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task Argument_Boxing_Detected()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class TestClass
+            {
+                public void TakeObject(object obj) {}
+            
+                public void Method()
+                {
+                    int i = 42;
+                    TakeObject({|ECS0009:i|});
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task SimpleAssignment_Boxing_Detected()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class TestClass
+            {
+                public void AssignExample()
+                {
+                    int i = 42;
+                    object boxed = {|ECS0009:i|};
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task ArrayElementReference_Unboxing_Detected()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            using System.Collections.Generic;
+
+            public class TestClass
+            {
+                public void ArrayAccessExample()
+                {
+                    List<object> list = new List<object>();
+                    int i = 42;
+                    list.Add({|ECS0009:i|});    // Boxing operation
+                    int value = {|ECS0009:(int)list[0]|}; // Unboxing operation
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task Assignment_With_Unboxing_Operation_Detected()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class TestClass
+            {
+                public void TestMethod()
+                {
+                    object obj = {|ECS0009:42|};        // Boxing operation expected here
+                    int value = {|ECS0009:(int)obj|};  // Unboxing operation expected here
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task Assignment_With_Boxing_When_ValueType_As_Interface()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public interface ITestInterface
+            {
+                void TestMethod();
+            }
+
+            public struct TestStruct : ITestInterface
+            {
+                public int Value;
+                public void TestMethod() { }
+            }
+
+            public class TestClass
+            {
+                public void TestMethod()
+                {
+                    TestStruct myStruct = new TestStruct { Value = 42 };
+                    ITestInterface myInterface = {|ECS0009:myStruct|};  // Expected to trigger boxing warning
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task Implicit_boxing_in_List()
+    {
+        // We need to ensure the detection of boxing in cases where a value type
+        // is being assigned or accessed in a way that results in copy semantics
+        //
+        // In this case, we are copying the value type when we bring it in and out
+        // the reference type List<Person>.
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            internal class Program
+            {
+              static void Main()
+              {
+            
+                // Using the Person in a collection
+                var attendees = new List<Person>();
+                var p = new Person { Name = "Old Name" };
+                attendees.Add(p);
+            
+                // Try to change the name
+                var p2 = {|ECS0009:attendees[0]|};
+                p2.Name = "New Name";
+            
+                // Writes "Old Name" because we pulled a copy of the struct
+                Console.WriteLine({|ECS0009:attendees[0]|}.ToString());
+              }
+            }
+
+            public struct Person
+            {
+              public string Name { get; set; }
+              public override string ToString() => Name;
+            }
+            """
+            , ReferenceAssemblyCatalog.Net80);
+    }
 }

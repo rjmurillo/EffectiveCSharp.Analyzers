@@ -26,14 +26,38 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterOperationAction(
-            AnalyzeOperation,
-            OperationKind.Conversion,
-            OperationKind.SimpleAssignment,
-            OperationKind.Argument,
-            OperationKind.Return,
-            OperationKind.Invocation,
-            OperationKind.ArrayElementReference);
+        context.RegisterOperationAction(AnalyzeOperation, OperationKind.Conversion);
+        context.RegisterSyntaxNodeAction(AnalyzeNode, SyntaxKind.ElementAccessExpression);
+    }
+
+    private static void AnalyzeNode(SyntaxNodeAnalysisContext context)
+    {
+        ElementAccessExpressionSyntax elementAccess = (ElementAccessExpressionSyntax)context.Node;
+
+        // Get the type of the accessed object
+        TypeInfo typeInfo = context.SemanticModel.GetTypeInfo(elementAccess.Expression, context.CancellationToken);
+
+        if (typeInfo.Type is not INamedTypeSymbol { IsGenericType: true } namedType)
+        {
+            return;
+        }
+
+        string constructedTypeName = namedType.ConstructedFrom.ToString();
+        ITypeSymbol? elementType = null;
+
+        // Check if it's a List<T>
+        if (string.Equals(constructedTypeName, "System.Collections.Generic.List<T>", StringComparison.Ordinal))
+        {
+            elementType = namedType.TypeArguments[0];
+        }
+
+        // Check if the element type is a value type
+        if (elementType is { IsValueType: true })
+        {
+            // Create and report a diagnostic if the element is accessed directly
+            Diagnostic diagnostic = elementAccess.GetLocation().CreateDiagnostic(Rule, elementType.Name);
+            context.ReportDiagnostic(diagnostic);
+        }
     }
 
     private static void AnalyzeOperation(OperationAnalysisContext context)
@@ -44,86 +68,16 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
                 AnalyzeConversionOperation(conversionOperation, context);
                 break;
 
-            case ISimpleAssignmentOperation simpleAssignmentOperation:
-                AnalyzeSimpleAssignmentOperation(simpleAssignmentOperation, context);
-                break;
-
-            case IArgumentOperation argumentOperation:
-                AnalyzeArgumentOperation(argumentOperation, context);
-                break;
-
-            case IReturnOperation returnOperation:
-                AnalyzeReturnOperation(returnOperation, context);
-                break;
-
-            case IInvocationOperation invocationOperation:
-                AnalyzeInvocationOperation(invocationOperation, context);
-                break;
-
-            case IArrayElementReferenceOperation arrayElementReferenceOperation:
-                AnalyzeArrayElementReferenceOperation(arrayElementReferenceOperation, context);
-                break;
-
             default:
                 throw new NotSupportedException($"Unsupported operation kind: {context.Operation.Kind}");
         }
     }
 
-    private static void AnalyzeArrayElementReferenceOperation(IArrayElementReferenceOperation arrayElementReferenceOperation, OperationAnalysisContext context)
-    {
-        if (arrayElementReferenceOperation.ArrayReference.Type is INamedTypeSymbol { ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IList_T }
-            && arrayElementReferenceOperation.ArrayReference is ILocalReferenceOperation { Type: INamedTypeSymbol listTypeSymbol }
-            && listTypeSymbol.TypeArguments[0].IsValueType)
-        {
-            Diagnostic diagnostic = arrayElementReferenceOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
-    private static void AnalyzeInvocationOperation(IInvocationOperation invocationOperation, OperationAnalysisContext context)
-    {
-        if (invocationOperation.IsInvocationToBoxedType())
-        {
-            Diagnostic diagnostic = invocationOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
     private static void AnalyzeConversionOperation(IConversionOperation conversionOperation, OperationAnalysisContext context)
     {
-        if (conversionOperation.IsBoxingOperation())
+        if (conversionOperation.IsBoxingOrUnboxingOperation())
         {
             Diagnostic diagnostic = conversionOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
-    private static void AnalyzeSimpleAssignmentOperation(ISimpleAssignmentOperation simpleAssignmentOperation, OperationAnalysisContext context)
-    {
-        if (simpleAssignmentOperation.Value.IsBoxingOperation()
-            || simpleAssignmentOperation.IsAssignmentToBoxedType())
-        {
-            Diagnostic diagnostic = simpleAssignmentOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
-    private static void AnalyzeArgumentOperation(IArgumentOperation argumentOperation, OperationAnalysisContext context)
-    {
-        if (argumentOperation.Value.IsBoxingOperation()
-            || argumentOperation.IsArgumentToBoxedType())
-        {
-            Diagnostic diagnostic = argumentOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
-    }
-
-    private static void AnalyzeReturnOperation(IReturnOperation returnOperation, OperationAnalysisContext context)
-    {
-        if (returnOperation.ReturnedValue.IsBoxingOperation()
-            || returnOperation.IsReturnToBoxedType())
-        {
-            Diagnostic diagnostic = returnOperation.Syntax.GetLocation().CreateDiagnostic(Rule);
             context.ReportDiagnostic(diagnostic);
         }
     }
