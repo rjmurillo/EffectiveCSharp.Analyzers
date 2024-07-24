@@ -12,7 +12,7 @@
 /// </remarks>
 internal static class ReferenceAssemblyCatalog
 {
-    public static string Net80 => nameof(Net80);
+    public static string Net80 => nameof(ReferenceAssemblies.Net.Net80);
 
     public static IReadOnlyDictionary<string, ReferenceAssemblies> Catalog { get; } = new Dictionary<string, ReferenceAssemblies>(StringComparer.Ordinal)
     {

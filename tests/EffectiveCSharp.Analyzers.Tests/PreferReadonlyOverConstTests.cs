@@ -5,25 +5,25 @@ namespace EffectiveCSharp.Analyzers.Tests;
 
 public class PreferReadonlyOverConstTests
 {
-    public static IEnumerable<object[]> TestData()
+    public static TheoryData<string, string> TestData()
     {
-        return new object[][]
+        TheoryData<string> data = new()
         {
             // This should not fire because it's a readonly field
-            ["""public static readonly int StartValue = 5;"""],
+            "public static readonly int StartValue = 5;",
 
             // This should fire because a const
-            ["""{|ECS0002:public const int EndValue = 10;|}"""],
+            "{|ECS0002:public const int EndValue = 10;|}",
 
             // This should not fire because it's suppressed
-            [
-                """
-                #pragma warning disable ECS0002
-                public const int EndValue = 10;
-                #pragma warning restore ECS0002
-                """
-            ],
-        }.WithReferenceAssemblyGroups();
+            """
+            #pragma warning disable ECS0002
+            public const int EndValue = 10;
+            #pragma warning restore ECS0002
+            """,
+        };
+
+        return data.WithReferenceAssemblyGroups();
     }
 
     [Theory]

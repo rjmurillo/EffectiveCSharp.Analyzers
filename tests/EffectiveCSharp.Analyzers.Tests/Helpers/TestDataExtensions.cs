@@ -2,11 +2,18 @@
 
 internal static class TestDataExtensions
 {
-    public static IEnumerable<object[]> WithReferenceAssemblyGroups(this IEnumerable<object[]> data)
+    public static TheoryData<string, string> WithReferenceAssemblyGroups(this TheoryData<string> data)
     {
-        foreach (object[] item in data)
+        TheoryData<string, string> retVal = new();
+
+        foreach (object[]? item in data)
         {
-            yield return item.Prepend(ReferenceAssemblyCatalog.Net80).ToArray();
+            foreach (object f in item)
+            {
+                retVal.Add(ReferenceAssemblyCatalog.Net80, (string)f);
+            }
         }
+
+        return retVal;
     }
 }

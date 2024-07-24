@@ -5,27 +5,26 @@ namespace EffectiveCSharp.Analyzers.Tests;
 
 public class AvoidStringlyTypedApisTests
 {
-    public static IEnumerable<object[]> TestData()
+    public static TheoryData<string, string> TestData()
     {
-        return new object[][]
+        TheoryData<string> data = new()
         {
             // This should not fire because it's using nameof
-            ["""nameof(thisCantBeNull)"""],
+            "nameof(thisCantBeNull)",
 
             // This should fire because it's referring to a member name using a string literal
-            ["""
+            """
                 {|ECS0006:"thisCantBeNull"|}
-            """],
+            """,
 
             // This should not fire because it's suppressed
-            [
-                """
-                #pragma warning disable ECS0006
-                "thisCantBeNull"
-                #pragma warning restore ECS0006
-                """
-            ],
-        }.WithReferenceAssemblyGroups();
+            """
+            #pragma warning disable ECS0006
+            "thisCantBeNull"
+            #pragma warning restore ECS0006
+            """,
+        };
+        return data.WithReferenceAssemblyGroups();
     }
 
     [Theory]

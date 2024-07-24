@@ -5,26 +5,28 @@ namespace EffectiveCSharp.Analyzers.Tests;
 
 public class SpanAnalyzerTests
 {
-    public static IEnumerable<object[]> TestData()
+    public static TheoryData<string, string> TestData()
     {
-        return new object[][]
+        TheoryData<string> data = new()
         {
             // This should fire
-            ["""var arr = {|ECS1000:new int[10]|};"""],
+            "var arr = {|ECS1000:new int[10]|};",
 
             // This should not fire because it's wrapped by a Span
-            ["""var arr = new Span<int>(new int[10]);"""],
+            "var arr = new Span<int>(new int[10]);",
 
             // This should not fire because it's wrapped by a ReadOnlySpan
-            ["""var arr = new ReadOnlySpan<int>(new int[10]);"""],
+            "var arr = new ReadOnlySpan<int>(new int[10]);",
 
             // This should not fire because it's suppressed
-            ["""
-             #pragma warning disable ECS1000 // Use Span<T> for performance
-             var arr = new int[10];
-             #pragma warning restore ECS1000 // Use Span<T> for performance
-             """],
-        }.WithReferenceAssemblyGroups();
+            """
+            #pragma warning disable ECS1000 // Use Span<T> for performance
+            var arr = new int[10];
+            #pragma warning restore ECS1000 // Use Span<T> for performance
+            """,
+        };
+
+        return data.WithReferenceAssemblyGroups();
     }
 
     [Theory]

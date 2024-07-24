@@ -11,50 +11,39 @@ namespace EffectiveCSharp.Analyzers.Tests;
 
 public class AvoidBoxingUnboxingTests
 {
-    public static IEnumerable<object[]> TestData()
+    public static TheoryData<string, string> TestData()
     {
-        return new object[][]
-        {
-            // This should fire
-            [
+        TheoryData<string> data = new()
+            {
+                // This should fire
                 """
                 int i = 5;
                 object o = {|ECS0009:i|}; // boxing
-                """
-            ],
-
-            // This should fire
-            [
+                """,
                 """
                 int i = 5;
                 object o = {|ECS0009:(object)i|}; // boxing
-                """
-            ],
+                """,
 
-            // This should fire for method call with value type defined in System.Object
-            [
+                // This should fire for method call with value type defined in System.Object
                 """
                 int i = 5;
                 Console.WriteLine(i); // boxing
-                """
-            ],
+                """,
 
-            // This should not fire because it's suppressed
-            [
+                // This should not fire because it's suppressed
                 """
                 #pragma warning disable ECS0009 // Minimize boxing and unboxing
                 int i = 5;
                 object o = i; // boxing
                 #pragma warning restore ECS0009 // Minimize boxing and unboxing
-                """
-            ],
-
-            [
+                """,
                 """
                 var dt = new DateTimeOffset(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
-                """
-                ],
-        }.WithReferenceAssemblyGroups();
+                """,
+            };
+
+        return data.WithReferenceAssemblyGroups();
     }
 
     [Theory]
@@ -74,84 +63,74 @@ public class AvoidBoxingUnboxingTests
             referenceAssemblyGroup);
     }
 
-    public static IEnumerable<object[]> TestData2()
+    public static TheoryData<string,string> TestData2()
     {
-        return new object[][]
+        TheoryData<string> data = new()
         {
             // This should fire
             // Equal to
             // Method("a few number...", new object[3]{ (object)firstNumber... });
-            [
-                """
-                void Foo()
-                {
-                  int firstNumber = 4;
-                  int secondNumber = 2;
-                  int thirdNumber = 6;
-
-                  Method(
-                   "A few numbers: {0}, {1}, {2}",
-                   {|ECS0009:firstNumber|},
-                   {|ECS0009:secondNumber|},
-                   {|ECS0009:thirdNumber|}
-                   );
-                }
-                """
-            ],
+            """
+            void Foo()
+            {
+              int firstNumber = 4;
+              int secondNumber = 2;
+              int thirdNumber = 6;
+            
+              Method(
+               "A few numbers: {0}, {1}, {2}",
+               {|ECS0009:firstNumber|},
+               {|ECS0009:secondNumber|},
+               {|ECS0009:thirdNumber|}
+               );
+            }
+            """,
 
             // This should not fire because it's suppressed
-            [
-                """
-                void Foo()
-                {
-                  int firstNumber = 4;
-                  int secondNumber = 2;
-                  int thirdNumber = 6;
-
-                  Method(
-                   "A few numbers: {0}, {1}, {2}",
-                   #pragma warning disable ECS0009 // Minimize boxing and unboxing
-                   firstNumber,
-                   secondNumber,
-                   thirdNumber
-                   #pragma warning restore ECS0009 // Minimize boxing and unboxing
-                   );
-                }
-                """
-            ],
+            """
+            void Foo()
+            {
+              int firstNumber = 4;
+              int secondNumber = 2;
+              int thirdNumber = 6;
+            
+              Method(
+               "A few numbers: {0}, {1}, {2}",
+               #pragma warning disable ECS0009 // Minimize boxing and unboxing
+               firstNumber,
+               secondNumber,
+               thirdNumber
+               #pragma warning restore ECS0009 // Minimize boxing and unboxing
+               );
+            }
+            """,
 
             // This should not fire because the string interpolation does not box
-            [
-                """
-                void Foo()
-                {
-                  int firstNumber = 4;
-                  int secondNumber = 2;
-                  int thirdNumber = 6;
+            """
+            void Foo()
+            {
+              int firstNumber = 4;
+              int secondNumber = 2;
+              int thirdNumber = 6;
+            
+              Method(
+               $"A few numbers: {firstNumber}, {secondNumber}, {thirdNumber}"
+               );
+            }
+            """,
+            """
+            private const int MyNumber = 42;
 
-                  Method(
-                   $"A few numbers: {firstNumber}, {secondNumber}, {thirdNumber}"
-                   );
-                }
-                """
-            ],
-
-            [
-                """
-                private const int MyNumber = 42;
-
-                void Foo()
-                {
-                  for(var i = 0; i <= MyNumber; i++)
-                  {
-                    Method("Bar");
-                  }
-                }
-                """
-                ],
+            void Foo()
+            {
+              for(var i = 0; i <= MyNumber; i++)
+              {
+                Method("Bar");
+              }
+            }
+            """,
 
             // Regression test: we are too aggressive when assigning ctor params to read-only properties
-            [
             """
             public int Arg { get; }
 
@@ -159,9 +138,10 @@ public class AvoidBoxingUnboxingTests
             {
                 Arg = arg;
             }
-            """
-                    ],
-        }.WithReferenceAssemblyGroups();
+            """,
+        };
+
+        return data.WithReferenceAssemblyGroups();
     }
 
     [Theory]
