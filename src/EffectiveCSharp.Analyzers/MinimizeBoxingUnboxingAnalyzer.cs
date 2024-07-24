@@ -38,7 +38,7 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
         });
     }
 
-    private void AnalyzeNode(SyntaxNodeAnalysisContext context, INamedTypeSymbol? dictionarySymbol, INamedTypeSymbol? listSymbol)
+    private static void AnalyzeNode(SyntaxNodeAnalysisContext context, INamedTypeSymbol? dictionarySymbol, INamedTypeSymbol? listSymbol)
     {
         if (context.Node is not ElementAccessExpressionSyntax elementAccess)
         {
@@ -78,7 +78,7 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
         }
         else
         {
-            Debug.Assert(false, $"Unrecognized constructed from named type '{baseType}'.");
+            Debug.Fail($"Unrecognized constructed from named type '{baseType}'.");
         }
 
         return;
@@ -96,7 +96,6 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(diagnostic);
 
             return true;
-
         }
     }
 
