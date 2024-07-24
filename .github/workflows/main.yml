@@ -110,6 +110,7 @@ jobs:
 
     - name: Upload packages
       uses: actions/upload-artifact@v4
+      if: success()
       with:
         name: packages-${{ matrix.os }}
         path: |
