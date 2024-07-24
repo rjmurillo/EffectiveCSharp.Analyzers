@@ -3,27 +3,29 @@ using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<Effect
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
+#pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
+
 public class PreferReadonlyOverConstTests
 {
-    public static IEnumerable<object[]> TestData()
+    public static TheoryData<string, string> TestData()
     {
-        return new object[][]
+        TheoryData<string> data = new()
         {
             // This should not fire because it's a readonly field
-            ["""public static readonly int StartValue = 5;"""],
+            "public static readonly int StartValue = 5;",
 
             // This should fire because a const
-            ["""{|ECS0002:public const int EndValue = 10;|}"""],
+            "{|ECS0002:public const int EndValue = 10;|}",
 
             // This should not fire because it's suppressed
-            [
-                """
-                #pragma warning disable ECS0002
-                public const int EndValue = 10;
-                #pragma warning restore ECS0002
-                """
-            ],
-        }.WithReferenceAssemblyGroups();
+            """
+            #pragma warning disable ECS0002
+            public const int EndValue = 10;
+            #pragma warning restore ECS0002
+            """,
+        };
+
+        return data.WithReferenceAssemblyGroups();
     }
 
     [Theory]
@@ -43,19 +45,19 @@ public class PreferReadonlyOverConstTests
     [Fact]
     public async Task CodeFix()
     {
-        string testCode = """
-                          class Program
-                          {
-                              {|ECS0002:private const int StartValue = 5;|}
-                          }
-                          """;
+        const string testCode = """
+                                class Program
+                                {
+                                    {|ECS0002:private const int StartValue = 5;|}
+                                }
+                                """;
 
-        string fixedCode = """
-                           class Program
-                           {
-                               private static readonly int StartValue = 5;
-                           }
-                           """;
+        const string fixedCode = """
+                                 class Program
+                                 {
+                                     private static readonly int StartValue = 5;
+                                 }
+                                 """;
 
         await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
     }

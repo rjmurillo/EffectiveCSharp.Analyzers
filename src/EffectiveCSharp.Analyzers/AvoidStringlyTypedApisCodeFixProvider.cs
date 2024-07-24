@@ -20,7 +20,7 @@ public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
     public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
         SyntaxNode? root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
-        Diagnostic diagnostic = context.Diagnostics.First();
+        Diagnostic diagnostic = context.Diagnostics[0];
         TextSpan diagnosticSpan = diagnostic.Location.SourceSpan;
 
         SyntaxNode? node = root?.FindNode(diagnosticSpan);
@@ -33,7 +33,7 @@ public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
             // Check if the node is an ArgumentSyntax containing a LiteralExpressionSyntax
             ArgumentSyntax { Expression: LiteralExpressionSyntax argLiteralNode } => argLiteralNode,
 
-            _ => null
+            _ => null,
         };
 
         if (literalExpression != null)
@@ -49,7 +49,7 @@ public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
 
     private static async Task<Solution> UseNameofOperatorAsync(Document document, LiteralExpressionSyntax? literalExpression, CancellationToken cancellationToken)
     {
-        string literalValue = literalExpression?.Token.ValueText;
+        string? literalValue = literalExpression?.Token.ValueText;
 
         // Walk up the syntax tree to find the containing class or method
         TypeDeclarationSyntax? containingClass = literalExpression?.FirstAncestorOrSelf<TypeDeclarationSyntax>();
@@ -65,7 +65,7 @@ public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
             {
                 IEnumerable<string> memberNames = containingTypeSymbol.GetMembers().Select(member => member.Name);
 
-                if (memberNames.Contains(literalValue))
+                if (memberNames.Contains(literalValue, StringComparer.Ordinal))
                 {
                     nameofExpressionText = $"nameof({literalValue})";
                 }
@@ -80,7 +80,7 @@ public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
             {
                 IEnumerable<string> parameterNames = methodSymbol.Parameters.Select(parameter => parameter.Name);
 
-                if (parameterNames.Contains(literalValue))
+                if (parameterNames.Contains(literalValue, StringComparer.Ordinal))
                 {
                     nameofExpressionText = $"nameof({literalValue})";
                 }

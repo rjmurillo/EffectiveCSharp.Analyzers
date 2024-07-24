@@ -2,12 +2,14 @@
 
 internal static class DiagnosticExtensions
 {
+    [DebuggerStepThrough]
     internal static Diagnostic CreateDiagnostic(
         this SyntaxNode node,
         DiagnosticDescriptor rule,
         params object?[]? messageArgs)
         => node.CreateDiagnostic(rule, properties: null, messageArgs);
 
+    [DebuggerStepThrough]
     internal static Diagnostic CreateDiagnostic(
         this SyntaxNode node,
         DiagnosticDescriptor rule,
@@ -15,6 +17,7 @@ internal static class DiagnosticExtensions
         params object?[]? messageArgs)
         => node.CreateDiagnostic(rule, additionalLocations: ImmutableArray<Location>.Empty, properties, messageArgs);
 
+    [DebuggerStepThrough]
     internal static Diagnostic CreateDiagnostic(
         this SyntaxNode node,
         DiagnosticDescriptor rule,
@@ -29,6 +32,7 @@ internal static class DiagnosticExtensions
                 properties: properties,
                 messageArgs: messageArgs);
 
+    [DebuggerStepThrough]
     internal static Diagnostic CreateDiagnostic(
         this Location location,
         DiagnosticDescriptor rule,
@@ -46,6 +50,7 @@ internal static class DiagnosticExtensions
         params object?[]? messageArgs)
         => location.CreateDiagnostic(rule, ImmutableArray<Location>.Empty, properties, messageArgs);
 
+    [DebuggerStepThrough]
     internal static Diagnostic CreateDiagnostic(
         this Location location,
         DiagnosticDescriptor rule,
