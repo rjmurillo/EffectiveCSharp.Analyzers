@@ -19,5 +19,30 @@
     <AssemblyAttribute Include="System.Runtime.InteropServices.ComVisibleAttribute">
       <_Parameter1>false</_Parameter1>
     </AssemblyAttribute>
-  </ItemGroup>  
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!--
+    In order to persist the full closure of package dependencies we opt-in to the 
+    lock file feature by setting the MSBuild property RestorePackagesWithLockFile.
+
+    NuGet restore will generate a packages.lock.json file at the root that lists all
+    package dependencies.
+
+    To restore with the lockmode enabled:
+    dotnet.exe restore --locked-mode
+    
+    msbuild.exe -t:restore -p:RestoreLockedMode=true
+    -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+    <!--
+    To make sure we always use locked mode, set the following property
+
+    If locked mode is true, restore will either restore the exact packages 
+    as listed in the lock file or fail if you updated the defined package 
+    dependencies for the project after lock file was created.
+    -->
+    <RestoreLockedMode>true</RestoreLockedMode>
+  </PropertyGroup>
 </Project>
