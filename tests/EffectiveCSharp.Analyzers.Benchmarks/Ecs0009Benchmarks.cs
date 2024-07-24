@@ -82,9 +82,9 @@ public struct Person
             .GetAllDiagnostics();
 
         // We have 4 instances in our test sample
-        if (diagnostics.Length != Constants.NumberOfCodeFiles * 4)
+        if (diagnostics.Length != Constants.NumberOfCodeFiles * 5)
         {
-            throw new InvalidOperationException($"Expected '{Constants.NumberOfCodeFiles:N0}' analyzer diagnostics but found '{diagnostics.Length}'");
+            throw new InvalidOperationException($"Expected '{Constants.NumberOfCodeFiles:N0}' analyzer diagnostics but found '{diagnostics.Length:N0}'");
         }
     }
 
