@@ -3,6 +3,11 @@
 namespace EffectiveCSharp.Analyzers.Tests;
 
 #pragma warning disable SA1204  // Static members are grouped with their Theory
+#pragma warning disable SA1001  // The harness has literal code as a string, which can be weirdly formatted
+#pragma warning disable SA1113
+#pragma warning disable S125    // There's code in comments as examples
+#pragma warning disable MA0051  // Some test methods are "too long"
+#pragma warning disable MA0007  // There are multiple types of tests defined in theory data
 
 public class AvoidBoxingUnboxingTests
 {
