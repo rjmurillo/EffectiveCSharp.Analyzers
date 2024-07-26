@@ -2,7 +2,7 @@
 
 internal static class ITypeSymbolExtensions
 {
-    public static bool IsNumericType(this ITypeSymbol? type)
+    internal static bool IsNumericType(this ITypeSymbol? type)
     {
         return type?.SpecialType is SpecialType.System_Int32
             or SpecialType.System_Int64
