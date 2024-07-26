@@ -1,0 +1,13 @@
+is_global = true
+global_level = -1
+
+# Title    : Use implicit type
+# Category : Style
+# Help Link: https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/ide0007
+#
+# Effective C# Item #1 - Prefer implicitly typed local variables
+# Use var to declare local variables for better readability and efficiency, except for built-in numeric types where explicit typing prevents potential conversion issues.
+dotnet_diagnostic.IDE0007.severity = suggestion
+csharp_style_var_elsewhere = true
+csharp_style_var_for_built_in_types = true
+csharp_style_var_when_type_is_apparent = true

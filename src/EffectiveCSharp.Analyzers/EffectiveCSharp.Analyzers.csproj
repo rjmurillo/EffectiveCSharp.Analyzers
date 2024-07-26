@@ -47,4 +47,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="build\*" PackagePath="build" />
+    <Content Include="build\config\*" PackagePath="build\config" />
+  </ItemGroup>
 </Project>

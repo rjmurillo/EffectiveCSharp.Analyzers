@@ -1,0 +1,13 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <RunAnalyzers>true</RunAnalyzers>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <SkipGlobalAnalyzerConfigForPackage>true</SkipGlobalAnalyzerConfigForPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)Stylecop.json" Visible="false" />
+    <EditorConfigFiles Include="$(MSBuildThisFileDirectory)config/General.globalconfig" />
+  </ItemGroup>
+</Project>

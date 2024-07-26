@@ -47,6 +47,8 @@ internal static class ReferenceAssemblyCatalog
 
     public static string Net90 => nameof(ReferenceAssemblies.Net.Net90);
 
+    public static string Latest => nameof(ReferenceAssemblies.Net.Net80);
+
     public static IReadOnlyDictionary<string, ReferenceAssemblies> Catalog { get; } = new Dictionary<string, ReferenceAssemblies>(StringComparer.Ordinal)
     {
         { Net48, ReferenceAssemblies.NetFramework.Net48.Default },
