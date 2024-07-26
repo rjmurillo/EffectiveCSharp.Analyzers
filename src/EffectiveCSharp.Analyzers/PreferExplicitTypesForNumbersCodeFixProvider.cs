@@ -1,9 +1,11 @@
-﻿using Microsoft.CodeAnalysis.Formatting;
-using Microsoft.CodeAnalysis.Simplification;
+﻿namespace EffectiveCSharp.Analyzers;
 
-namespace EffectiveCSharp.Analyzers;
-
-[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PreferExplicitTypesForNumbersCodeFixProvider)), Shared]
+/// <summary>
+/// A <see cref="CodeFixProvider"/> that provides a code fix for the <see cref="PreferExplicitTypesOnNumbersAnalyzer"/>.
+/// </summary>
+/// <seealso cref="CodeFixProvider" />
+[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PreferExplicitTypesForNumbersCodeFixProvider))]
+[Shared]
 public class PreferExplicitTypesForNumbersCodeFixProvider : CodeFixProvider
 {
     private const string Title = "Use explicit type";
@@ -17,12 +19,16 @@ public class PreferExplicitTypesForNumbersCodeFixProvider : CodeFixProvider
     /// <inheritdoc />
     public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+        SyntaxNode? root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+        Diagnostic diagnostic = context.Diagnostics.First();
+        TextSpan diagnosticSpan = diagnostic.Location.SourceSpan;
 
-        var diagnostic = context.Diagnostics.First();
-        var diagnosticSpan = diagnostic.Location.SourceSpan;
+        if (root is null)
+        {
+            return;
+        }
 
-        var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<LocalDeclarationStatementSyntax>().First();
+        LocalDeclarationStatementSyntax? declaration = root.FindToken(diagnosticSpan.Start).Parent?.AncestorsAndSelf().OfType<LocalDeclarationStatementSyntax>().First();
 
         context.RegisterCodeFix(
             CodeAction.Create(
@@ -32,10 +38,15 @@ public class PreferExplicitTypesForNumbersCodeFixProvider : CodeFixProvider
             diagnostic);
     }
 
-    private async Task<Document> UseExplicitTypeAsync(Document document, LocalDeclarationStatementSyntax localDeclaration, CancellationToken cancellationToken)
+    private static async Task<Document> UseExplicitTypeAsync(Document document, LocalDeclarationStatementSyntax? localDeclaration, CancellationToken cancellationToken)
     {
+        if (localDeclaration is null)
+        {
+            return document;
+        }
+
         SemanticModel? semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-        VariableDeclaratorSyntax variable = localDeclaration.Declaration.Variables.First();
+        VariableDeclaratorSyntax? variable = localDeclaration.Declaration.Variables.First();
         ExpressionSyntax? initializer = variable.Initializer?.Value;
 
         if (initializer is null)
