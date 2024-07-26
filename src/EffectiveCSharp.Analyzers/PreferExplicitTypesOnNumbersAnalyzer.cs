@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EffectiveCSharp.Analyzers;
+﻿namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
 /// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #1 - Prefer implicit types except on numbers.
@@ -17,7 +13,7 @@ public class PreferExplicitTypesOnNumbersAnalyzer : DiagnosticAnalyzer
         id: Id,
         title: "Prefer implicitly typed local variables",
         description: "Use var to declare local variables for better readability and efficiency, except for built-in numeric types where explicit typing prevents potential conversion issues.",
-        messageFormat: "",
+        messageFormat: "Use explicit type instead of 'var' for numeric variables",
         category: "Style",
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
@@ -38,37 +34,39 @@ public class PreferExplicitTypesOnNumbersAnalyzer : DiagnosticAnalyzer
     {
         LocalDeclarationStatementSyntax localDeclaration = (LocalDeclarationStatementSyntax)context.Node;
 
-        // Ensure the variable is declared using 'var'
-        if (!localDeclaration.Declaration.Type.IsVar)
+        foreach (VariableDeclaratorSyntax variable in localDeclaration.Declaration.Variables)
         {
-            return;
+            ExpressionSyntax? initializer = variable.Initializer?.Value;
+
+            if (initializer is null)
+            {
+                continue;
+            }
+
+            TypeInfo typeInfo = context.SemanticModel.GetTypeInfo(initializer, context.CancellationToken);
+            ITypeSymbol? type = typeInfo.ConvertedType;
+
+            if (type?.IsNumericType() != true)
+            {
+                continue;
+            }
+
+            if (localDeclaration.Declaration.Type.IsVar)
+            {
+                Diagnostic diagnostic = localDeclaration.GetLocation().CreateDiagnostic(Rule);
+                context.ReportDiagnostic(diagnostic);
+            }
+            else if (HasPotentialConversionIssues(type, initializer, context.SemanticModel, context.CancellationToken))
+            {
+                Diagnostic diagnostic = initializer.GetLocation().CreateDiagnostic(Rule);
+                context.ReportDiagnostic(diagnostic);
+            }
         }
+    }
 
-        VariableDeclaratorSyntax variable = localDeclaration.Declaration.Variables.First();
-        ExpressionSyntax? initializer = variable.Initializer?.Value;
-
-        if (initializer is null)
-        {
-            return;
-        }
-
-        TypeInfo typeInfo = context.SemanticModel.GetTypeInfo(initializer, context.CancellationToken);
-        ITypeSymbol? type = typeInfo.ConvertedType;
-
-        if (type is null)
-        {
-            return;
-        }
-
-        // Check if the type is a numeric type
-        if (type.SpecialType == SpecialType.System_Int32 ||
-            type.SpecialType == SpecialType.System_Int64 ||
-            type.SpecialType == SpecialType.System_Single ||
-            type.SpecialType == SpecialType.System_Double ||
-            type.SpecialType == SpecialType.System_Decimal)
-        {
-            Diagnostic diagnostic = localDeclaration.GetLocation().CreateDiagnostic(Rule);
-            context.ReportDiagnostic(diagnostic);
-        }
+    private static bool HasPotentialConversionIssues(ITypeSymbol type, ExpressionSyntax initializer, SemanticModel semanticModel, CancellationToken cancellationToken)
+    {
+        TypeInfo typeInfo = semanticModel.GetTypeInfo(initializer, cancellationToken);
+        return !SymbolEqualityComparer.IncludeNullability.Equals(typeInfo.Type, type);
     }
 }
