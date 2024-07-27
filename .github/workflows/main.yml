@@ -54,7 +54,7 @@ jobs:
 
     - name: Cache NuGet
       id: cache-nuget
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.NUGET_PACKAGES }}
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/global.json', '**/Directory.Packages.props', '**/Packages.props') }}
