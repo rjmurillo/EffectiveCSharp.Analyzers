@@ -5,9 +5,15 @@ on:
   pull_request:
     branches:
       - main
+      - 'releases/**'
+      - 'release/**'
+      - 'feature/**'
   push:
     branches:
       - main
+      - 'releases/**'
+      - 'release/**'
+      - 'feature/**'      
   merge_group:
     branches:
       - main
