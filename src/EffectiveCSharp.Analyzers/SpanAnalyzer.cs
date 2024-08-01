@@ -49,8 +49,10 @@ public class SpanAnalyzer : DiagnosticAnalyzer
 
     private static bool IsInsideSpanInitialization(ArrayCreationExpressionSyntax arrayCreation)
     {
+#pragma warning disable S125 // Remove this commented out code
         // Check if the parent is a Span<T> or ReadOnlySpan<T> creation
         // example: new Span<int>(new int[10]);
+#pragma warning restore S125 // Remove this commented out code
         if (arrayCreation.Parent?.Parent?.Parent is not ObjectCreationExpressionSyntax objectCreation)
         {
             return false;
