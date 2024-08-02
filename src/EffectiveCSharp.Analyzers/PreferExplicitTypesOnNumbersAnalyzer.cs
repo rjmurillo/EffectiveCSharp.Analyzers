@@ -12,11 +12,11 @@ public class PreferExplicitTypesOnNumbersAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor Rule = new(
         id: Id,
         title: "Prefer implicitly typed local variables",
-        description: "Use var to declare local variables for better readability and efficiency, except for built-in numeric types where explicit typing prevents potential conversion issues.",
         messageFormat: "Use explicit type instead of 'var' for numeric variables",
         category: "Style",
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
+        description: "Use var to declare local variables for better readability and efficiency, except for built-in numeric types where explicit typing prevents potential conversion issues.",
         helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
 
     /// <inheritdoc />
