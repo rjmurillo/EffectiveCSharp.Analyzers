@@ -4,6 +4,7 @@ using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<Effect
 namespace EffectiveCSharp.Analyzers.Tests;
 
 #pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
+#pragma warning disable SA1204 // Static elements should appear before instance elements - we suppress to keep theorydata next to theory
 
 public class ReplaceStringFormatTests
 {
@@ -55,7 +56,9 @@ public class ReplaceStringFormatTests
             """,
         };
 
+#pragma warning disable MA0002 // IEqualityComparer<string> or IComparer<string> is missing
         return data.WithReferenceAssemblyGroups(p => ReferenceAssemblyCatalog.DotNetCore.Contains(p));
+#pragma warning restore MA0002 // IEqualityComparer<string> or IComparer<string> is missing
     }
 
     [Theory]
@@ -76,6 +79,7 @@ public class ReplaceStringFormatTests
     }
 
     public static TheoryData<string, string> CodeFixTestData()
+#pragma warning restore SA1204 // Static elements should appear before instance elements
     {
         TheoryData<string, string> data = new()
         {

@@ -9,11 +9,17 @@ namespace EffectiveCSharp.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
 {
-    private const string DiagnosticId = DiagnosticIds.ReplaceStringFormatWithInterpolatedString;
-    private const string Title = "Replace string.Format with interpolated string";
-    private const string MessageFormat = "Replace '{0}' with interpolated string";
-    private const string Description = "Replace string.Format with interpolated string.";
     private const string Category = "Style";
+    private const string Description = "Replace string.Format with interpolated string.";
+    private const string DiagnosticId = DiagnosticIds.ReplaceStringFormatWithInterpolatedString;
+    private const string MessageFormat = "Replace '{0}' with interpolated string";
+    private const string Title = "Replace string.Format with interpolated string";
+
+    // We can't use source generators
+    private static readonly Regex PlaceholderRegex = new(
+        @"\{.*?\}",
+        RegexOptions.Compiled,
+        TimeSpan.FromSeconds(1));
 
     private static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
@@ -45,7 +51,6 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
         });
     }
 
-#pragma warning disable MA0051 // Method is too long
     private static void AnalyzeSyntaxNode(SyntaxNodeAnalysisContext context)
     {
         InvocationExpressionSyntax invocationExpr = (InvocationExpressionSyntax)context.Node;
@@ -73,7 +78,7 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        var formatString = formatArgument.Token.ValueText;
+        string formatString = formatArgument.Token.ValueText;
         if (!ContainsPlaceholders(formatString))
         {
             return;
@@ -82,11 +87,9 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
         Diagnostic diagnostic = invocationExpr.GetLocation().CreateDiagnostic(Rule, invocationExpr.ToString());
         context.ReportDiagnostic(diagnostic);
     }
-#pragma warning restore MA0051 // Method is too long
 
     private static bool ContainsPlaceholders(string formatString)
     {
-        Regex regex = new(@"\{.*?\}");
-        return regex.IsMatch(formatString);
+        return PlaceholderRegex.IsMatch(formatString);
     }
 }

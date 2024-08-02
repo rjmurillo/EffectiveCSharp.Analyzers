@@ -5,7 +5,7 @@ internal static class TestDataExtensions
     internal static TheoryData<string, string> WithReferenceAssemblyGroups(this TheoryData<string> data, Predicate<string>? predicate = null)
     {
         TheoryData<string, string> retVal = [];
-        predicate ??= s => true;
+        predicate ??= _ => true;
 
         foreach (object[]? theoryDataItem in data)
         {
