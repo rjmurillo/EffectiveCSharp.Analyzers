@@ -1,7 +1,7 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
-/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #4 - Replace string.Format with interpolated string
+/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #4 - Replace string.Format with interpolated string.
 /// </summary>
 /// <seealso cref="Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
@@ -34,6 +34,7 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
         context.RegisterSyntaxNodeAction(AnalyzeSyntaxNode, SyntaxKind.InvocationExpression);
     }
 
+#pragma warning disable MA0051 // Method is too long
     private static void AnalyzeSyntaxNode(SyntaxNodeAnalysisContext context)
     {
         InvocationExpressionSyntax invocationExpr = (InvocationExpressionSyntax)context.Node;
@@ -52,6 +53,7 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
         bool containsNormalString = false;
         bool? containsPlaceholders = null;
 
+#pragma warning disable S3267 // Loops should be simplified with "LINQ" expressions
         foreach (ArgumentSyntax argument in invocationExpr.ArgumentList.Arguments)
         {
             ExpressionSyntax expression = argument.Expression;
@@ -97,14 +99,17 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
                 containsNormalString = true;
             }
         }
+#pragma warning restore S3267 // Loops should be simplified with "LINQ" expressions
 
-        if ((containsVerbatimString.GetValueOrDefault(false)
-            || containsPlaceholders.GetValueOrDefault(false))
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous
+        if (((containsPlaceholders ?? false) || (containsVerbatimString ?? false))
             && !containsNormalString)
         {
             Diagnostic diagnostic = invocationExpr.GetLocation().CreateDiagnostic(Rule, invocationExpr.ToString());
 
             context.ReportDiagnostic(diagnostic);
         }
+#pragma warning restore S2589 // Boolean expressions should not be gratuitous
     }
+#pragma warning restore MA0051 // Method is too long
 }

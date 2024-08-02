@@ -12,8 +12,10 @@ internal static class ITypeSymbolExtensions
     }
 
     /// <summary>
-    /// Returns true if the type is <see cref="string"/>.
+    /// Determines if the <paramref name="typeSymbol"/> is <see cref="string"/>.
     /// </summary>
+    /// <param name="typeSymbol">The type.</param>
+    /// <returns>Return true if the type is <see cref="string"/>; otherwise, false.</returns>
     internal static bool IsString(this ITypeSymbol typeSymbol)
     {
         return typeSymbol?.SpecialType == SpecialType.System_String;
