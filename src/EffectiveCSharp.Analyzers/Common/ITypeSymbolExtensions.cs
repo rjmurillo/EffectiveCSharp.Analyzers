@@ -10,4 +10,12 @@ internal static class ITypeSymbolExtensions
             or SpecialType.System_Double
             or SpecialType.System_Decimal;
     }
+
+    /// <summary>
+    /// Returns true if the type is <see cref="string"/>.
+    /// </summary>
+    internal static bool IsString(this ITypeSymbol typeSymbol)
+    {
+        return typeSymbol?.SpecialType == SpecialType.System_String;
+    }
 }
