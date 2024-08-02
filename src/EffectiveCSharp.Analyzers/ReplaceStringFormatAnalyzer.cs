@@ -1,4 +1,6 @@
-﻿namespace EffectiveCSharp.Analyzers;
+﻿using System.Text.RegularExpressions;
+
+namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
 /// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #4 - Replace string.Format with interpolated string.
@@ -58,67 +60,33 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        bool? containsVerbatimString = null;
-        bool containsNormalString = false;
-        bool? containsPlaceholders = null;
+        SeparatedSyntaxList<ArgumentSyntax> argumentList = invocationExpr.ArgumentList.Arguments;
 
-#pragma warning disable S3267 // Loops should be simplified with "LINQ" expressions
-        foreach (ArgumentSyntax argument in invocationExpr.ArgumentList.Arguments)
+        if (argumentList.Count < 2)
         {
-            ExpressionSyntax expression = argument.Expression;
-
-            if (expression.IsKind(SyntaxKind.InterpolatedStringExpression))
-            {
-                return;
-            }
-
-            if (expression.IsKind(SyntaxKind.StringLiteralExpression))
-            {
-                string text = ((LiteralExpressionSyntax)expression).Token.Text;
-                if (text.Contains("{") || text.Contains("}"))
-                {
-                    containsPlaceholders = true;
-                }
-
-                if (text.StartsWith("@", StringComparison.Ordinal))
-                {
-                    switch (containsVerbatimString)
-                    {
-                        case null:
-                            containsVerbatimString = true;
-                            break;
-                        case false:
-                            return;
-                    }
-                }
-                else
-                {
-                    if (!containsVerbatimString.HasValue)
-                    {
-                        containsVerbatimString = false;
-                    }
-                    else if (containsVerbatimString.Value)
-                    {
-                        return;
-                    }
-                }
-            }
-            else
-            {
-                containsNormalString = true;
-            }
+            return;
         }
-#pragma warning restore S3267 // Loops should be simplified with "LINQ" expressions
 
-#pragma warning disable S2589 // Boolean expressions should not be gratuitous
-        if (((containsPlaceholders ?? false) || (containsVerbatimString ?? false))
-            && !containsNormalString)
+        if (argumentList[0].Expression is not LiteralExpressionSyntax formatArgument
+            || !formatArgument.IsKind(SyntaxKind.StringLiteralExpression))
         {
-            Diagnostic diagnostic = invocationExpr.GetLocation().CreateDiagnostic(Rule, invocationExpr.ToString());
-
-            context.ReportDiagnostic(diagnostic);
+            return;
         }
-#pragma warning restore S2589 // Boolean expressions should not be gratuitous
+
+        var formatString = formatArgument.Token.ValueText;
+        if (!ContainsPlaceholders(formatString))
+        {
+            return;
+        }
+
+        Diagnostic diagnostic = invocationExpr.GetLocation().CreateDiagnostic(Rule, invocationExpr.ToString());
+        context.ReportDiagnostic(diagnostic);
     }
 #pragma warning restore MA0051 // Method is too long
+
+    private static bool ContainsPlaceholders(string formatString)
+    {
+        Regex regex = new(@"\{.*?\}");
+        return regex.IsMatch(formatString);
+    }
 }
