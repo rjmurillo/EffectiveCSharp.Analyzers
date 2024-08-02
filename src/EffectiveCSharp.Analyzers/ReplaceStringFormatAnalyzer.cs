@@ -31,7 +31,16 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSyntaxNodeAction(AnalyzeSyntaxNode, SyntaxKind.InvocationExpression);
+        context.RegisterCompilationStartAction(compilationContext =>
+        {
+            CSharpParseOptions? parseOptions = compilationContext.Compilation.SyntaxTrees.FirstOrDefault()?.Options as CSharpParseOptions;
+            if (parseOptions != null && parseOptions.LanguageVersion < LanguageVersion.CSharp10)
+            {
+                return;
+            }
+
+            compilationContext.RegisterSyntaxNodeAction(AnalyzeSyntaxNode, SyntaxKind.InvocationExpression);
+        });
     }
 
 #pragma warning disable MA0051 // Method is too long
