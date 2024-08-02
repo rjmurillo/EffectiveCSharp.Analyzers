@@ -61,4 +61,6 @@ internal static class ReferenceAssemblyCatalog
         { Net80, ReferenceAssemblies.Net.Net80 },
         { Net90, ReferenceAssemblies.Net.Net90 },
     };
+
+    public static IReadOnlySet<string> DotNetCore { get; } = new HashSet<string>(new[] { Net60, Net80, Net90 });
 }
