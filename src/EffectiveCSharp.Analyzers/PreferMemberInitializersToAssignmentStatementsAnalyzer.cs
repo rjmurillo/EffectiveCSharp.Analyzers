@@ -12,11 +12,11 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
     private static readonly DiagnosticDescriptor Rule = new(
         id: Id,
         title: "Prefer member initializers to assignment statements",
-        description: "Field initialization in a constructor that does not use an argument should be done with a member initializer.",
         messageFormat: "Use a member initializer instead of an assignment statement",
         category: "Maintainability",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
+        description: "Field initialization in a constructor that does not use an argument should be done with a member initializer.",
         helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
 
     private readonly IDictionary<string, (AssignmentExpressionSyntax AssignmentNode, int NumberOfAssignments)> _memberInitializerCandidates = new Dictionary<string, (AssignmentExpressionSyntax AssignmentNode, int NumberOfAssignments)>(StringComparer.Ordinal);
@@ -46,7 +46,8 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         {
             if (memberInitializerCandidate.Value.NumberOfAssignments == 1)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Rule, memberInitializerCandidate.Value.AssignmentNode.GetLocation()));
+                Diagnostic diagnostic = memberInitializerCandidate.Value.AssignmentNode.GetLocation().CreateDiagnostic(Rule);
+                context.ReportDiagnostic(diagnostic);
             }
         }
     }
