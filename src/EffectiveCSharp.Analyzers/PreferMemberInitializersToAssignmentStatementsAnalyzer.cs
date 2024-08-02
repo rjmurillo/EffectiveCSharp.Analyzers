@@ -19,7 +19,7 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         description: "Field initialization in a constructor that does not use an argument should be done with a member initializer.",
         helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
 
-    private readonly IDictionary<string, (AssignmentExpressionSyntax AssignmentNode, int NumberOfAssignments)> _memberInitializerCandidates = new Dictionary<string, (AssignmentExpressionSyntax AssignmentNode, int NumberOfAssignments)>(StringComparer.Ordinal);
+    private readonly IDictionary<string, (ExpressionStatementSyntax ExpressionStatementNode, int NumberOfAssignments)> _memberInitializerCandidates = new Dictionary<string, (ExpressionStatementSyntax AssignmentNode, int NumberOfAssignments)>(StringComparer.Ordinal);
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
@@ -42,11 +42,11 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
             FindMemberInitializerCandidates(context, constructor);
         }
 
-        foreach (KeyValuePair<string, (AssignmentExpressionSyntax AssignmentNode, int NumberOfAssignments)> memberInitializerCandidate in _memberInitializerCandidates)
+        foreach (KeyValuePair<string, (ExpressionStatementSyntax ExpressionStatementNode, int NumberOfAssignments)> memberInitializerCandidate in _memberInitializerCandidates)
         {
             if (memberInitializerCandidate.Value.NumberOfAssignments == 1)
             {
-                Diagnostic diagnostic = memberInitializerCandidate.Value.AssignmentNode.GetLocation().CreateDiagnostic(Rule);
+                Diagnostic diagnostic = memberInitializerCandidate.Value.ExpressionStatementNode.GetLocation().CreateDiagnostic(Rule);
                 context.ReportDiagnostic(diagnostic);
             }
         }
@@ -71,18 +71,19 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
 
     private void HandleEmptyArgumentsList(ConstructorDeclarationSyntax constructor, SemanticModel semanticModel, CancellationToken cancellationToken)
     {
-        foreach (AssignmentExpressionSyntax assignment in constructor.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+        foreach (ExpressionStatementSyntax expressionStatement in constructor.DescendantNodes().OfType<ExpressionStatementSyntax>())
         {
-            if (assignment.Left is IdentifierNameSyntax identifierName &&
-                semanticModel.GetSymbolInfo(identifierName, cancellationToken: cancellationToken).Symbol is IFieldSymbol fieldSymbol)
+            if (expressionStatement.Expression is AssignmentExpressionSyntax assignment
+                && assignment.Left is IdentifierNameSyntax identifierName
+                && semanticModel.GetSymbolInfo(identifierName, cancellationToken: cancellationToken).Symbol is IFieldSymbol fieldSymbol)
             {
-                if (_memberInitializerCandidates.TryGetValue(fieldSymbol.Name, out (AssignmentExpressionSyntax AssignmentNode, int NumberOfAssignments) existingCandidate))
+                if (_memberInitializerCandidates.TryGetValue(fieldSymbol.Name, out (ExpressionStatementSyntax ExpressionStatementNode, int NumberOfAssignments) existingCandidate))
                 {
                     existingCandidate.NumberOfAssignments++;
                 }
                 else
                 {
-                    _memberInitializerCandidates.Add(fieldSymbol.Name, (assignment, 1));
+                    _memberInitializerCandidates.Add(fieldSymbol.Name, (expressionStatement, 1));
                 }
             }
         }
@@ -90,9 +91,10 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
 
     private void HandleArgumentsList(ConstructorDeclarationSyntax constructor, SemanticModel semanticModel, CancellationToken cancellationToken)
     {
-        foreach (AssignmentExpressionSyntax assignment in constructor.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+        foreach (ExpressionStatementSyntax expressionStatement in constructor.DescendantNodes().OfType<ExpressionStatementSyntax>())
         {
-            if (assignment.Left is IdentifierNameSyntax identifierName
+            if (expressionStatement.Expression is AssignmentExpressionSyntax assignment
+                    && assignment.Left is IdentifierNameSyntax identifierName
                     && semanticModel.GetSymbolInfo(identifierName, cancellationToken: cancellationToken).Symbol is IFieldSymbol fieldSymbol
                     && semanticModel.GetOperation(assignment.Right, cancellationToken) is not IParameterReferenceOperation)
             {
@@ -100,13 +102,13 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
                 {
                     case LiteralExpressionSyntax:
                         {
-                            if (_memberInitializerCandidates.TryGetValue(fieldSymbol.Name, out (AssignmentExpressionSyntax AssignmentNode, int NumberOfAssignments) existingCandidate))
+                            if (_memberInitializerCandidates.TryGetValue(fieldSymbol.Name, out (ExpressionStatementSyntax ExpressionStatementNode, int NumberOfAssignments) existingCandidate))
                             {
                                 existingCandidate.NumberOfAssignments++;
                             }
                             else
                             {
-                                _memberInitializerCandidates.Add(fieldSymbol.Name, (assignment, 1));
+                                _memberInitializerCandidates.Add(fieldSymbol.Name, (expressionStatement, 1));
                             }
                         }
 
@@ -126,13 +128,13 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
 
                             if (canAdd)
                             {
-                                if (_memberInitializerCandidates.TryGetValue(fieldSymbol.Name, out (AssignmentExpressionSyntax AssignmentNode, int NumberOfAssignments) existingCandidate))
+                                if (_memberInitializerCandidates.TryGetValue(fieldSymbol.Name, out (ExpressionStatementSyntax AssignmentNode, int NumberOfAssignments) existingCandidate))
                                 {
                                     existingCandidate.NumberOfAssignments++;
                                 }
                                 else
                                 {
-                                    _memberInitializerCandidates.Add(fieldSymbol.Name, (assignment, 1));
+                                    _memberInitializerCandidates.Add(fieldSymbol.Name, (expressionStatement, 1));
                                 }
                             }
                         }
