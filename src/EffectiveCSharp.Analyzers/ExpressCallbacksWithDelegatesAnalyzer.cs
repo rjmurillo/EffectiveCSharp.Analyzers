@@ -1,4 +1,8 @@
-﻿namespace EffectiveCSharp.Analyzers;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
 /// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #7 - Express callbacks with delegates.
@@ -7,6 +11,8 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
 {
+    private const string Id = DiagnosticIds.ExpressCallbacksWithDelegates;
+
     private static readonly DiagnosticDescriptor Rule = new(
         id: DiagnosticIds.ExpressCallbacksWithDelegates,
         title: "Express callbacks with delegates",
@@ -79,13 +85,13 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
     }
 
     private static bool IsDelegateMulticast(ExpressionSyntax delegateExpression, MethodDeclarationSyntax parentMethod, SemanticModel semanticModel)
-    {
+                {
         BlockSyntax? blockSyntax = parentMethod.Body;
 
         if (blockSyntax == null)
-        {
+                    {
             return false;
-        }
+                    }
 
         ISymbol? delegateSymbol = semanticModel.GetSymbolInfo(delegateExpression).Symbol;
 
@@ -95,7 +101,7 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
             if (!syntax.OperatorToken.IsKind(SyntaxKind.PlusEqualsToken))
             {
                 continue;
-            }
+                }
 
             ISymbol? leftSymbol = semanticModel.GetSymbolInfo(syntax.Left).Symbol;
 
@@ -104,7 +110,9 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
                 return true; // The delegate is being combined/multicasted
             }
         }
+#pragma warning restore S3267 // Loops should be simplified with "LINQ" expressions
 
+        // No issues detected
         return false;
     }
 
@@ -125,7 +133,7 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
             return false;
         }
 
-        // It's true that this CAN be simplified, but the readability is better this way
+// It's true that this CAN be simplified, but the readability is better this way
 #pragma warning disable IDE0046 // 'if' statement can be simplified
         // Handle Func<T>, Action<T>, Predicate<T>
         if (namedTypeSymbol.ConstructedFrom.Name.StartsWith("Func", StringComparison.Ordinal) ||

@@ -26,9 +26,9 @@ public class ExpressCallbacksAsDelegateTests
                 List<int> numbers = Enumerable.Range(1, 200).ToList();
                 var oddNumbers = numbers.Find(n=> n % 2 == 1);
                 var test = numbers.TrueForAll(n=> n < 50);
-
+            
                 numbers.RemoveAll(n => n % 2 == 0);
-
+            
                 numbers.ForEach(item => Console.WriteLine(item));
               }
             }
@@ -49,7 +49,7 @@ public class ExpressCallbacksAsDelegateTests
             public class MyClass
             {
               List<MyClass> container = new();
-
+            
               public void LengthyOperation(Func<bool> predicate)
               {
                 foreach(MyClass item in container)
@@ -61,11 +61,11 @@ public class ExpressCallbacksAsDelegateTests
                     }
                 }
               }
-
+              
               public void DoLengthyOperation() {}
               public bool CheckWithUser() => true;
               public bool CheckWithSystem() => true;
-
+              
               public void CheckThenDo()
               {
                 Func<bool> cp = () => CheckWithUser();
@@ -91,18 +91,18 @@ public class ExpressCallbacksAsDelegateTests
             public class MyClass
             {
               List<MyClass> container = new();
-
+            
               public void LengthyOperation(Func<bool> predicate)
               {
                 bool canContinue = true;
                 foreach(MyClass item in container)
                 {
                   item.DoLengthyOperation();
-
+                  
                   foreach(Func<bool> pr in predicate.GetInvocationList())
                   {
                     canContinue &= pr();
-
+                    
                     if (!canContinue)
                     {
                       return;
@@ -110,7 +110,7 @@ public class ExpressCallbacksAsDelegateTests
                   }
                 }
               }
-
+              
               public void DoLengthyOperation() {}
             }
             """,
@@ -125,12 +125,12 @@ public class ExpressCallbacksAsDelegateTests
             public class CustomCollection<T>
             {
                 private List<T> _items = new List<T>();
-
+            
                 public void Add(T item)
                 {
                     _items.Add(item);
                 }
-
+            
                 public void ProcessItems(Action<T> callback)
                 {
                     foreach (var item in _items)
@@ -139,7 +139,7 @@ public class ExpressCallbacksAsDelegateTests
                     }
                 }
             }
-
+            
             public class TestClass
             {
                 public void TestMethod()
@@ -148,7 +148,7 @@ public class ExpressCallbacksAsDelegateTests
                     collection.Add(1);
                     collection.Add(2);
                     collection.Add(3);
-
+            
                     collection.ProcessItems(item => Console.WriteLine(item));
                 }
             }
@@ -164,7 +164,7 @@ public class ExpressCallbacksAsDelegateTests
             public class MultiDelegateHandler
             {
                 private List<int> _items = new List<int> { 1, 2, 3, 4, 5 };
-
+            
                 public void HandleItems(Action<int> actionCallback, Predicate<int> predicateCallback)
                 {
                     foreach (var item in _items)
@@ -200,7 +200,7 @@ public class ExpressCallbacksAsDelegateTests
             public class TransformProcessor
             {
                 private List<int> _items = new List<int> { 1, 2, 3, 4, 5 };
-
+            
                 public void ProcessItems(Func<int, string> transformCallback, Action<string> actionCallback)
                 {
                     foreach (var item in _items)
