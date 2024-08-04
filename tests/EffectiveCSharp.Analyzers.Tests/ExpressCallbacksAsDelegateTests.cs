@@ -39,13 +39,12 @@ public class ExpressCallbacksAsDelegateTests
     [Fact]
     public async Task Delegate()
     {
+        // The problem here is that this works as a single delegate
+        // but when using it as a multicast delegate, things break.
+        // The value returned from invoking the delegate is the
+        // return value from the last function in the multicast chain.
+        // The return from the CheckWithUser() predicate is ignored.
         await Verifier.VerifyAnalyzerAsync(
-
-            // The problem here is that this works as a single delegate
-            // but when using it as a multicast delegate, things break.
-            // The value returned from invoking the delegate is the
-            // return value from the last function in the multicast chain.
-            // The return from the CheckWithUser() predicate is ignored.
             """
             public class MyClass
             {
@@ -81,12 +80,11 @@ public class ExpressCallbacksAsDelegateTests
     [Fact]
     public async Task CorrectDelegate()
     {
+        // You address both issues described in the Delegate test
+        // by invoking the delegate target yourself. Each delegate
+        // you create contains a list of delegates. You examine
+        // the chain yourself and call each one.
         await Verifier.VerifyAnalyzerAsync(
-
-            // You address both issues described in the Delegate test
-            // by invoking the delegate target yourself. Each delegate
-            // you create containst a list of delegates. You examine
-            // the chain yourself and call each one.
             """
             using System.Linq;
 
@@ -190,7 +188,7 @@ public class ExpressCallbacksAsDelegateTests
                     )|};
                 }
             }
-            """, 
+            """,
             ReferenceAssemblyCatalog.Latest);
     }
 

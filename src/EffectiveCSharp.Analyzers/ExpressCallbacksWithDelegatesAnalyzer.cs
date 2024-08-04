@@ -17,10 +17,10 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
         id: Id,
         title: "Express callbacks with delegates",
         messageFormat: "Method '{0}' should use a delegate for the callback",
-        description: "Ensure that callbacks are implemented using delegates.",
         category: "Design",
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
+        description: "Ensure that callbacks are implemented using delegates.",
         helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
 
     /// <inheritdoc />
@@ -36,12 +36,13 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
 
     private static void AnalyzeSyntaxNode(SyntaxNodeAnalysisContext context)
     {
-        var invocationExpr = (InvocationExpressionSyntax)context.Node;
-        var symbolInfo = context.SemanticModel.GetSymbolInfo(invocationExpr, context.CancellationToken);
-        var methodSymbol = symbolInfo.Symbol as IMethodSymbol;
+        InvocationExpressionSyntax invocationExpr = (InvocationExpressionSyntax)context.Node;
+        SymbolInfo symbolInfo = context.SemanticModel.GetSymbolInfo(invocationExpr, context.CancellationToken);
 
-        if (methodSymbol == null)
+        if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
+        {
             return;
+        }
 
         // Check if the method has delegate parameters
         bool hasDelegateParameter = methodSymbol.Parameters.Any(p => IsDelegateType(p.Type));
@@ -50,7 +51,7 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        var diagnostic = Diagnostic.Create(Rule, invocationExpr.GetLocation(), methodSymbol.Name);
+        Diagnostic diagnostic = invocationExpr.GetLocation().CreateDiagnostic(Rule, methodSymbol.Name);
         context.ReportDiagnostic(diagnostic);
     }
 
@@ -66,20 +67,22 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
             return true;
         }
 
-        if (typeSymbol is INamedTypeSymbol namedTypeSymbol)
+        if (typeSymbol is not INamedTypeSymbol namedTypeSymbol)
         {
-            // Handle Func<T>, Action<T>, Predicate<T>
-            if (namedTypeSymbol.ConstructedFrom != null &&
-                (namedTypeSymbol.ConstructedFrom.Name.StartsWith("Func") ||
-                 namedTypeSymbol.ConstructedFrom.Name.StartsWith("Action") ||
-                 namedTypeSymbol.ConstructedFrom.Name.StartsWith("Predicate")))
-            {
-                return true;
-            }
-
-            return namedTypeSymbol.ConstructedFrom.SpecialType == SpecialType.System_MulticastDelegate;
+            return false;
         }
 
-        return false;
+// It's true that this CAN be simplified, but the readability is better this way
+#pragma warning disable IDE0046 // 'if' statement can be simplified
+        // Handle Func<T>, Action<T>, Predicate<T>
+        if (namedTypeSymbol.ConstructedFrom.Name.StartsWith("Func", StringComparison.Ordinal) ||
+            namedTypeSymbol.ConstructedFrom.Name.StartsWith("Action", StringComparison.Ordinal) ||
+            namedTypeSymbol.ConstructedFrom.Name.StartsWith("Predicate", StringComparison.Ordinal))
+        {
+            return true;
+        }
+#pragma warning restore IDE0046 // 'if' statement can be simplified
+
+        return namedTypeSymbol.ConstructedFrom is { SpecialType: SpecialType.System_MulticastDelegate };
     }
 }
