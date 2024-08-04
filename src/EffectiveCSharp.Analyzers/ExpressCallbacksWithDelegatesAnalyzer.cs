@@ -51,8 +51,41 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        Diagnostic diagnostic = invocationExpr.GetLocation().CreateDiagnostic(Rule, methodSymbol.Name);
-        context.ReportDiagnostic(diagnostic);
+        // Check if the delegate is passed around or multicast
+        if (ShouldWarnForMethod(methodSymbol, invocationExpr, context.SemanticModel))
+        {
+            Diagnostic diagnostic = invocationExpr.GetLocation().CreateDiagnostic(Rule, methodSymbol.Name);
+            context.ReportDiagnostic(diagnostic);
+        }
+    }
+
+    private static bool ShouldWarnForMethod(IMethodSymbol methodSymbol, InvocationExpressionSyntax invocationExpr, SemanticModel semanticModel)
+    {
+        foreach (ArgumentSyntax argument in invocationExpr.ArgumentList.Arguments)
+        {
+            ITypeSymbol? argumentType = semanticModel.GetTypeInfo(argument.Expression).Type;
+
+            // Check if the argument is a delegate type
+            if (IsDelegateType(argumentType))
+            {
+                // Check if the delegate is passed to another method or assigned to a field/property
+                SyntaxNode? parent = argument.Expression.Parent;
+                while (parent != null)
+                {
+                    if (parent is ArgumentSyntax or AssignmentExpressionSyntax)
+                    {
+                        return true;
+                    }
+
+                    parent = parent.Parent;
+                }
+
+                // Additional checks for specific scenarios can be added here
+            }
+        }
+
+        // No issues detected
+        return false;
     }
 
     private static bool IsDelegateType(ITypeSymbol? typeSymbol)

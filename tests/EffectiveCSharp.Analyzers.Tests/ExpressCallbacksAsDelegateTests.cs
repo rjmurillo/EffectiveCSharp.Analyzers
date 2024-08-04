@@ -149,7 +149,7 @@ public class ExpressCallbacksAsDelegateTests
                     collection.Add(2);
                     collection.Add(3);
             
-                    {|ECS0007:collection.ProcessItems(item => Console.WriteLine(item))|};
+                    collection.ProcessItems(item => Console.WriteLine(item));
                 }
             }
             """,
@@ -182,10 +182,10 @@ public class ExpressCallbacksAsDelegateTests
                 public void TestMethod()
                 {
                     var handler = new MultiDelegateHandler();
-                    {|ECS0007:handler.HandleItems(
+                    handler.HandleItems(
                         item => Console.WriteLine($"Processing item: {item}"),
                         item => item % 2 == 0
-                    )|};
+                    );
                 }
             }
             """,
@@ -216,10 +216,10 @@ public class ExpressCallbacksAsDelegateTests
                 public void TestMethod()
                 {
                     var processor = new TransformProcessor();
-                    {|ECS0007:processor.ProcessItems(
+                    processor.ProcessItems(
                         item => $"Item: {item}",
                         transformedItem => Console.WriteLine(transformedItem)
-                    )|};
+                    );
                 }
             }
             """,
