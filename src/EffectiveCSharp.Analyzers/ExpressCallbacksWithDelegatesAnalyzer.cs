@@ -52,15 +52,16 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
         }
 
         // Check if the delegate is passed around or multicast
-        if (ShouldWarnForMethod(methodSymbol, invocationExpr, context.SemanticModel))
+        if (ShouldWarnForMethod(invocationExpr, context.SemanticModel))
         {
             Diagnostic diagnostic = invocationExpr.GetLocation().CreateDiagnostic(Rule, methodSymbol.Name);
             context.ReportDiagnostic(diagnostic);
         }
     }
 
-    private static bool ShouldWarnForMethod(IMethodSymbol methodSymbol, InvocationExpressionSyntax invocationExpr, SemanticModel semanticModel)
+    private static bool ShouldWarnForMethod(InvocationExpressionSyntax invocationExpr, SemanticModel semanticModel)
     {
+#pragma warning disable S3267 // Loops should be simplified with "LINQ" expressions
         foreach (ArgumentSyntax argument in invocationExpr.ArgumentList.Arguments)
         {
             ITypeSymbol? argumentType = semanticModel.GetTypeInfo(argument.Expression).Type;
@@ -83,6 +84,7 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
                 // Additional checks for specific scenarios can be added here
             }
         }
+#pragma warning restore S3267 // Loops should be simplified with "LINQ" expressions
 
         // No issues detected
         return false;
