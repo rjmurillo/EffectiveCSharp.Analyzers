@@ -450,7 +450,7 @@
 - {Id: MA0029, Title: Combine LINQ methods, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0030, Title: Remove useless OrderBy call, Category: Performance, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0031, Title: Optimize Enumerable.Count() usage, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
-- {Id: MA0032, Title: Use an overload with a CancellationToken argument, Category: Usage, DefaultSeverity: Note, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: false}
+- {Id: MA0032, Title: Use an overload with a CancellationToken argument, Category: Usage, DefaultSeverity: Note, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: MA0033, Title: Do not tag instance fields with ThreadStaticAttribute, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0035, Title: Do not use dangerous threading methods, Category: Usage, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0036, Title: Make class static, Category: Design, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
@@ -1088,7 +1088,7 @@
 - {Id: S3263, Title: 'Static fields should appear in the order they must be initialized ', Category: Major Bug, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: S3264, Title: Events should be invoked, Category: Major Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: S3265, Title: Non-flags enums should not be used in bitwise operations, Category: Critical Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: S3267, Title: Loops should be simplified with "LINQ" expressions, Category: Minor Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: S3267, Title: Loops should be simplified with "LINQ" expressions, Category: Minor Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
 - {Id: S3329, Title: Cipher Block Chaining IVs should be unpredictable, Category: Critical Vulnerability, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: S3330, Title: Creating cookies without the "HttpOnly" flag is security-sensitive, Category: Minor Security Hotspot, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: S3343, Title: Caller information parameters should come at the end of the parameter list, Category: Major Bug, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
