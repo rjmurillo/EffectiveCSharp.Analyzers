@@ -111,7 +111,7 @@ public class PreferMemberInitializersToAssignmentStatementsTests
             """
             public class MyClass
             {
-              private List<string> {|ECS0012:listOfString|};
+              {|ECS0012:private List<string> listOfString;|}
 
               public MyClass()
               {
