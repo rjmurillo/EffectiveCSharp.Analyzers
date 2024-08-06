@@ -76,10 +76,6 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
                 return;
             }
         }
-        else
-        {
-            Debug.Fail($"Unrecognized constructed from named type '{baseType}'.");
-        }
 
         return;
 
