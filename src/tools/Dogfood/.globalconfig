@@ -1,4 +1,5 @@
-[*.cs]
+is_global = true
+global_level = 0
 
 # Enable all the analyzers as warnings
 dotnet_diagnostic.ECS0001.severity = warning
