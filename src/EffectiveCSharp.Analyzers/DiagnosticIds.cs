@@ -1,5 +1,7 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
+#pragma warning disable ECS0002 // Consider using readonly instead of const for better flexibility
+
 internal static class DiagnosticIds
 {
     internal const string PreferImplicitlyTypedLocalVariables = "ECS0001";

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>EffectiveCSharp.Analyzers</RootNamespace>
+        <AssemblyName>$(RootNamespace)</AssemblyName>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules><!-- Resolves RS1036 -->
+        <NoWarn>RS2008;$(NoWarn)</NoWarn> <!-- We don't actually ship analyzers from this project, it's only for dogfooding our own analyzers -->
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="$(RepoRoot)\src\EffectiveCSharp.Analyzers\EffectiveCSharp.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="All" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="$(RepoRoot)\src\EffectiveCSharp.Analyzers\**\*.cs" OutputType="Analyzer" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="all" />
+    </ItemGroup>
+</Project>
