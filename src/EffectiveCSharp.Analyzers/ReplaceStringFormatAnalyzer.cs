@@ -9,11 +9,9 @@ namespace EffectiveCSharp.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
 {
-    private const string Category = "Style";
-    private const string Description = "Replace string.Format with interpolated string.";
-    private const string DiagnosticId = DiagnosticIds.ReplaceStringFormatWithInterpolatedString;
-    private const string MessageFormat = "Replace '{0}' with interpolated string";
-    private const string Title = "Replace string.Format with interpolated string";
+    private static readonly string Description = "Replace string.Format with interpolated string.";
+    private static readonly string MessageFormat = "Replace '{0}' with interpolated string";
+    private static readonly string Title = "Replace string.Format with interpolated string";
 
     // We can't use source generators
     private static readonly Regex PlaceholderRegex = new(
@@ -22,14 +20,14 @@ public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
         TimeSpan.FromSeconds(1));
 
     private static readonly DiagnosticDescriptor Rule = new(
-        DiagnosticId,
+        DiagnosticIds.ReplaceStringFormatWithInterpolatedString,
         Title,
         MessageFormat,
-        Category,
+        Categories.Style,
         DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: Description,
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers{ThisAssembly.GitCommitId}/docs/{DiagnosticId}.md");
+        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.ReplaceStringFormatWithInterpolatedString}.md");
 
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);

@@ -7,17 +7,15 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PreferExplicitTypesOnNumbersAnalyzer : DiagnosticAnalyzer
 {
-    private const string Id = DiagnosticIds.PreferImplicitlyTypedLocalVariables;
-
     private static readonly DiagnosticDescriptor Rule = new(
-        id: Id,
+        id: DiagnosticIds.PreferImplicitlyTypedLocalVariables,
         title: "Prefer implicitly typed local variables",
         messageFormat: "Use explicit type instead of 'var' for numeric variables",
         category: "Style",
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: "Use var to declare local variables for better readability and efficiency, except for built-in numeric types where explicit typing prevents potential conversion issues.",
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
+        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.PreferImplicitlyTypedLocalVariables}.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);

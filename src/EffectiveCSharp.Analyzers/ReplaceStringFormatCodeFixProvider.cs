@@ -10,7 +10,7 @@ namespace EffectiveCSharp.Analyzers;
 [Shared]
 public class ReplaceStringFormatCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Replace with interpolated string";
+    private static readonly string Title = "Replace with interpolated string";
 
     /// <inheritdoc />
     public override sealed ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DiagnosticIds.ReplaceStringFormatWithInterpolatedString);

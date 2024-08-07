@@ -7,16 +7,14 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 {
-    private const string Id = DiagnosticIds.MinimizeBoxingUnboxing;
-
     private static readonly DiagnosticDescriptor Rule = new(
-        id: Id,
+        id: DiagnosticIds.MinimizeBoxingUnboxing,
         title: "Minimize boxing and unboxing",
         messageFormat: "Consider using an alternative implementation to avoid boxing and unboxing",
-        category: "Performance",
+        category: Categories.Performance,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
+        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.MinimizeBoxingUnboxing}.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);

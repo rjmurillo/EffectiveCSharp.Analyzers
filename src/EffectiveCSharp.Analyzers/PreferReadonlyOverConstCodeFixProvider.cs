@@ -8,7 +8,7 @@
 [Shared]
 public class PreferReadonlyOverConstCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Use readonly instead of const";
+    private static readonly string Title = "Use readonly instead of const";
 
     /// <inheritdoc />
     public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DiagnosticIds.PreferReadonlyOverConst);
