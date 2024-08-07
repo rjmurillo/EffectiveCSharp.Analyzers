@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EffectiveCSharp.Analyzers;
+﻿namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
 /// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #7 - Express callbacks with delegates.
@@ -11,8 +7,6 @@ namespace EffectiveCSharp.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
 {
-    private const string Id = DiagnosticIds.ExpressCallbacksWithDelegates;
-
     private static readonly DiagnosticDescriptor Rule = new(
         id: DiagnosticIds.ExpressCallbacksWithDelegates,
         title: "Express callbacks with delegates",
@@ -133,7 +127,7 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
             return false;
         }
 
-// It's true that this CAN be simplified, but the readability is better this way
+        // It's true that this CAN be simplified, but the readability is better this way
 #pragma warning disable IDE0046 // 'if' statement can be simplified
         // Handle Func<T>, Action<T>, Predicate<T>
         if (namedTypeSymbol.ConstructedFrom.Name.StartsWith("Func", StringComparison.Ordinal) ||
