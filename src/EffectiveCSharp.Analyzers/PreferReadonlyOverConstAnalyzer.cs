@@ -7,16 +7,14 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PreferReadonlyOverConstAnalyzer : DiagnosticAnalyzer
 {
-    private const string Id = DiagnosticIds.PreferReadonlyOverConst;
-
     private static readonly DiagnosticDescriptor Rule = new(
-        id: Id,
+        id: DiagnosticIds.PreferReadonlyOverConst,
         title: "Prefer readonly over const",
         messageFormat: "Consider using readonly instead of const for better flexibility",
         category: "Maintainability",
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
+        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.PreferReadonlyOverConst}.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);

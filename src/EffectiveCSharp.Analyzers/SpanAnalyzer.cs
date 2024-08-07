@@ -7,15 +7,14 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class SpanAnalyzer : DiagnosticAnalyzer
 {
-    private const string Id = DiagnosticIds.UseSpanInstead;
     private static readonly DiagnosticDescriptor Rule = new(
-        id: Id,
+        id: DiagnosticIds.UseSpanInstead,
         title: "Use Span<T> for performance",
         messageFormat: "Consider using Span<T> instead of array for better performance",
-        category: "Performance",
+        category: Categories.Performance,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
+        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.UseSpanInstead}.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);

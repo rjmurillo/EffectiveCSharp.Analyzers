@@ -8,7 +8,7 @@
 [Shared]
 public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Use nameof operator";
+    private static readonly string Title = "Use nameof operator";
 
     /// <inheritdoc/>
     public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DiagnosticIds.AvoidStringlyTypedApis);

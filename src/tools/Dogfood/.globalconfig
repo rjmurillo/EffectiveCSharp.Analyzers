@@ -1,0 +1,16 @@
+is_global = true
+global_level = 0
+
+# Enable all the analyzers as warnings
+dotnet_diagnostic.ECS0001.severity = warning
+dotnet_diagnostic.ECS0002.severity = warning
+dotnet_diagnostic.ECS0003.severity = warning
+dotnet_diagnostic.ECS0004.severity = warning
+dotnet_diagnostic.ECS0005.severity = warning
+dotnet_diagnostic.ECS0006.severity = warning
+dotnet_diagnostic.ECS0007.severity = warning
+dotnet_diagnostic.ECS0008.severity = warning
+dotnet_diagnostic.ECS0009.severity = warning
+dotnet_diagnostic.ECS0010.severity = warning
+dotnet_diagnostic.ECS0011.severity = warning
+dotnet_diagnostic.ECS0012.severity = warning
