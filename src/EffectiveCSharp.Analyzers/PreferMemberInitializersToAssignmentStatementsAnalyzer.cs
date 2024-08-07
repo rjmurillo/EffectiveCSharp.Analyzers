@@ -9,37 +9,37 @@ namespace EffectiveCSharp.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PreferMemberInitializersToAssignmentStatementsAnalyzer : DiagnosticAnalyzer
 {
-    private const string Id = DiagnosticIds.PreferMemberInitializersToAssignmentStatement;
+    private const string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{DiagnosticIds.PreferMemberInitializersToAssignmentStatement}.md";
 
     private static readonly DiagnosticDescriptor GeneralRule = new(
-        id: Id,
+        id: DiagnosticIds.PreferMemberInitializersToAssignmentStatement,
         title: "Prefer member initializers to assignment statements",
         messageFormat: "Use a member initializer instead of an assignment statement",
         category: "Maintainability",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "Field initialization in a constructor that does not use an argument should be done with a member initializer.",
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
+        helpLinkUri: HelpLinkUri);
 
     private static readonly DiagnosticDescriptor RuleExceptionInitializeToNullOrZero = new(
-        id: Id,
+        id: DiagnosticIds.PreferMemberInitializersExceptNullOrZero,
         title: "Should not initialize to null or zero",
         messageFormat: "Do not initialize to null or zero as these already occur by default",
         category: "Maintainability",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "Field initialization to null or zero is redundant and should be avoided.",
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
+        helpLinkUri: HelpLinkUri);
 
     private static readonly DiagnosticDescriptor RuleExceptionShouldNotInitializeInDeclaration = new(
-        id: Id,
+        id: DiagnosticIds.PreferMemberInitializersExceptWhenVaryingInitializations,
         title: "Should not initialize in declaration due to diverging initializations in constructors",
         messageFormat: "Do not initialize a field in its declaration if you have diverging initializations in constructors. This is to prevent unnecessary allocations.",
         category: "Maintainability",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "Field initialization should not occur when there are diverging initializations in constructos. This is to prevent unnecessary allocations.",
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
+        helpLinkUri: HelpLinkUri);
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(GeneralRule, RuleExceptionInitializeToNullOrZero, RuleExceptionShouldNotInitializeInDeclaration);
@@ -75,12 +75,22 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         {
             foreach (VariableDeclaratorSyntax variable in field.Declaration.Variables)
             {
-                string? fieldName = semanticModel.GetDeclaredSymbol(variable, cancellationToken)?.Name;
+                IFieldSymbol? symbol = (IFieldSymbol?)semanticModel.GetDeclaredSymbol(variable, cancellationToken);
+
+                string? fieldName = symbol?.Name;
 
                 if (fieldName is not null)
                 {
                     bool hasInitializer = variable.Initializer is not null;
-                    fieldInitializationInfo.Add(fieldName, new FieldInitializationInfo(fieldName, field, new List<ExpressionStatementSyntax>(), shouldNotInitializeInDeclaration: false, fieldHasInitializer: hasInitializer));
+                    fieldInitializationInfo.Add(
+                        fieldName,
+                        new FieldInitializationInfo(
+                            fieldName,
+                            field,
+                            new List<ExpressionStatementSyntax>(),
+                            shouldNotInitializeInDeclaration: false,
+                            fieldHasInitializer: hasInitializer,
+                            fieldSymbol: symbol!));
                 }
             }
         }
@@ -93,39 +103,42 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         foreach (FieldInitializationInfo field in fields.Values)
         {
             // Check and report fields that are initialized to null or zero. Structs are also checked for empty initializers.
-            if (IsFieldNullOrZero(field) || IsStructInitializerEmpty(context, field))
+            if (IsFieldNullOrZeroWithInitializer(field) || IsStructInitializerEmpty(field))
             {
                 context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleExceptionInitializeToNullOrZero));
             }
-
-            if (field.ShouldNotInitializeInDeclaration)
+            else if (field.ShouldNotInitializeInDeclaration)
             {
                 context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleExceptionShouldNotInitializeInDeclaration));
             }
-
-            if (field.MemberInitializers.Count == 0 && !field.ShouldNotInitializeInDeclaration && !field.FieldHasInitializer)
-            {
-                context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(GeneralRule));
-            }
-            else
+            else if (field.MemberInitializers.Count > 0)
             {
                 foreach (ExpressionStatementSyntax memberInitializer in field.MemberInitializers)
                 {
                     context.ReportDiagnostic(memberInitializer.GetLocation().CreateDiagnostic(GeneralRule));
                 }
             }
+            else if (!field.FieldHasInitializer && !field.IsZeroOrNullInitializableType)
+            {
+                context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(GeneralRule));
+            }
         }
     }
 
-    private static bool IsFieldNullOrZero(FieldInitializationInfo field)
+    private static bool IsFieldNullOrZeroWithInitializer(FieldInitializationInfo field)
     {
-        IEnumerable<LiteralExpressionSyntax> literalExpressionEnumerable = field.FieldDeclaration.DescendantNodes().OfType<LiteralExpressionSyntax>();
-        return literalExpressionEnumerable.Count() == 1 && (literalExpressionEnumerable.Single().Token.Value is null or 0);
+        if (field.IsZeroOrNullInitializableType)
+        {
+            IEnumerable<LiteralExpressionSyntax> literalExpressionEnumerable = field.FieldDeclaration.DescendantNodes().OfType<LiteralExpressionSyntax>();
+            return literalExpressionEnumerable.Count() == 1 && (literalExpressionEnumerable.Single().Token.Value is null or 0 or false);
+        }
+
+        return false;
     }
 
-    private static bool IsStructInitializerEmpty(SyntaxNodeAnalysisContext context, FieldInitializationInfo field)
+    private static bool IsStructInitializerEmpty(FieldInitializationInfo field)
     {
-        if (context.SemanticModel.GetTypeInfo(field.FieldDeclaration.Declaration.Type, context.CancellationToken).Type?.TypeKind == TypeKind.Struct)
+        if (field.IsStruct)
         {
             IEnumerable<ObjectCreationExpressionSyntax> objectCreationNodeEnumerable = field.FieldDeclaration.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
             return objectCreationNodeEnumerable.Count() == 1 && objectCreationNodeEnumerable.Single().ArgumentList?.Arguments.Count == 0;
@@ -260,13 +273,16 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
             FieldDeclarationSyntax fieldDeclaration,
             IList<ExpressionStatementSyntax> memberInitializers,
             bool shouldNotInitializeInDeclaration,
-            bool fieldHasInitializer)
+            bool fieldHasInitializer,
+            IFieldSymbol fieldSymbol)
         {
             FieldName = fieldName;
             FieldDeclaration = fieldDeclaration;
             MemberInitializers = memberInitializers;
             ShouldNotInitializeInDeclaration = shouldNotInitializeInDeclaration;
             FieldHasInitializer = fieldHasInitializer;
+            IsStruct = fieldSymbol.Type.TypeKind == TypeKind.Struct;
+            IsZeroOrNullInitializableType = fieldSymbol.Type.IsValueType || fieldSymbol.NullableAnnotation == NullableAnnotation.Annotated;
         }
 
         public string FieldName { get; init; }
@@ -278,5 +294,9 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         public bool ShouldNotInitializeInDeclaration { get; set; }
 
         public bool FieldHasInitializer { get; init; }
+
+        public bool IsStruct { get; init; }
+
+        public bool IsZeroOrNullInitializableType { get; init; }
     }
 }

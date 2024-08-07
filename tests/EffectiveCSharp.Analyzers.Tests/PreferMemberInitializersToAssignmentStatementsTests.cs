@@ -1,3 +1,4 @@
+using CodeFixVerifier = EffectiveCSharp.Analyzers.Tests.Helpers.CodeFixVerifier<EffectiveCSharp.Analyzers.PreferMemberInitializersToAssignmentStatementsAnalyzer, EffectiveCSharp.Analyzers.PreferMemberInitializersToAssignmentStatementsCodeFixProvider>;
 using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.PreferMemberInitializersToAssignmentStatementsAnalyzer>;
 
 namespace EffectiveCSharp.Analyzers.Tests;
@@ -7,12 +8,6 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     [Fact]
     public async Task AnalyzerSimpleCase()
     {
-        // There are five outputs to the following:
-        // Declared Type: Double, Value = 166.666666666667
-        // Declared Type: Single, Value = 166.6667
-        // Declared Type: Decimal, Value = 166.66666666666666666666666667
-        // Declared Type: Int32, Value = 166
-        // Declared Type: Int64, Value = 166
         await Verifier.VerifyAnalyzerAsync(
             """
             public class MyClass
@@ -21,7 +16,7 @@ public class PreferMemberInitializersToAssignmentStatementsTests
 
               public MyClass()
               {
-                {|ECS0012:labels = string.Empty;|}
+                {|ECS1200:labels = string.Empty;|}
               }
             }
             """,
@@ -31,12 +26,6 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     [Fact]
     public async Task AnalyzerShouldNotFireSinceFieldAlreadyInitializedInDeclaration()
     {
-        // There are five outputs to the following:
-        // Declared Type: Double, Value = 166.666666666667
-        // Declared Type: Single, Value = 166.6667
-        // Declared Type: Decimal, Value = 166.66666666666666666666666667
-        // Declared Type: Int32, Value = 166
-        // Declared Type: Int64, Value = 166
         await Verifier.VerifyAnalyzerAsync(
             """
             public class MyClass
@@ -54,12 +43,6 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     [Fact]
     public async Task AnalyzerShouldNotFireSinceInStructs()
     {
-        // There are five outputs to the following:
-        // Declared Type: Double, Value = 166.666666666667
-        // Declared Type: Single, Value = 166.6667
-        // Declared Type: Decimal, Value = 166.66666666666666666666666667
-        // Declared Type: Int32, Value = 166
-        // Declared Type: Int64, Value = 166
         await Verifier.VerifyAnalyzerAsync(
             """
             public struct MyStruct
@@ -71,14 +54,34 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     }
 
     [Fact]
+    public async Task AnalyzerShouldNotFireSinceInWithZeroable()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              public double MyDouble;
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
+    public async Task AnalyzerShouldNotFireSinceInWithNullable()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              public string? MyString;
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
     public async Task AnalyzerShouldFireWhenInitToZeroOrNull()
     {
-        // There are five outputs to the following:
-        // Declared Type: Double, Value = 166.666666666667
-        // Declared Type: Single, Value = 166.6667
-        // Declared Type: Decimal, Value = 166.66666666666666666666666667
-        // Declared Type: Int32, Value = 166
-        // Declared Type: Int64, Value = 166
         await Verifier.VerifyAnalyzerAsync(
             """
             public struct MyStruct
@@ -88,7 +91,7 @@ public class PreferMemberInitializersToAssignmentStatementsTests
 
             public class MyClass
             {
-              {|ECS0012:private MyStruct structInstance = new MyStruct();|}
+              {|ECS1201:private MyStruct structInstance = new MyStruct();|}
 
               public MyClass()
               {
@@ -101,17 +104,11 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     [Fact]
     public async Task AnalyzerShouldFireDueToMissingDeclaration()
     {
-        // There are five outputs to the following:
-        // Declared Type: Double, Value = 166.666666666667
-        // Declared Type: Single, Value = 166.6667
-        // Declared Type: Decimal, Value = 166.66666666666666666666666667
-        // Declared Type: Int32, Value = 166
-        // Declared Type: Int64, Value = 166
         await Verifier.VerifyAnalyzerAsync(
             """
             public class MyClass
             {
-              {|ECS0012:private List<string> listOfString;|}
+              {|ECS1200:private List<string> listOfString;|}
 
               public MyClass()
               {
@@ -124,17 +121,11 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     [Fact]
     public async Task AnalyzerShouldFireDueToInitializigToZero()
     {
-        // There are five outputs to the following:
-        // Declared Type: Double, Value = 166.666666666667
-        // Declared Type: Single, Value = 166.6667
-        // Declared Type: Decimal, Value = 166.66666666666666666666666667
-        // Declared Type: Int32, Value = 166
-        // Declared Type: Int64, Value = 166
         await Verifier.VerifyAnalyzerAsync(
             """
             public class MyClass
             {
-              {|ECS0012:private double mynum = 0;|}
+              {|ECS1201:private double mynum = 0;|}
 
               public MyClass()
               {
@@ -147,12 +138,6 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     [Fact]
     public async Task AnalyzerShouldFireWhenBeingInitializedInFieldAndConstructorsWith()
     {
-        // There are five outputs to the following:
-        // Declared Type: Double, Value = 166.666666666667
-        // Declared Type: Single, Value = 166.6667
-        // Declared Type: Decimal, Value = 166.66666666666666666666666667
-        // Declared Type: Int32, Value = 166
-        // Declared Type: Int64, Value = 166
         await Verifier.VerifyAnalyzerAsync(
             """
             public class MyClass
@@ -161,12 +146,12 @@ public class PreferMemberInitializersToAssignmentStatementsTests
 
               public MyClass()
               {
-                {|ECS0012:listOfString = new List<string>();|}
+                {|ECS1200:listOfString = new List<string>();|}
               }
 
               public MyClass(int size)
               {
-                {|ECS0012:listOfString = new List<string>();|}
+                {|ECS1200:listOfString = new List<string>();|}
               }
             }
             """,
@@ -176,17 +161,11 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     [Fact]
     public async Task AnalyzerShouldFireWhenBeingInitializedInFieldAndConstructorsWithArgUse()
     {
-        // There are five outputs to the following:
-        // Declared Type: Double, Value = 166.666666666667
-        // Declared Type: Single, Value = 166.6667
-        // Declared Type: Decimal, Value = 166.66666666666666666666666667
-        // Declared Type: Int32, Value = 166
-        // Declared Type: Int64, Value = 166
         await Verifier.VerifyAnalyzerAsync(
             """
             public class MyClass
             {
-              {|ECS0012:private List<string> listOfString = new List<string>();|}
+              {|ECS1202:private List<string> listOfString = new List<string>();|}
 
               public MyClass()
               {
@@ -200,5 +179,35 @@ public class PreferMemberInitializersToAssignmentStatementsTests
             }
             """,
             ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
+    public async Task CodeFixMissingInitialization()
+    {
+        const string testCode =
+        """
+          public class MyClass
+          {
+            {|ECS1200:private List<string> listOfString;|}
+
+            public MyClass()
+            {
+            }
+          }
+        """;
+
+        const string fixedCode =
+        """
+          public class MyClass
+          {
+            private List<string> listOfString = new List<string>();
+
+            public MyClass()
+            {
+            }
+          }
+        """;
+
+        await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
     }
 }
