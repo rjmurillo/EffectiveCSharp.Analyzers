@@ -9,6 +9,7 @@ namespace EffectiveCSharp.Analyzers.Tests;
 #pragma warning disable MA0051  // Some test methods are "too long"
 #pragma warning disable MA0007  // There are multiple types of tests defined in theory data
 #pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
+#pragma warning disable AsyncFixer01
 
 public class AvoidBoxingUnboxingTests
 {
@@ -64,7 +65,7 @@ public class AvoidBoxingUnboxingTests
             referenceAssemblyGroup);
     }
 
-    public static TheoryData<string,string> TestData2()
+    public static TheoryData<string, string> TestData2()
     {
         TheoryData<string> data = new()
         {
@@ -77,7 +78,7 @@ public class AvoidBoxingUnboxingTests
               int firstNumber = 4;
               int secondNumber = 2;
               int thirdNumber = 6;
-            
+
               Method(
                "A few numbers: {0}, {1}, {2}",
                {|ECS0009:firstNumber|},
@@ -94,7 +95,7 @@ public class AvoidBoxingUnboxingTests
               int firstNumber = 4;
               int secondNumber = 2;
               int thirdNumber = 6;
-            
+
               Method(
                "A few numbers: {0}, {1}, {2}",
                #pragma warning disable ECS0009 // Minimize boxing and unboxing
@@ -113,7 +114,7 @@ public class AvoidBoxingUnboxingTests
               int firstNumber = 4;
               int secondNumber = 2;
               int thirdNumber = 6;
-            
+
               Method(
                $"A few numbers: {firstNumber}, {secondNumber}, {thirdNumber}"
                );
@@ -213,7 +214,7 @@ public class MyClass
             public class TestClass
             {
                 public void TakeObject(object obj) {}
-            
+
                 public void Method()
                 {
                     int i = 42;
@@ -321,16 +322,16 @@ public class MyClass
             {
               static void Main()
               {
-            
+
                 // Using the Person in a collection
                 var attendees = new List<Person>();
                 var p = new Person { Name = "Old Name" };
                 attendees.Add(p);
-            
+
                 // Try to change the name
                 var p2 = {|ECS0009:attendees[0]|};
                 p2.Name = "New Name";
-            
+
                 // Writes "Old Name" because we pulled a copy of the struct
                 Console.WriteLine({|ECS0009:attendees[0]|}.ToString());
               }
@@ -359,16 +360,16 @@ public class MyClass
             {
               static void Main()
               {
-            
+
                 // Using the Person in a collection
                 var attendees = new Dictionary<int, Person>();
                 var p = new Person { Name = "Old Name" };
                 attendees.Add(1, p);
-            
+
                 // Try to change the name
                 var p2 = {|ECS0009:attendees[1]|};
                 p2.Name = "New Name";
-            
+
                 // Writes "Old Name" because we pulled a copy of the struct
                 Console.WriteLine({|ECS0009:attendees[1]|}.ToString());
               }
@@ -381,5 +382,48 @@ public class MyClass
             }
             """
             , ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task Lowered_string_does_not_box()
+    {
+        // The code for name is getting flagged
+        // It's lowered to
+        //
+        // string item = string.Concat("Foo", num.ToString());
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            using System;
+            using System.Collections.Generic;
+            public class C {
+                public void M() {
+                    List<string> names = new List<String>();
+                    for(var i = 0; i<100; i++) {
+                        var name = "Foo" + i;
+                        names.Add(name);
+                    }
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
+    public async Task Foo()
+    {
+        // The code for name is getting flagged
+        // It's lowered to
+        //
+        // string item = string.Concat("Foo", num.ToString());
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class C {
+                public void M() {
+                        var i = 0;
+                        var name = "Foo" + i;
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
     }
 }
