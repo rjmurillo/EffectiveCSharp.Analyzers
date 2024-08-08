@@ -8,7 +8,7 @@
 [Shared]
 public class PreferExplicitTypesForNumbersCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Use explicit type";
+    private static readonly string Title = "Use explicit type";
 
     /// <inheritdoc />
     public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DiagnosticIds.PreferImplicitlyTypedLocalVariables);

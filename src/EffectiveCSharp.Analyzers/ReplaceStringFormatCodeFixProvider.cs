@@ -10,7 +10,7 @@ namespace EffectiveCSharp.Analyzers;
 [Shared]
 public class ReplaceStringFormatCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Replace with interpolated string";
+    private static readonly string Title = "Replace with interpolated string";
 
     /// <inheritdoc />
     public override sealed ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DiagnosticIds.ReplaceStringFormatWithInterpolatedString);
@@ -76,7 +76,14 @@ public class ReplaceStringFormatCodeFixProvider : CodeFixProvider
             return document.Project.Solution;
         }
 
-        ArgumentSyntax[] arguments = invocationExpr.ArgumentList.Arguments.Skip(1).ToArray();
+        SeparatedSyntaxList<ArgumentSyntax> allArguments = invocationExpr.ArgumentList.Arguments;
+        int count = allArguments.Count;
+        ArgumentSyntax[] arguments = new ArgumentSyntax[count - 1];
+
+        for (int i = 1; i < count; i++)
+        {
+            arguments[i - 1] = allArguments[i];
+        }
 
         // Replace format placeholders with corresponding arguments in an interpolated string format
         string interpolatedString = CreateInterpolatedString(formatString!, arguments);

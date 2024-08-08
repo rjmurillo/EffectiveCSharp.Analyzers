@@ -8,7 +8,7 @@
 [Shared]
 public class SpanCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Use Span<T>";
+    private static readonly string Title = "Use Span<T>";
 
     /// <inheritdoc />
     public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DiagnosticIds.UseSpanInstead);

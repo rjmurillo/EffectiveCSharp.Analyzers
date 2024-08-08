@@ -298,6 +298,13 @@
 - {Id: CA5403, Title: Do not hard-code certificate, Category: Security, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: CA5404, Title: Do not disable token validation checks, Category: Security, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: CA5405, Title: Do not always skip token validation in delegates, Category: Security, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
+- {Id: ECS0001, Title: Prefer implicitly typed local variables, Category: Style, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: ECS0002, Title: Prefer readonly over const, Category: Maintainability, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
+- {Id: ECS0004, Title: Replace string.Format with interpolated string, Category: Style, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: ECS0006, Title: Avoid stringly-typed APIs, Category: Refactoring, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: ECS0007, Title: Express callbacks with delegates, Category: Design, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: ECS0009, Title: Minimize boxing and unboxing, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: ECS1000, Title: Use Span<T> for performance, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: EM0001, Title: Switch on Enum Not Exhaustive, Category: Logic, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: EM0002, Title: Switch on Nullable Enum Not Exhaustive, Category: Logic, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: EM0003, Title: Switch on Closed Type Not Exhaustive, Category: Logic, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -869,7 +876,7 @@
 - {Id: RS2005, Title: Remove duplicate entries for diagnostic ID in the same analyzer release, Category: MicrosoftCodeAnalysisReleaseTracking, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: RS2006, Title: Remove duplicate entries for diagnostic ID between analyzer releases, Category: MicrosoftCodeAnalysisReleaseTracking, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: RS2007, Title: Invalid entry in analyzer release file, Category: MicrosoftCodeAnalysisReleaseTracking, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: RS2008, Title: Enable analyzer release tracking, Category: MicrosoftCodeAnalysisReleaseTracking, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: RS2008, Title: Enable analyzer release tracking, Category: MicrosoftCodeAnalysisReleaseTracking, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: S100, Title: Methods and properties should be named in PascalCase, Category: Minor Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: false}
 - {Id: S1006, Title: Method overrides should not change parameter defaults, Category: Critical Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: S101, Title: Types should be named in PascalCase, Category: Minor Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
