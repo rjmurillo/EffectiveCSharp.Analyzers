@@ -16,3 +16,23 @@ dotnet_diagnostic.CS1712.severity = suggestion
 # VSTHRD200: Use "Async" suffix for async methods
 # Just about every test method is async, doesn't provide any real value and clustters up test window
 dotnet_diagnostic.VSTHRD200.severity = none
+
+# Static members are grouped with their Theory
+dotnet_diagnostic.SA1204.severity = none
+
+# The harness has literal code as a string
+dotnet_diagnostic.SA1001.severity = none
+
+dotnet_diagnostic.SA1113.severity = none
+
+# There's code in comments as examples
+dotnet_diagnostic.S125.severity = none
+
+# Some test methods are "too long"
+dotnet_diagnostic.MA0051.severity = none
+
+# Multiple types of tests are defined in TheoryData
+dotnet_diagnostic.MA0007.severity = none
+
+# The harness uses async and await
+dotnet_diagnostic.AsyncFixer01.severity = none

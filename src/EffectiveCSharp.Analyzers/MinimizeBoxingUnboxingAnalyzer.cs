@@ -123,7 +123,7 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
 
     private static void AnalyzeConversionOperation(IConversionOperation conversionOperation, OperationAnalysisContext context)
     {
-        // We need to detect when a conversion operation should indeed considered to be problematic:
+        // We need to detect when a conversion operation should indeed be considered to be problematic:
         //
         // 1. Excluding safe operations: Some conversions might be misidentified as boxing when they are safe or optimized
         // away by the compiler, such as converting between numeric types or appending integers to strings which only involves
@@ -131,7 +131,7 @@ public class MinimizeBoxingUnboxingAnalyzer : DiagnosticAnalyzer
         // 2. Context-Sensitive: Depending on the context of the conversion (like within a string concatenation), it might be
         // considered boxing. Analyzing the parent operations or the usage context is needed to decide to trigger a boxing warning
         // 3. Specific type checks: before reporting boxing, verify the types involved in the conversion are not special cases
-        // that are handled differently, like enum to string conversions in switch statements or using `int` in `string` concatentation
+        // that are handled differently, like enum to string conversions in switch statements or using `int` in `string` concatenation
 
         // Check if the conversion explicitly involves boxing or unboxing
         if (!conversionOperation.IsBoxingOrUnboxingOperation())
