@@ -426,7 +426,7 @@
 - {Id: MA0004, Title: Use Task.ConfigureAwait, Category: Usage, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0005, Title: Use Array.Empty<T>(), Category: Performance, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0006, Title: Use String.Equals instead of equality operator, Category: Usage, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: MA0007, Title: Add a comma after the last value, Category: Style, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
+- {Id: MA0007, Title: Add a comma after the last value, Category: Style, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note, None], IsEverSuppressed: true}
 - {Id: MA0008, Title: Add StructLayoutAttribute, Category: Performance, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0009, Title: Add regex evaluation timeout, Category: Security, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0010, Title: Mark attributes with AttributeUsageAttribute, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -469,7 +469,7 @@
 - {Id: MA0048, Title: File name must match type name, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
 - {Id: MA0049, Title: Type name should not match containing namespace, Category: Design, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0050, Title: Validate arguments correctly in iterator methods, Category: Design, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
-- {Id: MA0051, Title: Method is too long, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
+- {Id: MA0051, Title: Method is too long, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, None], IsEverSuppressed: true}
 - {Id: MA0052, Title: Replace constant Enum.ToString with nameof, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0053, Title: Make class sealed, Category: Design, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0054, Title: Embed the caught exception as innerException, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -921,7 +921,7 @@
 - {Id: S1226, Title: "Method parameters, caught exceptions and foreach variables' initial values should not be ignored", Category: Minor Bug, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: S1227, Title: break statements should not be used except for switch cases, Category: Minor Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: S1244, Title: Floating point numbers should not be tested for equality, Category: Major Bug, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: S125, Title: Sections of code should not be commented out, Category: Major Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
+- {Id: S125, Title: Sections of code should not be commented out, Category: Major Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, None], IsEverSuppressed: true}
 - {Id: S126, Title: '"if ... else if" constructs should end with "else" clauses', Category: Critical Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: S1264, Title: A "while" loop should be used instead of a "for" loop, Category: Minor Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: S127, Title: '"for" loop stop conditions should be invariant', Category: Major Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -1343,7 +1343,7 @@
 - {Id: SA0001, Title: XML comment analysis disabled, Category: StyleCop.CSharp.SpecialRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA0002, Title: Invalid settings file, Category: StyleCop.CSharp.SpecialRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1000, Title: Keywords should be spaced correctly, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: SA1001, Title: Commas should be spaced correctly, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
+- {Id: SA1001, Title: Commas should be spaced correctly, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, None], IsEverSuppressed: true}
 - {Id: SA1002, Title: Semicolons should be spaced correctly, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1003, Title: Symbols should be spaced correctly, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1004, Title: Documentation lines should begin with single space, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -1384,7 +1384,7 @@
 - {Id: SA1110, Title: Opening parenthesis or bracket should be on declaration line, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1111, Title: Closing parenthesis should be on line of last parameter, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1112, Title: Closing parenthesis should be on line of opening parenthesis, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: SA1113, Title: Comma should be on the same line as previous parameter, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
+- {Id: SA1113, Title: Comma should be on the same line as previous parameter, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, None], IsEverSuppressed: true}
 - {Id: SA1114, Title: Parameter list should follow declaration, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1115, Title: Parameter should follow comma, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
 - {Id: SA1116, Title: Split parameters should start on line after declaration, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -1417,7 +1417,7 @@
 - {Id: SA1201, Title: Elements should appear in the correct order, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1202, Title: Elements should be ordered by access, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1203, Title: Constants should appear before fields, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: SA1204, Title: Static elements should appear before instance elements, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
+- {Id: SA1204, Title: Static elements should appear before instance elements, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, None], IsEverSuppressed: true}
 - {Id: SA1205, Title: Partial elements should declare access, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1206, Title: Declaration keywords should follow order, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1207, Title: Protected should come before internal, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
