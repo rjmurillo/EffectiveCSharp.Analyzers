@@ -85,9 +85,35 @@ public class EventInvocationCodeFixProvider : CodeFixProvider
 
         // Attempt to find a preceding variable declaration if it exists
         BlockSyntax? blockSyntax = ifStatement.Parent as BlockSyntax;
-        LocalDeclarationStatementSyntax? variableDeclaration = blockSyntax?.Statements
-            .OfType<LocalDeclarationStatementSyntax>()
-            .FirstOrDefault(v => v.Declaration.Variables.Any(var => string.Equals(var.Identifier.Text, identifierName.Identifier.Text, StringComparison.Ordinal)));
+        LocalDeclarationStatementSyntax? variableDeclaration = null;
+
+        if (blockSyntax?.Statements != null)
+        {
+            for (int i = 0; i < blockSyntax.Statements.Count; i++)
+            {
+                StatementSyntax statement = blockSyntax.Statements[i];
+                if (statement is LocalDeclarationStatementSyntax localDeclaration)
+                {
+                    for (int j = 0; j < localDeclaration.Declaration.Variables.Count; j++)
+                    {
+                        VariableDeclaratorSyntax variable = localDeclaration.Declaration.Variables[j];
+                        if (string.Equals(
+                                variable.Identifier.Text,
+                                identifierName.Identifier.Text,
+                                StringComparison.Ordinal))
+                        {
+                            variableDeclaration = localDeclaration;
+                            break;
+                        }
+                    }
+                }
+
+                if (variableDeclaration != null)
+                {
+                    break;
+                }
+            }
+        }
 
         if (variableDeclaration == null)
         {
