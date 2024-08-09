@@ -1,5 +1,4 @@
-﻿using Xunit.Abstractions;
-using CodeFixVerifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerAndCodeFixVerifier<EffectiveCSharp.Analyzers.EventInvocationAnalyzer, EffectiveCSharp.Analyzers.EventInvocationCodeFixProvider>;
+﻿using CodeFixVerifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerAndCodeFixVerifier<EffectiveCSharp.Analyzers.EventInvocationAnalyzer, EffectiveCSharp.Analyzers.EventInvocationCodeFixProvider>;
 using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.EventInvocationAnalyzer>;
 
 namespace EffectiveCSharp.Analyzers.Tests;
@@ -15,13 +14,6 @@ namespace EffectiveCSharp.Analyzers.Tests;
 
 public class EventInvocationTests
 {
-    private readonly ITestOutputHelper _output;
-
-    public EventInvocationTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
     public static TheoryData<string, string> TestData()
     {
         TheoryData<string> data = new()

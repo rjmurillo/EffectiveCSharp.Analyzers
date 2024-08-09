@@ -60,6 +60,8 @@ public class EventInvocationCodeFixProvider : CodeFixProvider
         return editor.GetChangedDocument();
     }
 
+#pragma warning disable MA0051 // Method is too long
+#pragma warning disable S125 // Remove commented out code
     private static async Task<Document> UseNullConditionalOperatorAsync(Document document, IfStatementSyntax ifStatement, CancellationToken cancellationToken)
     {
         DocumentEditor? editor = await DocumentEditor.CreateAsync(document, cancellationToken).ConfigureAwait(false);
@@ -85,7 +87,7 @@ public class EventInvocationCodeFixProvider : CodeFixProvider
         BlockSyntax? blockSyntax = ifStatement.Parent as BlockSyntax;
         LocalDeclarationStatementSyntax? variableDeclaration = blockSyntax?.Statements
             .OfType<LocalDeclarationStatementSyntax>()
-            .FirstOrDefault(v => v.Declaration.Variables.Any(var => var.Identifier.Text == identifierName.Identifier.Text));
+            .FirstOrDefault(v => v.Declaration.Variables.Any(var => string.Equals(var.Identifier.Text, identifierName.Identifier.Text, StringComparison.Ordinal)));
 
         if (variableDeclaration == null)
         {
@@ -127,4 +129,6 @@ public class EventInvocationCodeFixProvider : CodeFixProvider
 
         return document;
     }
+#pragma warning restore S125 // Removed commented out code
+#pragma warning restore MA0051 // Method is too long
 }
