@@ -41,6 +41,21 @@ public class FormattableStringForCultureSpecificStringsTests
             private readonly FormattableString _message = $"The speed of light is {SpeedOfLight:N3} km/s.";
             """,
 
+            // This should not trigger the analyzer because strings are lowered to a string.Concat
+            """
+            public string M()
+            {
+                string h = "hello";
+                string w = "world";
+                return $"{h}, {w}!";
+            }
+            """,
+            """
+            private static readonly string h = "hello";
+            private static readonly string w = "world";
+            private static readonly string hw = $"{h}, {w}!";
+            """,
+
             // Conditional interpolated string
             """
             private const bool condition = false;

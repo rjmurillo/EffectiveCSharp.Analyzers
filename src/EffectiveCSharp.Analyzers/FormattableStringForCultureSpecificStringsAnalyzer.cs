@@ -44,7 +44,7 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
         InterpolatedStringExpressionSyntax interpolatedString = (InterpolatedStringExpressionSyntax)context.Node;
         SyntaxNode? parent = interpolatedString.Parent;
 
-        if (parent == null)
+        if (parent == null || IsSimpleStringConcatenation(interpolatedString, context))
         {
             return;
         }
@@ -63,6 +63,32 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
         {
             ReportDiagnostic(context, interpolatedString, "FormattableString", "string");
         }
+    }
+
+    private static bool IsSimpleStringConcatenation(InterpolatedStringExpressionSyntax interpolatedString, SyntaxNodeAnalysisContext context)
+    {
+        foreach (InterpolatedStringContentSyntax content in interpolatedString.Contents)
+        {
+            if (content is not InterpolationSyntax interpolation)
+            {
+                continue;
+            }
+
+            TypeInfo typeInfo = context.SemanticModel.GetTypeInfo(interpolation.Expression, context.CancellationToken);
+            if (typeInfo.Type?.SpecialType != SpecialType.System_String
+                || ContainsComplexFormatting(interpolation.Expression))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ContainsComplexFormatting(ExpressionSyntax expression)
+    {
+        // Check if the expression contains any method invocations or more complex operations
+        return expression is InvocationExpressionSyntax or BinaryExpressionSyntax;
     }
 
     private static ITypeSymbol? GetAssignmentTargetType(SyntaxNodeAnalysisContext context, AssignmentExpressionSyntax assignment)
