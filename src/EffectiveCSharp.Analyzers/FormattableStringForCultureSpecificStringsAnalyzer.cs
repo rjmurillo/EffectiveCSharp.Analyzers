@@ -49,35 +49,82 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
             return;
         }
 
-        ITypeSymbol? targetType = null;
-
-        if (parent is AssignmentExpressionSyntax assignment)
+        ITypeSymbol? targetType = parent switch
         {
-            // Handling direct assignment in method scope
-            targetType = context.SemanticModel.GetTypeInfo(assignment.Left, context.CancellationToken).Type;
-        }
-        else if (parent is EqualsValueClauseSyntax equalsValueClause)
-        {
-            SyntaxNode? declaration = equalsValueClause.Parent;
+            AssignmentExpressionSyntax assignment => GetAssignmentTargetType(context, assignment),
+            EqualsValueClauseSyntax equalsValueClause => GetEqualsValueClauseTargetType(context, equalsValueClause),
+            ConditionalExpressionSyntax conditionalExpression => GetConditionalExpressionTargetType(context, conditionalExpression),
+            ParenthesizedLambdaExpressionSyntax or SimpleLambdaExpressionSyntax => GetLambdaTargetType(context, parent),
+            ArgumentSyntax argument => GetArgumentTargetType(context, argument),
+            _ => null
+        };
 
-            // Handling variable/field initialization
-            if (declaration is VariableDeclaratorSyntax variableDeclarator)
-            {
-                ISymbol? symbol = context.SemanticModel.GetDeclaredSymbol(variableDeclarator, context.CancellationToken);
-                targetType = (symbol as ILocalSymbol)?.Type ?? (symbol as IFieldSymbol)?.Type;
-            }
-            // Handling property initialization
-            else if (declaration is PropertyDeclarationSyntax propertyDeclaration)
-            {
-                targetType = context.SemanticModel.GetTypeInfo(propertyDeclaration.Type, context.CancellationToken).Type;
-            }
-        }
-
-        // If the target type is string (and not FormattableString), report a diagnostic
         if (targetType?.SpecialType == SpecialType.System_String)
         {
             ReportDiagnostic(context, interpolatedString, "FormattableString", "string");
         }
+    }
+
+    private static ITypeSymbol? GetAssignmentTargetType(SyntaxNodeAnalysisContext context, AssignmentExpressionSyntax assignment)
+    {
+        return context.SemanticModel.GetTypeInfo(assignment.Left, context.CancellationToken).Type;
+    }
+
+    private static ITypeSymbol? GetEqualsValueClauseTargetType(SyntaxNodeAnalysisContext context, EqualsValueClauseSyntax equalsValueClause)
+    {
+        SyntaxNode? declaration = equalsValueClause.Parent;
+        switch (declaration)
+        {
+            case VariableDeclaratorSyntax variableDeclarator:
+                ISymbol? symbol = context.SemanticModel.GetDeclaredSymbol(variableDeclarator, context.CancellationToken);
+                ITypeSymbol? typeSymbol = (symbol as ILocalSymbol)?.Type ?? (symbol as IFieldSymbol)?.Type;
+
+                // Check if the type is a generic (like Func<string>) and unpack the target type
+                if (typeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol)
+                {
+                    ITypeSymbol? returnType = namedTypeSymbol.TypeArguments.FirstOrDefault();
+                    if (returnType?.SpecialType == SpecialType.System_String)
+                    {
+                        return returnType;
+                    }
+                }
+
+                return typeSymbol;
+            case PropertyDeclarationSyntax propertyDeclaration:
+                return context.SemanticModel.GetTypeInfo(propertyDeclaration.Type, context.CancellationToken).Type;
+            default:
+                return null;
+        }
+    }
+
+    private static ITypeSymbol? GetConditionalExpressionTargetType(SyntaxNodeAnalysisContext context, ConditionalExpressionSyntax conditionalExpression)
+    {
+        return context.SemanticModel.GetTypeInfo(conditionalExpression, context.CancellationToken).Type;
+    }
+
+    private static ITypeSymbol? GetLambdaTargetType(SyntaxNodeAnalysisContext context, SyntaxNode parent)
+    {
+        // Lambdas are usually within EqualsValueClauseSyntax, so we can reuse the method
+        if (parent.Parent is EqualsValueClauseSyntax lambdaParent)
+        {
+            return GetEqualsValueClauseTargetType(context, lambdaParent);
+        }
+
+        return null;
+    }
+
+    private static ITypeSymbol? GetArgumentTargetType(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+    {
+        InvocationExpressionSyntax? methodInvocation = argument.Parent?.Parent as InvocationExpressionSyntax;
+        if (methodInvocation != null
+            && context.SemanticModel.GetSymbolInfo(methodInvocation, context.CancellationToken).Symbol is IMethodSymbol methodSymbol
+            && string.Equals(methodSymbol.ContainingType.Name, "StringBuilder", StringComparison.Ordinal)
+            && string.Equals(methodSymbol.ContainingNamespace.ToDisplayString(), "System.Text", StringComparison.Ordinal))
+        {
+            return context.Compilation.GetTypeByMetadataName("System.String");
+        }
+
+        return null;
     }
 
     private static void ReportDiagnostic(SyntaxNodeAnalysisContext context, InterpolatedStringExpressionSyntax interpolatedString, string suggestion, string original)

@@ -30,9 +30,10 @@ public class FormattableStringForCultureSpecificStringsTests
 
             // Should trigger the analyzer: local variable assignment
             """
-            public void SomeMethod()
+            public string M()
             {
                 string message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                return message;
             }
             """,
 
@@ -40,6 +41,45 @@ public class FormattableStringForCultureSpecificStringsTests
             """
             private readonly FormattableString _message = $"The speed of light is {SpeedOfLight:N3} km/s.";
             """,
+
+            // Conditional interpolated string
+            """
+            private const bool condition = false;
+            private readonly string? _message = condition ? {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|} : null;
+            """,
+
+            // StringBuilder
+            """
+            private string M()
+            {
+              var builder = new StringBuilder();
+              builder.Append({|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|});
+              return builder.ToString();
+            }
+            """,
+
+            // With formatting
+            """
+            private readonly string _message = {|ECS0005:$"The speed of light is {SpeedOfLight,10:N3} km/s."|};
+            """,
+
+            // Nested interpolated strings
+            """
+            private readonly string _message = {|ECS0005:$"The speed of light is {string.Create(CultureInfo.InvariantCulture, $"{SpeedOfLight:N3}")} km/s."|};
+            """,
+
+            // Complex expressions in interpolated strings
+            """
+            private string M()
+            {
+              return $"The speed of light is {Math.Round(SpeedOfLight, 2):N2} km/s.";
+            }
+            """,
+
+            // Local functions and lambdas
+            """
+            Func<string> lambda = () => {|ECS0005:$"The speed of light is {SpeedOfLight,10:N3} km/s."|};
+            """
         };
         return data.WithReferenceAssemblyGroups(p => p == ReferenceAssemblyCatalog.Latest);
     }
