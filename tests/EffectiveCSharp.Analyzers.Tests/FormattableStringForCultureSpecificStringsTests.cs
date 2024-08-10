@@ -1,5 +1,4 @@
-﻿using Xunit.Abstractions;
-using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.FormattableStringForCultureSpecificStringsAnalyzer>;
+﻿using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.FormattableStringForCultureSpecificStringsAnalyzer>;
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
@@ -79,9 +78,9 @@ public class FormattableStringForCultureSpecificStringsTests
             // Local functions and lambdas
             """
             Func<string> lambda = () => {|ECS0005:$"The speed of light is {SpeedOfLight,10:N3} km/s."|};
-            """
+            """,
         };
-        return data.WithReferenceAssemblyGroups(p => p == ReferenceAssemblyCatalog.Latest);
+        return data.WithReferenceAssemblyGroups(p => ReferenceAssemblyCatalog.DotNetCore.Contains(p, StringComparer.Ordinal));
     }
 
     [Theory]

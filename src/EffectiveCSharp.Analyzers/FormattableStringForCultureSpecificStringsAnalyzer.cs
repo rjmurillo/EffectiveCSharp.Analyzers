@@ -1,7 +1,7 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
-/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #5 - Use FormattableString for culture specific strings
+/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #5 - Use FormattableString for culture specific strings.
 /// </summary>
 /// <seealso cref="Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
@@ -56,7 +56,7 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
             ConditionalExpressionSyntax conditionalExpression => GetConditionalExpressionTargetType(context, conditionalExpression),
             ParenthesizedLambdaExpressionSyntax or SimpleLambdaExpressionSyntax => GetLambdaTargetType(context, parent),
             ArgumentSyntax argument => GetArgumentTargetType(context, argument),
-            _ => null
+            _ => null,
         };
 
         if (targetType?.SpecialType == SpecialType.System_String)
@@ -115,8 +115,7 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
 
     private static ITypeSymbol? GetArgumentTargetType(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
     {
-        InvocationExpressionSyntax? methodInvocation = argument.Parent?.Parent as InvocationExpressionSyntax;
-        if (methodInvocation != null
+        if (argument.Parent?.Parent is InvocationExpressionSyntax methodInvocation
             && context.SemanticModel.GetSymbolInfo(methodInvocation, context.CancellationToken).Symbol is IMethodSymbol methodSymbol
             && string.Equals(methodSymbol.ContainingType.Name, "StringBuilder", StringComparison.Ordinal)
             && string.Equals(methodSymbol.ContainingNamespace.ToDisplayString(), "System.Text", StringComparison.Ordinal))
