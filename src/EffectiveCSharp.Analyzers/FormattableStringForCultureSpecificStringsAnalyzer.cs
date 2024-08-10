@@ -16,7 +16,7 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
             Categories.Globalization,
             DiagnosticSeverity.Info,
             isEnabledByDefault: true,
-            helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{DiagnosticIds.PreferFormattableStringForCultureSpecificStrings}.md");
+            helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.PreferFormattableStringForCultureSpecificStrings}.md");
 
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
