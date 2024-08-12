@@ -4,15 +4,8 @@ namespace EffectiveCSharp.Analyzers.Tests;
 
 #pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
 
-public class FormattableStringForCultureSpecificStringsTests
+public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper _output;
-
-    public FormattableStringForCultureSpecificStringsTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
     public static TheoryData<string, string> TestData()
     {
         TheoryData<string> data = new()
@@ -111,7 +104,7 @@ public class FormattableStringForCultureSpecificStringsTests
                         }
                         """;
 
-        _output.WriteLine(code);
+        output.WriteLine(code);
 
         await Verifier.VerifyAnalyzerAsync(
             code,
