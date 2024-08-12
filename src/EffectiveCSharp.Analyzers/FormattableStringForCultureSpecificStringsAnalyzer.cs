@@ -61,7 +61,25 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
 
         if (targetType?.SpecialType == SpecialType.System_String)
         {
-            ReportDiagnostic(context, interpolatedString, "FormattableString", "string");
+            /*
+             * To align the analyzer with the guidance provided by Stephen Toub for .NET 6 and later,
+             * we should favor `string.Create` over `FormattableString` when formatting culture-specific
+             * strings.
+             *
+             * See https://devblogs.microsoft.com/dotnet/string-interpolation-in-c-10-and-net-6/
+             */
+
+            // Check if we're targeting .NET 6 or later.
+            if (context.Compilation.IsCSharpVersionOrLater(LanguageVersion.CSharp10))
+            {
+                // Favor `string.Create`
+                ReportDiagnostic(context, interpolatedString, "string.Create", "string");
+            }
+            else
+            {
+                // Pre-.NET 6, favor FormattableString
+                ReportDiagnostic(context, interpolatedString, "FormattableString", "string");
+            }
         }
     }
 
