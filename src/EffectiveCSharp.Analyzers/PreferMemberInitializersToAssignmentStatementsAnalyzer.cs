@@ -41,8 +41,18 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         description: "Field initialization should not occur when there are diverging initializations in constructos. This is to prevent unnecessary allocations.",
         helpLinkUri: HelpLinkUri);
 
+    private static readonly DiagnosticDescriptor RuleShouldInitializeInDeclarationWhenNoInitializationPresent = new(
+        id: DiagnosticIds.PreferMemberInitializersWhenNoInitializationPresent,
+        title: "Should initialize in declaration when no initialization present",
+        messageFormat: "Initialize the field in its declaration when no distint initializations will occur in constructors",
+        category: "Maintainability",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Field initialization should occur in the declaration unless there are diverging initializations in constructors, or the field is a value type or nullable being initialized to the default.",
+        helpLinkUri: HelpLinkUri);
+
     /// <inheritdoc />
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(GeneralRule, RuleExceptionInitializeToNullOrZero, RuleExceptionShouldNotInitializeInDeclaration);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(GeneralRule, RuleExceptionInitializeToNullOrZero, RuleExceptionShouldNotInitializeInDeclaration, RuleShouldInitializeInDeclarationWhenNoInitializationPresent);
 
     /// <inheritdoc />
     public override void Initialize(AnalysisContext context)
@@ -120,7 +130,7 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
             }
             else if (!field.FieldHasInitializer && !field.IsZeroOrNullInitializableType)
             {
-                context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(GeneralRule));
+                context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleShouldInitializeInDeclarationWhenNoInitializationPresent));
             }
         }
     }

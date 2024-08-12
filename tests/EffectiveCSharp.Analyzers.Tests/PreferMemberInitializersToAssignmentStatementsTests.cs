@@ -108,7 +108,7 @@ public class PreferMemberInitializersToAssignmentStatementsTests
             """
             public class MyClass
             {
-              {|ECS1200:private List<string> listOfString;|}
+              {|ECS1203:private List<string> listOfString;|}
 
               public MyClass()
               {
@@ -188,7 +188,7 @@ public class PreferMemberInitializersToAssignmentStatementsTests
         """
           public class MyClass
           {
-            {|ECS1200:private List<string> listOfString;|}
+            {|ECS1203:private List<string> listOfString;|}
 
             public MyClass()
             {
@@ -203,6 +203,118 @@ public class PreferMemberInitializersToAssignmentStatementsTests
             private List<string> listOfString = new List<string>();
 
             public MyClass()
+            {
+            }
+          }
+        """;
+
+        await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task CodeFixInitializedToNullOrZero()
+    {
+        const string testCode =
+        """
+          public class MyClass
+          {
+            {|ECS1201:private string? myString = null;|}
+
+            public MyClass()
+            {
+            }
+          }
+        """;
+
+        const string fixedCode =
+        """
+          public class MyClass
+          {
+            private string? myString;
+
+            public MyClass()
+            {
+            }
+          }
+        """;
+
+        await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task CodeFixDivergingInitializations()
+    {
+        const string testCode =
+        """
+          public class MyClass
+          {
+            {|ECS1202:private List<string> listOfString = new List<string>();|}
+
+            public MyClass()
+            {
+              listOfString = new List<string>();
+            }
+
+            public MyClass(int size)
+            {
+              listOfString = new List<string>(size);
+            }
+          }
+        """;
+
+        const string fixedCode =
+        """
+          public class MyClass
+          {
+            private List<string> listOfString;
+
+            public MyClass()
+            {
+              listOfString = new List<string>();
+            }
+
+            public MyClass(int size)
+            {
+              listOfString = new List<string>(size);
+            }
+          }
+        """;
+
+        await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task CodeFixInitializeInDeclarationWhenIdenticalInitializations()
+    {
+        const string testCode =
+        """
+          public class MyClass
+          {
+            private List<string> listOfString = new List<string>();
+
+            public MyClass()
+            {
+              {|ECS1200:listOfString = new List<string>();|}
+            }
+
+            public MyClass(int size)
+            {
+              {|ECS1200:listOfString = new List<string>();|}
+            }
+          }
+        """;
+
+        const string fixedCode =
+        """
+          public class MyClass
+          {
+            private List<string> listOfString = new List<string>();
+
+            public MyClass()
+            {
+            }
+
+            public MyClass(int size)
             {
             }
           }

@@ -11,4 +11,5 @@ internal static class DiagnosticIds
     internal const string PreferMemberInitializersToAssignmentStatement = "ECS1200";
     internal const string PreferMemberInitializersExceptNullOrZero = "ECS1201";
     internal const string PreferMemberInitializersExceptWhenVaryingInitializations = "ECS1202";
+    internal const string PreferMemberInitializersWhenNoInitializationPresent = "ECS1203";
 }
