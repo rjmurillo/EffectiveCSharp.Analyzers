@@ -29,7 +29,7 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
             }
             """,
 
-            // This should not trigger the analyzer because no actual formatting has taken place
+            // This should not trigger the analyzer because no actual formatting has taken place, just instructions about the format
             """
             private readonly FormattableString _message = $"The speed of light is {SpeedOfLight:N3} km/s.";
             """,
