@@ -1,4 +1,5 @@
-﻿using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.FormattableStringForCultureSpecificStringsAnalyzer>;
+﻿using CodeFixVerifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerAndCodeFixVerifier<EffectiveCSharp.Analyzers.FormattableStringForCultureSpecificStringsAnalyzer, EffectiveCSharp.Analyzers.FormattableStringForCultureSpecificStringsCodeFixProvider>;
+using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.FormattableStringForCultureSpecificStringsAnalyzer>;
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
@@ -109,5 +110,51 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
         await Verifier.VerifyAnalyzerAsync(
             code,
             referenceAssemblyGroup);
+    }
+
+    [Fact]
+    public async Task CodeFix_Net6()
+    {
+        const string testCode = """
+                          public class C
+                          {
+                            private const double SpeedOfLight = 299_792.458;
+                            private readonly string _message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                            public string Message { get; set; } = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                            public string M()
+                            {
+                              string message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                              return message;
+                            }
+                            public string S()
+                            {
+                              string h = "hello";
+                              string w = "world";
+                              return $"{h}, {w}!";
+                            }
+                          }
+                          """;
+
+        const string fixedCode = """
+                           public class C
+                           {
+                             private const double SpeedOfLight = 299_792.458;
+                             private readonly string _message = string.Create(CultureInfo.CurrentCulture, $"The speed of light is {SpeedOfLight:N3} km/s.");
+                             public string Message { get; set; } = string.Create(CultureInfo.CurrentCulture, $"The speed of light is {SpeedOfLight:N3} km/s.");
+                             public string M()
+                             {
+                               string message = string.Create(CultureInfo.CurrentCulture, $"The speed of light is {SpeedOfLight:N3} km/s.");
+                               return message;
+                             }
+                             public string S()
+                             {
+                               string h = "hello";
+                               string w = "world";
+                               return $"{h}, {w}!";
+                             }
+                           }
+                           """;
+
+        await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net60);
     }
 }
