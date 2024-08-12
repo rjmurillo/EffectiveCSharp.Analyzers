@@ -12,4 +12,3 @@ ECS0006 | Refactoring | Info | AvoidStringlyTypedApisAnalyzer, [Documentation](h
 ECS0007 | Design | Info | ExpressCallbacksWithDelegatesAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/dc194bbde030e9c40d8d9cdb1e0b5ff8919fe5a8/docs/rules/ECS0007.md)
 ECS0008 | Usage | Info | EventInvocationAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/cc7d91eb81f6781851c09732db1268be7dab402b/docs/rules/ECS0008.md)
 ECS0009 | Performance | Info | MinimizeBoxingUnboxingAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/6213cba8473dac61d6132e205550884eae1c94bf/docs/rules/ECS0009.md)
-ECS1000 | Performance | Info | SpanAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/d00a4cc9f61e7d5b392894aad859e46c43a5611c/docs/rules/ECS1000.md)
