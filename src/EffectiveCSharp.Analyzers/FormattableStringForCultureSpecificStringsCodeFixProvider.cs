@@ -77,7 +77,6 @@ public class FormattableStringForCultureSpecificStringsCodeFixProvider : CodeFix
                     SyntaxFactory.Argument(interpolatedString),
                 }));
 
-
         InvocationExpressionSyntax invocation = SyntaxFactory.InvocationExpression(
             SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)), SyntaxFactory.IdentifierName("Create")),
             arguments);
