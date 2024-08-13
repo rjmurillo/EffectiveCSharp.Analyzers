@@ -108,11 +108,15 @@ internal static class CompilationExtensions
     /// </summary>
     /// <param name="compilation">The compilation.</param>
     /// <returns>
-    /// A <see cref="Tuple{Version, LanguageVersion}"/>:
+    /// A <see cref="Tuple{Version, LanguageVersion, LanguageVersion}"/>:
     /// <list type="unordered">
     ///     <item>
     ///         <term><see cref="Version"/></term>
     ///         <description>Contains the version of the assembly containing the type <see cref="object"/>.</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="LanguageVersion" /></term>
+    ///         <description>The documented default language version for a given .NET version from <see cref="DotNet.LangVersion.FromDotNetVersion"/>. </description>
     ///     </item>
     ///     <item>
     ///         <term><see cref="LanguageVersion" /></term>
@@ -125,6 +129,7 @@ internal static class CompilationExtensions
     /// on a newer runtime, or downgrade the runtime with a newer language. When picking up issues, we want to
     /// make sure analyzers and code fix providers are finding legitimate issues and offering compatible solutions.
     /// </remarks>
+    /// <seealso cref="DotNet.LangVersion.FromDotNetVersion"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static (Version? DotNetVersion, LanguageVersion? DotNetLanguageVersion, LanguageVersion? CompilerLanguageVersion) GetVersions(this Compilation compilation)
     {
