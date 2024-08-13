@@ -51,12 +51,14 @@ internal static class DotNet
         {
             return version?.Major switch
             {
+                3 when version.Minor == 5 => LanguageVersion.CSharp3,
+
                 // .NET Framework versions
                 4 when version.Minor == 8 => LanguageVersion.CSharp8,
-                4 when version is { Minor: 7, Revision: 2 } => LanguageVersion.CSharp7_2,
-                4 when version is { Minor: 7, Revision: 1 } => LanguageVersion.CSharp7_1,
+                4 when version is { Minor: 7, Build: 2 } => LanguageVersion.CSharp7_3,
+                4 when version is { Minor: 7, Build: 1 } => LanguageVersion.CSharp7_1,
                 4 when version is { Minor: 7 } => LanguageVersion.CSharp7,
-                4 when version is { Minor: 6, Revision: 2 } => LanguageVersion.CSharp7,
+                4 when version is { Minor: 6, Build: 2 } => LanguageVersion.CSharp7,
                 4 when version is { Minor: 6 } => LanguageVersion.CSharp6,
 
                 // .NET Core versions
@@ -67,6 +69,11 @@ internal static class DotNet
                     // REVIEW: This should be CSharp11, but it's not available in the enum
                     LanguageVersion.CSharp10,
                 8 =>
+
+                    // REVIEW: This should be CSharp12, but it's not available in the enum
+                    LanguageVersion.CSharp10,
+
+                9 =>
 
                     // REVIEW: This should be CSharp12, but it's not available in the enum
                     LanguageVersion.CSharp10,
