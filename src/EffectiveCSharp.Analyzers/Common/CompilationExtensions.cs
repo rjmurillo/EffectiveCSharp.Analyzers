@@ -50,7 +50,7 @@ internal static class CompilationExtensions
     /// Gets the version from the compilation's referenced types.
     /// </summary>
     /// <param name="compilation">The compilation.</param>
-    /// <returns>A <see cref="Version"/> if there is a <see cref="System.Object"/> that can be located; otherwise, performs feature detection.</returns>
+    /// <returns>A <see cref="Version"/> if there is a <see cref="object"/> that can be located; otherwise, performs feature detection.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Version? GetDotNetVersionFromCompilation(this Compilation compilation)
     {
@@ -112,7 +112,7 @@ internal static class CompilationExtensions
     /// <list type="unordered">
     ///     <item>
     ///         <term><see cref="Version"/></term>
-    ///         <description>Contains the version of the assembly containing the type <see cref="System.Object"/>.</description>
+    ///         <description>Contains the version of the assembly containing the type <see cref="object"/>.</description>
     ///     </item>
     ///     <item>
     ///         <term><see cref="LanguageVersion" /></term>
@@ -126,11 +126,12 @@ internal static class CompilationExtensions
     /// make sure analyzers and code fix providers are finding legitimate issues and offering compatible solutions.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static (Version? DotNetVersion, LanguageVersion? CompilerLanguageVersion) GetVersions(this Compilation compilation)
+    internal static (Version? DotNetVersion, LanguageVersion? DotNetLanguageVersion, LanguageVersion? CompilerLanguageVersion) GetVersions(this Compilation compilation)
     {
         Version? version = GetDotNetVersionFromCompilation(compilation);
-        LanguageVersion? lang = GetLanguageVersionFromCompilation(compilation);
+        LanguageVersion? compilerLanguageVersion = GetLanguageVersionFromCompilation(compilation);
+        LanguageVersion? dotnetLanguageVersion = DotNet.LangVersion.FromDotNetVersion(version);
 
-        return (version, lang);
+        return (version, dotnetLanguageVersion, compilerLanguageVersion);
     }
 }

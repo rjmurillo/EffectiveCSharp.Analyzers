@@ -61,8 +61,8 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
 
         if (targetType?.SpecialType == SpecialType.System_String)
         {
-            (Version? DotNetVersion, LanguageVersion? CompilerLanguageVersion) versions = context.Compilation.GetVersions();
-            if (versions.CompilerLanguageVersion is null || versions.DotNetVersion is null)
+            (Version? dotNetVersion, _, LanguageVersion? compilerLanguageVersion) = context.Compilation.GetVersions();
+            if (compilerLanguageVersion is null || dotNetVersion is null)
             {
                 return;
             }
@@ -74,28 +74,26 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
              *
              * See https://devblogs.microsoft.com/dotnet/string-interpolation-in-c-10-and-net-6/
              */
-            switch (versions.CompilerLanguageVersion)
+            switch (compilerLanguageVersion)
             {
                 // string.Create was introduced in C# 10 and .NET 6
-                case >= LanguageVersion.CSharp10 when versions.DotNetVersion >= DotNet.Versions.DotNet6:
+                case >= LanguageVersion.CSharp10 when dotNetVersion >= DotNet.Versions.DotNet6:
                     // Favor `string.Create`
                     ReportDiagnostic(context, interpolatedString, "string.Create", "string");
                     break;
 
                 // Pre-.NET 6, favor FormattableString
-                case >= LanguageVersion.CSharp9 when versions.DotNetVersion >= DotNet.Versions.DotNet5:
+                case >= LanguageVersion.CSharp9 when dotNetVersion >= DotNet.Versions.DotNet5:
                     ReportDiagnostic(context, interpolatedString, "FormattableString", "string");
                     break;
 
                 // Interpolated strings were introduced in C# 6 and .NET Framework 4.6, but we don't have fancy features
-                case >= LanguageVersion.CSharp6 when versions.DotNetVersion >= DotNet.Versions.DotNet46:
+                case >= LanguageVersion.CSharp6 when dotNetVersion >= DotNet.Versions.DotNet46:
                     ReportDiagnostic(context, interpolatedString, "string.Format", "string");
                     break;
             }
         }
     }
-
-
 
     private static bool IsSimpleStringConcatenation(InterpolatedStringExpressionSyntax interpolatedString, SyntaxNodeAnalysisContext context)
     {
