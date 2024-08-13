@@ -19,10 +19,16 @@ public class FormattableStringForCultureSpecificStringsCodeFixProvider : CodeFix
     /// <inheritdoc />
     public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
+        SemanticModel? semanticModel = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
+
+        if (semanticModel == null)
+        {
+            return;
+        }
+
         SyntaxNode? root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
         Diagnostic diagnostic = context.Diagnostics[0];
         TextSpan diagnosticSpan = diagnostic.Location.SourceSpan;
-
         // Find the interpolated string expression identified by the diagnostic
         InterpolatedStringExpressionSyntax? interpolatedString = root?.FindToken(diagnosticSpan.Start).Parent?.AncestorsAndSelf().OfType<InterpolatedStringExpressionSyntax>().First();
 
@@ -31,32 +37,73 @@ public class FormattableStringForCultureSpecificStringsCodeFixProvider : CodeFix
             return;
         }
 
-        context.RegisterCodeFix(
-            CodeAction.Create(
-                title: Title,
-                createChangedSolution: c => UseCultureSpecificStringAsync(context.Document, interpolatedString, c),
-                equivalenceKey: Title),
-            diagnostic);
+        Compilation compilation = semanticModel.Compilation;
+
+        (Version? DotNetVersion, LanguageVersion? CompilerLanguageVersion) versions = compilation.GetVersions();
+        if (versions.CompilerLanguageVersion is null || versions.DotNetVersion is null)
+        {
+            return;
+        }
+
+        // REVIEW: A similar version of this logic is in the analyzer as well
+        switch (versions.CompilerLanguageVersion)
+        {
+            // string.Create was introduced in C# 10 and .NET 6
+            // .NET 6+, favor `string.Create`
+            case >= LanguageVersion.CSharp10 when versions.DotNetVersion >= DotNet.Versions.DotNet6:
+
+            // Pre-.NET 6, favor FormattableString
+            case >= LanguageVersion.CSharp9 when versions.DotNetVersion >= DotNet.Versions.DotNet5:
+                context.RegisterCodeFix(
+                    CodeAction.Create(
+                        title: Title,
+                        createChangedSolution: c => UseCultureSpecificStringAsync(context.Document, semanticModel, interpolatedString, c),
+                        equivalenceKey: Title),
+                    diagnostic);
+                break;
+        }
     }
 
-    private static async Task<Solution> UseCultureSpecificStringAsync(Document document, InterpolatedStringExpressionSyntax interpolatedString, CancellationToken cancellationToken)
+    private static async Task<Solution> UseCultureSpecificStringAsync(
+        Document document,
+        SemanticModel semanticModel,
+        InterpolatedStringExpressionSyntax interpolatedString,
+        CancellationToken cancellationToken)
     {
-        SemanticModel? semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+        SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
-        if (semanticModel == null)
+        if (root == null)
         {
             return document.Project.Solution;
         }
 
         Compilation compilation = semanticModel.Compilation;
 
-        ExpressionSyntax newExpression = compilation.IsCSharpVersionOrLater(LanguageVersion.CSharp10)
-            ? CreateStringCreateExpression(interpolatedString)
-            : CreateFormattableStringExpression(interpolatedString);
+        (Version? DotNetVersion, LanguageVersion? CompilerLanguageVersion) versions = compilation.GetVersions();
+        if (versions.CompilerLanguageVersion is null || versions.DotNetVersion is null)
+        {
+            return document.Project.Solution;
+        }
 
-        SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        ExpressionSyntax? newExpression = null;
 
-        if (root == null)
+        // REVIEW: A similar version of this logic is in the analyzer as well
+        switch (versions.CompilerLanguageVersion)
+        {
+            // string.Create was introduced in C# 10 and .NET 6
+            // .NET 6+, favor `string.Create`
+            case >= LanguageVersion.CSharp10 when versions.DotNetVersion >= DotNet.Versions.DotNet6:
+
+                newExpression = CreateStringCreateExpression(interpolatedString);
+                break;
+
+            // Pre-.NET 6, favor FormattableString
+            case >= LanguageVersion.CSharp9 when versions.DotNetVersion >= DotNet.Versions.DotNet5:
+                newExpression = CreateFormattableStringWithCurrentCultureExpression(interpolatedString);
+                break;
+        }
+
+        if (newExpression == null)
         {
             return document.Project.Solution;
         }
@@ -84,7 +131,7 @@ public class FormattableStringForCultureSpecificStringsCodeFixProvider : CodeFix
         return invocation;
     }
 
-    private static InvocationExpressionSyntax CreateFormattableStringExpression(InterpolatedStringExpressionSyntax interpolatedString)
+    private static InvocationExpressionSyntax CreateFormattableStringWithCurrentCultureExpression(InterpolatedStringExpressionSyntax interpolatedString)
     {
         // Replace with FormattableString.CurrentCulture(...) just to be explicit about what was happening before
         InvocationExpressionSyntax invocation = SyntaxFactory.InvocationExpression(

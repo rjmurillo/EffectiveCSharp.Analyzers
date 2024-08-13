@@ -89,6 +89,11 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
             Func<string> lambda = () => {|ECS0005:$"The speed of light is {SpeedOfLight,10:N3} km/s."|};
             """,
         };
+
+        // FormattableString was introduced in C# 6.0 and .NET 4.6 with extended capabilities up through C# 9.0
+        // string.Create was introduced in C# 10 and .NET 6
+
+        // REVIEW: There's a similar version of this logic in the analyzer and code fix provider as well
         return data.WithReferenceAssemblyGroups(p => ReferenceAssemblyCatalog.DotNetCore.Contains(p, StringComparer.Ordinal));
     }
 
@@ -156,5 +161,31 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
                            """;
 
         await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net60);
+    }
+
+    [Fact]
+    public async Task Analyzer_Net462()
+    {
+        const string testCode = """
+                          public class C
+                          {
+                            private const double SpeedOfLight = 299_792.458;
+                            private readonly string _message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                            public string Message { get; set; } = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                            public string M()
+                            {
+                              string message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                              return message;
+                            }
+                            public string S()
+                            {
+                              string h = "hello";
+                              string w = "world";
+                              return $"{h}, {w}!";
+                            }
+                          }
+                          """;
+
+        await Verifier.VerifyAnalyzerAsync(testCode, ReferenceAssemblyCatalog.Net462);
     }
 }

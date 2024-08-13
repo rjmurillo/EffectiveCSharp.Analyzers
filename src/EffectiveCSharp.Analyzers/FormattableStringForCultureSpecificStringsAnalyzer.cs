@@ -7,8 +7,8 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnalyzer
 {
-    private static readonly LocalizableString Title = "Prefer FormattableString for culture-specific strings";
-    private static readonly LocalizableString MessageFormat = "Use 'FormattableString' instead of 'string' for culture-specific interpolated strings";
+    private static readonly LocalizableString Title = "Prefer FormattableString or string.Create for culture-specific strings";
+    private static readonly LocalizableString MessageFormat = "Use '{0}' instead of '{1}' for culture-specific interpolated strings";
     private static readonly DiagnosticDescriptor Rule = new(
             DiagnosticIds.PreferFormattableStringForCultureSpecificStrings,
             Title,
@@ -29,8 +29,8 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
 
         context.RegisterCompilationStartAction(compilationContext =>
         {
-            CSharpParseOptions? parseOptions = compilationContext.Compilation.SyntaxTrees.FirstOrDefault()?.Options as CSharpParseOptions;
-            if (parseOptions != null && parseOptions.LanguageVersion < LanguageVersion.CSharp10)
+            // String interpolation was introduced in C# 6
+            if (!compilationContext.Compilation.IsCSharpVersionOrLater(LanguageVersion.CSharp6))
             {
                 return;
             }
@@ -61,6 +61,12 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
 
         if (targetType?.SpecialType == SpecialType.System_String)
         {
+            (Version? DotNetVersion, LanguageVersion? CompilerLanguageVersion) versions = context.Compilation.GetVersions();
+            if (versions.CompilerLanguageVersion is null || versions.DotNetVersion is null)
+            {
+                return;
+            }
+
             /*
              * To align the analyzer with the guidance provided by Stephen Toub for .NET 6 and later,
              * we should favor `string.Create` over `FormattableString` when formatting culture-specific
@@ -68,25 +74,34 @@ public class FormattableStringForCultureSpecificStringsAnalyzer : DiagnosticAnal
              *
              * See https://devblogs.microsoft.com/dotnet/string-interpolation-in-c-10-and-net-6/
              */
+            switch (versions.CompilerLanguageVersion)
+            {
+                // string.Create was introduced in C# 10 and .NET 6
+                case >= LanguageVersion.CSharp10 when versions.DotNetVersion >= DotNet.Versions.DotNet6:
+                    // Favor `string.Create`
+                    ReportDiagnostic(context, interpolatedString, "string.Create", "string");
+                    break;
 
-            // Check if we're targeting .NET 6 or later.
-            if (context.Compilation.IsCSharpVersionOrLater(LanguageVersion.CSharp10))
-            {
-                // Favor `string.Create`
-                ReportDiagnostic(context, interpolatedString, "string.Create", "string");
-            }
-            else
-            {
                 // Pre-.NET 6, favor FormattableString
-                ReportDiagnostic(context, interpolatedString, "FormattableString", "string");
+                case >= LanguageVersion.CSharp9 when versions.DotNetVersion >= DotNet.Versions.DotNet5:
+                    ReportDiagnostic(context, interpolatedString, "FormattableString", "string");
+                    break;
+
+                // Interpolated strings were introduced in C# 6 and .NET Framework 4.6, but we don't have fancy features
+                case >= LanguageVersion.CSharp6 when versions.DotNetVersion >= DotNet.Versions.DotNet46:
+                    ReportDiagnostic(context, interpolatedString, "string.Format", "string");
+                    break;
             }
         }
     }
 
+
+
     private static bool IsSimpleStringConcatenation(InterpolatedStringExpressionSyntax interpolatedString, SyntaxNodeAnalysisContext context)
     {
-        foreach (InterpolatedStringContentSyntax content in interpolatedString.Contents)
+        for (int i = 0; i < interpolatedString.Contents.Count; i++)
         {
+            InterpolatedStringContentSyntax content = interpolatedString.Contents[i];
             if (content is not InterpolationSyntax interpolation)
             {
                 continue;
