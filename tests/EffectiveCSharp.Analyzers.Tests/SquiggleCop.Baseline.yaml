@@ -579,7 +579,6 @@
 - {Id: MA0158, Title: Use System.Threading.Lock, Category: Performance, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0159, Title: Use 'Order' instead of 'OrderBy', Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0160, Title: Use ContainsKey instead of TryGetValue, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
-- {Id: POLYSP0003, Title: Unsupported C# language version, Category: Microsoft.CodeAnalysis.CSharp.CSharpParseOptions, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: RCS1001, Title: Add braces (when expression spans over multiple lines), Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1002, Title: Remove braces, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: false}
 - {Id: RCS1002FadeOut, Title: Remove braces, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
@@ -785,7 +784,7 @@
 - {Id: RCS1228, Title: Unused element in a documentation comment, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1229, Title: Use async/await when necessary, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1230, Title: Unnecessary explicit use of enumerator, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
-- {Id: RCS1231, Title: Make parameter ref read-only, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: false}
+- {Id: RCS1231, Title: Make parameter ref read-only, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: RCS1232, Title: Order elements in documentation comment, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1233, Title: Use short-circuiting operator, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1234, Title: Duplicate enum value, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
