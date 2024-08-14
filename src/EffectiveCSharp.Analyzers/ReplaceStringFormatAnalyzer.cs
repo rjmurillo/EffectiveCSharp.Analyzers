@@ -9,9 +9,9 @@ namespace EffectiveCSharp.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ReplaceStringFormatAnalyzer : DiagnosticAnalyzer
 {
-    private static readonly string Description = "Replace string.Format with interpolated string.";
-    private static readonly string MessageFormat = "Replace '{0}' with interpolated string";
-    private static readonly string Title = "Replace string.Format with interpolated string";
+    private static readonly LocalizableString Description = "Replace string.Format with interpolated string.";
+    private static readonly LocalizableString MessageFormat = "Replace '{0}' with interpolated string";
+    private static readonly LocalizableString Title = "Replace string.Format with interpolated string";
 
     // We can't use source generators
     private static readonly Regex PlaceholderRegex = new(

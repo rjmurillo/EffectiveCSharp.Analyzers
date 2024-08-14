@@ -7,9 +7,9 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class EventInvocationAnalyzer : DiagnosticAnalyzer
 {
-    private static readonly string Title = "Use the Null Conditional Operator for Event Invocations";
-    private static readonly string MessageFormat = "Use the null-conditional operator to invoke the event '{0}'";
-    private static readonly string Description = "Event invocation should use the null-conditional operator to avoid race conditions and improve readability.";
+    private static readonly LocalizableString Title = "Use the Null Conditional Operator for Event Invocations";
+    private static readonly LocalizableString MessageFormat = "Use the null-conditional operator to invoke the event '{0}'";
+    private static readonly LocalizableString Description = "Event invocation should use the null-conditional operator to avoid race conditions and improve readability.";
 
     private static readonly DiagnosticDescriptor Rule = new(
         DiagnosticIds.UseNullConditionalOperatorForEventInvocations,
