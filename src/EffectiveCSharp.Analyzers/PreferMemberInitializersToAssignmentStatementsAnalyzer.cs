@@ -117,7 +117,7 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
             {
                 context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleExceptionInitializeToNullOrZero));
             }
-            else if (field.ShouldNotInitializeInDeclaration)
+            else if (field.ShouldNotInitializeInDeclaration && field.FieldHasInitializer)
             {
                 context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleExceptionShouldNotInitializeInDeclaration));
             }
@@ -128,7 +128,7 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
                     context.ReportDiagnostic(memberInitializer.GetLocation().CreateDiagnostic(GeneralRule));
                 }
             }
-            else if (!field.FieldHasInitializer && !field.IsZeroOrNullInitializableType)
+            else if (!field.ShouldNotInitializeInDeclaration && !field.FieldHasInitializer && !field.IsZeroOrNullInitializableType)
             {
                 context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleShouldInitializeInDeclarationWhenNoInitializationPresent));
             }
