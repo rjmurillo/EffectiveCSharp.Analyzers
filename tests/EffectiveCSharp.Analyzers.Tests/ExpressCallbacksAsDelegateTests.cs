@@ -70,7 +70,7 @@ public class ExpressCallbacksAsDelegateTests
               {
                 Func<bool> cp = () => CheckWithUser();
                 cp += () => CheckWithSystem();
-                {|ECS0007:LengthyOperation(cp)|};
+                {|ECS0700:LengthyOperation(cp)|};
               }
             }
             """,

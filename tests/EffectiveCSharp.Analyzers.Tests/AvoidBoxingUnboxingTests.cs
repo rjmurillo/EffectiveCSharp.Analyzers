@@ -20,11 +20,11 @@ public class AvoidBoxingUnboxingTests
                 // This should fire
                 """
                 int i = 5;
-                object o = {|ECS0009:i|}; // boxing
+                object o = {|ECS0900:i|}; // boxing
                 """,
                 """
                 int i = 5;
-                object o = {|ECS0009:(object)i|}; // boxing
+                object o = {|ECS0900:(object)i|}; // boxing
                 """,
 
                 // This should fire for method call with value type defined in System.Object
@@ -81,9 +81,9 @@ public class AvoidBoxingUnboxingTests
 
               Method(
                "A few numbers: {0}, {1}, {2}",
-               {|ECS0009:firstNumber|},
-               {|ECS0009:secondNumber|},
-               {|ECS0009:thirdNumber|}
+               {|ECS0900:firstNumber|},
+               {|ECS0900:secondNumber|},
+               {|ECS0900:thirdNumber|}
                );
             }
             """,
@@ -199,7 +199,7 @@ public class MyClass
                 public object ReturnBoxing()
                 {
                     int i = 42;
-                    return {|ECS0009:i|};
+                    return {|ECS0900:i|};
                 }
             }
             """,
@@ -218,7 +218,7 @@ public class MyClass
                 public void Method()
                 {
                     int i = 42;
-                    TakeObject({|ECS0009:i|});
+                    TakeObject({|ECS0900:i|});
                 }
             }
             """,
@@ -235,7 +235,7 @@ public class MyClass
                 public void AssignExample()
                 {
                     int i = 42;
-                    object boxed = {|ECS0009:i|};
+                    object boxed = {|ECS0900:i|};
                 }
             }
             """,
@@ -255,8 +255,8 @@ public class MyClass
                 {
                     List<object> list = new List<object>();
                     int i = 42;
-                    list.Add({|ECS0009:i|});    // Boxing operation
-                    int value = {|ECS0009:(int)list[0]|}; // Unboxing operation
+                    list.Add({|ECS0900:i|});    // Boxing operation
+                    int value = {|ECS0900:(int)list[0]|}; // Unboxing operation
                 }
             }
             """,
@@ -272,8 +272,8 @@ public class MyClass
             {
                 public void TestMethod()
                 {
-                    object obj = {|ECS0009:42|};        // Boxing operation expected here
-                    int value = {|ECS0009:(int)obj|};  // Unboxing operation expected here
+                    object obj = {|ECS0900:42|};        // Boxing operation expected here
+                    int value = {|ECS0900:(int)obj|};  // Unboxing operation expected here
                 }
             }
             """,
@@ -301,7 +301,7 @@ public class MyClass
                 public void TestMethod()
                 {
                     TestStruct myStruct = new TestStruct { Value = 42 };
-                    ITestInterface myInterface = {|ECS0009:myStruct|};  // Expected to trigger boxing warning
+                    ITestInterface myInterface = {|ECS0900:myStruct|};  // Expected to trigger boxing warning
                 }
             }
             """,
@@ -329,11 +329,11 @@ public class MyClass
                 attendees.Add(p);
 
                 // Try to change the name
-                var p2 = {|ECS0009:attendees[0]|};
+                var p2 = {|ECS0900:attendees[0]|};
                 p2.Name = "New Name";
 
                 // Writes "Old Name" because we pulled a copy of the struct
-                Console.WriteLine({|ECS0009:attendees[0]|}.ToString());
+                Console.WriteLine({|ECS0900:attendees[0]|}.ToString());
               }
             }
 
@@ -367,11 +367,11 @@ public class MyClass
                 attendees.Add(1, p);
 
                 // Try to change the name
-                var p2 = {|ECS0009:attendees[1]|};
+                var p2 = {|ECS0900:attendees[1]|};
                 p2.Name = "New Name";
 
                 // Writes "Old Name" because we pulled a copy of the struct
-                Console.WriteLine({|ECS0009:attendees[1]|}.ToString());
+                Console.WriteLine({|ECS0900:attendees[1]|}.ToString());
               }
             }
 

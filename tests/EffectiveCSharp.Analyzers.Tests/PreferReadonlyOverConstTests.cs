@@ -15,7 +15,7 @@ public class PreferReadonlyOverConstTests
             "public static readonly int StartValue = 5;",
 
             // This should fire because a const
-            "{|ECS0002:public const int EndValue = 10;|}",
+            "{|ECS0200:public const int EndValue = 10;|}",
 
             // This should not fire because it's suppressed
             """
@@ -48,7 +48,7 @@ public class PreferReadonlyOverConstTests
         const string testCode = """
                                 class Program
                                 {
-                                    {|ECS0002:private const int StartValue = 5;|}
+                                    {|ECS0200:private const int StartValue = 5;|}
                                 }
                                 """;
 
