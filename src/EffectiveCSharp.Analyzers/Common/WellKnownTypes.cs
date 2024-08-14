@@ -1,6 +1,6 @@
 ﻿namespace EffectiveCSharp.Analyzers.Common;
 
-#pragma warning disable ECS0002 // Consider using static readonly instead of const
+#pragma warning disable ECS0200 // Consider using static readonly instead of const
 
 internal static class WellKnownTypes
 {

@@ -19,9 +19,9 @@ public class PreferReadonlyOverConstTests
 
             // This should not fire because it's suppressed
             """
-            #pragma warning disable ECS0002
+            #pragma warning disable ECS0200
             public const int EndValue = 10;
-            #pragma warning restore ECS0002
+            #pragma warning restore ECS0200
             """,
         };
 

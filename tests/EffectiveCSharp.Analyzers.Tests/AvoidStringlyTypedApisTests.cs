@@ -21,9 +21,9 @@ public class AvoidStringlyTypedApisTests
 
             // This should not fire because it's suppressed
             """
-            #pragma warning disable ECS0006
+            #pragma warning disable ECS0600
             "thisCantBeNull"
-            #pragma warning restore ECS0006
+            #pragma warning restore ECS0600
             """,
         };
         return data.WithReferenceAssemblyGroups();

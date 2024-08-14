@@ -35,10 +35,10 @@ public class AvoidBoxingUnboxingTests
 
                 // This should not fire because it's suppressed
                 """
-                #pragma warning disable ECS0009 // Minimize boxing and unboxing
+                #pragma warning disable ECS0900 // Minimize boxing and unboxing
                 int i = 5;
                 object o = i; // boxing
-                #pragma warning restore ECS0009 // Minimize boxing and unboxing
+                #pragma warning restore ECS0900 // Minimize boxing and unboxing
                 """,
                 """
                 var dt = new DateTimeOffset(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -98,11 +98,11 @@ public class AvoidBoxingUnboxingTests
 
               Method(
                "A few numbers: {0}, {1}, {2}",
-               #pragma warning disable ECS0009 // Minimize boxing and unboxing
+               #pragma warning disable ECS0900 // Minimize boxing and unboxing
                firstNumber,
                secondNumber,
                thirdNumber
-               #pragma warning restore ECS0009 // Minimize boxing and unboxing
+               #pragma warning restore ECS0900 // Minimize boxing and unboxing
                );
             }
             """,
