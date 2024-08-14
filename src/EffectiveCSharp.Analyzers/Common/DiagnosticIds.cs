@@ -8,6 +8,7 @@ internal static class DiagnosticIds
     internal const string PreferImplicitlyTypedLocalVariables = "ECS0001";
     internal const string PreferReadonlyOverConst = "ECS0002";
     internal const string ReplaceStringFormatWithInterpolatedString = "ECS0004";
+    internal const string PreferFormattableStringForCultureSpecificStrings = "ECS0005";
     internal const string AvoidStringlyTypedApis = "ECS0006";
     internal const string ExpressCallbacksWithDelegates = "ECS0007";
     internal const string UseNullConditionalOperatorForEventInvocations = "ECS0008";

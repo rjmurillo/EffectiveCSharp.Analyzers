@@ -158,7 +158,7 @@
 - {Id: CA2013, Title: Do not use ReferenceEquals with value types, Category: Reliability, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: CA2014, Title: Do not use stackalloc in loops, Category: Reliability, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: CA2015, Title: Do not define finalizers for types derived from MemoryManager<T>, Category: Reliability, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: CA2016, Title: Forward the 'CancellationToken' parameter to methods, Category: Reliability, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error, Note], IsEverSuppressed: false}
+- {Id: CA2016, Title: Forward the 'CancellationToken' parameter to methods, Category: Reliability, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: CA2017, Title: Parameter count mismatch, Category: Reliability, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: CA2018, Title: "'Buffer.BlockCopy' expects the number of bytes to be copied for the 'count' argument", Category: Reliability, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: CA2019, Title: Improper 'ThreadStatic' field initialization, Category: Reliability, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
@@ -445,7 +445,7 @@
 - {Id: MA0023, Title: Add RegexOptions.ExplicitCapture, Category: Performance, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0024, Title: Use an explicit StringComparer when possible, Category: Usage, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0025, Title: Implement the functionality instead of throwing NotImplementedException, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: MA0026, Title: Fix TODO comment, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, None], IsEverSuppressed: true}
+- {Id: MA0026, Title: Fix TODO comment, Category: Design, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: MA0027, Title: Prefer rethrowing an exception implicitly, Category: Usage, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0028, Title: Optimize StringBuilder usage, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0029, Title: Combine LINQ methods, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
@@ -458,7 +458,7 @@
 - {Id: MA0037, Title: Remove empty statement, Category: Usage, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0038, Title: 'Make method static (deprecated, use CA1822 instead)', Category: Design, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0039, Title: Do not write your own certificate validation method, Category: Security, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: MA0040, Title: Forward the CancellationToken parameter to methods that take one, Category: Usage, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error, Note], IsEverSuppressed: false}
+- {Id: MA0040, Title: Forward the CancellationToken parameter to methods that take one, Category: Usage, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0041, Title: 'Make property static (deprecated, use CA1822 instead)', Category: Design, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0042, Title: Do not use blocking calls in an async method, Category: Design, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0043, Title: Use nameof operator in ArgumentException, Category: Usage, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
@@ -579,7 +579,6 @@
 - {Id: MA0158, Title: Use System.Threading.Lock, Category: Performance, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: MA0159, Title: Use 'Order' instead of 'OrderBy', Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: MA0160, Title: Use ContainsKey instead of TryGetValue, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
-- {Id: POLYSP0003, Title: Unsupported C# language version, Category: Microsoft.CodeAnalysis.CSharp.CSharpParseOptions, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: RCS1001, Title: Add braces (when expression spans over multiple lines), Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1002, Title: Remove braces, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: false}
 - {Id: RCS1002FadeOut, Title: Remove braces, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
@@ -785,7 +784,7 @@
 - {Id: RCS1228, Title: Unused element in a documentation comment, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1229, Title: Use async/await when necessary, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1230, Title: Unnecessary explicit use of enumerator, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
-- {Id: RCS1231, Title: Make parameter ref read-only, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: false}
+- {Id: RCS1231, Title: Make parameter ref read-only, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: RCS1232, Title: Order elements in documentation comment, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1233, Title: Use short-circuiting operator, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1234, Title: Duplicate enum value, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
@@ -900,7 +899,7 @@
 - {Id: S113, Title: Files should end with a newline, Category: Minor Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: S1133, Title: Deprecated code should be removed, Category: Info Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: S1134, Title: Track uses of "FIXME" tags, Category: Major Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: S1135, Title: Track uses of "TODO" tags, Category: Info Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, Note], IsEverSuppressed: false}
+- {Id: S1135, Title: Track uses of "TODO" tags, Category: Info Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: S1144, Title: Unused private types or members should be removed, Category: Major Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: S1147, Title: Exit methods should not be called, Category: Blocker Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: S1151, Title: '"switch case" clauses should not have too many lines of code', Category: Major Code Smell, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
@@ -1372,7 +1371,7 @@
 - {Id: SA1027, Title: Use tabs correctly, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1028, Title: Code should not contain trailing whitespace, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1100, Title: Do not prefix calls with base unless local implementation exists, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: SA1101, Title: Prefix local calls with this, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, Note], IsEverSuppressed: true}
+- {Id: SA1101, Title: Prefix local calls with this, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: true}
 - {Id: SA1102, Title: Query clause should follow previous clause, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1103, Title: Query clauses should be on separate lines or all on one line, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1104, Title: Query clause should begin on new line when previous clause spans multiple lines, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -1439,7 +1438,7 @@
 - {Id: SA1306, Title: Field names should begin with lower-case letter, Category: StyleCop.CSharp.NamingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1307, Title: Accessible fields should begin with upper-case letter, Category: StyleCop.CSharp.NamingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1308, Title: Variable names should not be prefixed, Category: StyleCop.CSharp.NamingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: SA1309, Title: Field names should not begin with underscore, Category: StyleCop.CSharp.NamingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, None], IsEverSuppressed: true}
+- {Id: SA1309, Title: Field names should not begin with underscore, Category: StyleCop.CSharp.NamingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: SA1310, Title: Field names should not contain underscore, Category: StyleCop.CSharp.NamingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1311, Title: Static readonly fields should begin with upper-case letter, Category: StyleCop.CSharp.NamingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1312, Title: Variable names should begin with lower-case letter, Category: StyleCop.CSharp.NamingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -1482,7 +1481,7 @@
 - {Id: SA1518, Title: Use line endings correctly at end of file, Category: StyleCop.CSharp.LayoutRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1519, Title: Braces should not be omitted from multi-line child statement, Category: StyleCop.CSharp.LayoutRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1520, Title: Use braces consistently, Category: StyleCop.CSharp.LayoutRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: SA1600, Title: Elements should be documented, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, Note], IsEverSuppressed: true}
+- {Id: SA1600, Title: Elements should be documented, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: true}
 - {Id: SA1601, Title: Partial elements should be documented, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1602, Title: Enumeration items should be documented, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1603, Title: Documentation should contain valid XML, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
@@ -1515,7 +1514,7 @@
 - {Id: SA1630, Title: Documentation text should contain whitespace, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: SA1631, Title: Documentation should meet character percentage, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: SA1632, Title: Documentation text should meet minimum character length, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
-- {Id: SA1633, Title: File should have header, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error, Note], IsEverSuppressed: true}
+- {Id: SA1633, Title: File should have header, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: true}
 - {Id: SA1634, Title: File header should show copyright, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1635, Title: File header should have copyright text, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1636, Title: File header copyright text should match, Category: StyleCop.CSharp.DocumentationRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
