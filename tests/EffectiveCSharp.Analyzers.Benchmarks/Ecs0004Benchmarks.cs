@@ -2,7 +2,7 @@
 
 [InProcess]
 [MemoryDiagnoser]
-public class Ecs1000Benchmarks
+public class Ecs0004Benchmarks
 {
     private static CompilationWithAnalyzers? BaselineCompilation { get; set; }
 
@@ -15,30 +15,29 @@ public class Ecs1000Benchmarks
         List<(string Name, string Content)> sources = [];
         for (int index = 0; index < Constants.NumberOfCodeFiles; index++)
         {
-            string name = "TypeName" + index;
+            string name = $"TypeName{index}";
             sources.Add((name, @$"
 using System;
 
-internal class {name}
+public class {name}
 {{
-    private void Test()
-    {{
-        _ = new int[10];
-        _ = new Span<int>(new int[10]);
-    }}
+  public void Main()
+  {{
+      var str = string.Format(""The value of pi is {{0}}"", Math.PI.ToString(""F2""));
+  }}
 }}
 "));
         }
 
         (BaselineCompilation, TestCompilation) =
             BenchmarkCSharpCompilationFactory
-            .CreateAsync<SpanAnalyzer>(sources.ToArray())
+            .CreateAsync<ReplaceStringFormatAnalyzer>(sources.ToArray())
             .GetAwaiter()
             .GetResult();
     }
 
     [Benchmark]
-    public async Task Ecs1000WithDiagnostics()
+    public async Task Ecs0004WithDiagnostics()
     {
         ImmutableArray<Diagnostic> diagnostics =
             (await TestCompilation!
@@ -54,7 +53,7 @@ internal class {name}
     }
 
     [Benchmark(Baseline = true)]
-    public async Task Ecs1000Baseline()
+    public async Task Ecs0004Baseline()
     {
         ImmutableArray<Diagnostic> diagnostics =
             (await BaselineCompilation!

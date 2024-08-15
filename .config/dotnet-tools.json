@@ -15,6 +15,13 @@
         "dotnet-verify"
       ],
       "rollForward": false
+    },
+    "squigglecop.tool": {
+      "version": "1.0.13",
+      "commands": [
+        "dotnet-squigglecop"
+      ],
+      "rollForward": false
     }
   }
 }

@@ -35,7 +35,7 @@ public class Container
   public void BoxingExample()
   {
     int i = 42;
-    object boxed = {|ECS0009:i|};
+    object boxed = {|ECS0900:i|};
   }
 }
 "

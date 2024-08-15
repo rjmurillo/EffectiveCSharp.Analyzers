@@ -40,7 +40,7 @@ private static readonly DiagnosticDescriptor Rule = new(
     category: "Maintainability",
     defaultSeverity: DiagnosticSeverity.Info,
     isEnabledByDefault: true,
-    helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{Id}.md");
+    helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{Id}.md");
 ```
 
 The documentation for the rule is placed in to `docs/rules/ECS0002.md`.

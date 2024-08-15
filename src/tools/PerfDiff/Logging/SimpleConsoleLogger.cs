@@ -65,10 +65,12 @@ namespace PerfDiff.Logging
             return (int)logLevel >= (int)_minimalLogLevel;
         }
 
+#pragma warning disable CS8633  // Nullability in constraints for type parameter 'TState' doesn't match the constraints for interface
         public IDisposable BeginScope<TState>(TState state)
         {
             return NullScope.Instance;
         }
+#pragma warning restore CS8633
 
         private void LogToTerminal(string message, LogLevel logLevel, bool logToErrorStream)
         {

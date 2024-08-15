@@ -9,6 +9,7 @@ namespace EffectiveCSharp.Analyzers.Tests;
 #pragma warning disable MA0051  // Some test methods are "too long"
 #pragma warning disable MA0007  // There are multiple types of tests defined in theory data
 #pragma warning disable IDE0028 // We cannot simply object creation on TheoryData because we need to convert from object[] to string, the way it is now is cleaner
+#pragma warning disable AsyncFixer01
 
 public class AvoidBoxingUnboxingTests
 {
@@ -19,11 +20,11 @@ public class AvoidBoxingUnboxingTests
                 // This should fire
                 """
                 int i = 5;
-                object o = {|ECS0009:i|}; // boxing
+                object o = {|ECS0900:i|}; // boxing
                 """,
                 """
                 int i = 5;
-                object o = {|ECS0009:(object)i|}; // boxing
+                object o = {|ECS0900:(object)i|}; // boxing
                 """,
 
                 // This should fire for method call with value type defined in System.Object
@@ -34,10 +35,10 @@ public class AvoidBoxingUnboxingTests
 
                 // This should not fire because it's suppressed
                 """
-                #pragma warning disable ECS0009 // Minimize boxing and unboxing
+                #pragma warning disable ECS0900 // Minimize boxing and unboxing
                 int i = 5;
                 object o = i; // boxing
-                #pragma warning restore ECS0009 // Minimize boxing and unboxing
+                #pragma warning restore ECS0900 // Minimize boxing and unboxing
                 """,
                 """
                 var dt = new DateTimeOffset(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -64,7 +65,7 @@ public class AvoidBoxingUnboxingTests
             referenceAssemblyGroup);
     }
 
-    public static TheoryData<string,string> TestData2()
+    public static TheoryData<string, string> TestData2()
     {
         TheoryData<string> data = new()
         {
@@ -77,12 +78,12 @@ public class AvoidBoxingUnboxingTests
               int firstNumber = 4;
               int secondNumber = 2;
               int thirdNumber = 6;
-            
+
               Method(
                "A few numbers: {0}, {1}, {2}",
-               {|ECS0009:firstNumber|},
-               {|ECS0009:secondNumber|},
-               {|ECS0009:thirdNumber|}
+               {|ECS0900:firstNumber|},
+               {|ECS0900:secondNumber|},
+               {|ECS0900:thirdNumber|}
                );
             }
             """,
@@ -94,14 +95,14 @@ public class AvoidBoxingUnboxingTests
               int firstNumber = 4;
               int secondNumber = 2;
               int thirdNumber = 6;
-            
+
               Method(
                "A few numbers: {0}, {1}, {2}",
-               #pragma warning disable ECS0009 // Minimize boxing and unboxing
+               #pragma warning disable ECS0900 // Minimize boxing and unboxing
                firstNumber,
                secondNumber,
                thirdNumber
-               #pragma warning restore ECS0009 // Minimize boxing and unboxing
+               #pragma warning restore ECS0900 // Minimize boxing and unboxing
                );
             }
             """,
@@ -113,7 +114,7 @@ public class AvoidBoxingUnboxingTests
               int firstNumber = 4;
               int secondNumber = 2;
               int thirdNumber = 6;
-            
+
               Method(
                $"A few numbers: {firstNumber}, {secondNumber}, {thirdNumber}"
                );
@@ -198,7 +199,7 @@ public class MyClass
                 public object ReturnBoxing()
                 {
                     int i = 42;
-                    return {|ECS0009:i|};
+                    return {|ECS0900:i|};
                 }
             }
             """,
@@ -213,11 +214,11 @@ public class MyClass
             public class TestClass
             {
                 public void TakeObject(object obj) {}
-            
+
                 public void Method()
                 {
                     int i = 42;
-                    TakeObject({|ECS0009:i|});
+                    TakeObject({|ECS0900:i|});
                 }
             }
             """,
@@ -234,7 +235,7 @@ public class MyClass
                 public void AssignExample()
                 {
                     int i = 42;
-                    object boxed = {|ECS0009:i|};
+                    object boxed = {|ECS0900:i|};
                 }
             }
             """,
@@ -254,8 +255,8 @@ public class MyClass
                 {
                     List<object> list = new List<object>();
                     int i = 42;
-                    list.Add({|ECS0009:i|});    // Boxing operation
-                    int value = {|ECS0009:(int)list[0]|}; // Unboxing operation
+                    list.Add({|ECS0900:i|});    // Boxing operation
+                    int value = {|ECS0900:(int)list[0]|}; // Unboxing operation
                 }
             }
             """,
@@ -271,8 +272,8 @@ public class MyClass
             {
                 public void TestMethod()
                 {
-                    object obj = {|ECS0009:42|};        // Boxing operation expected here
-                    int value = {|ECS0009:(int)obj|};  // Unboxing operation expected here
+                    object obj = {|ECS0900:42|};        // Boxing operation expected here
+                    int value = {|ECS0900:(int)obj|};  // Unboxing operation expected here
                 }
             }
             """,
@@ -300,7 +301,7 @@ public class MyClass
                 public void TestMethod()
                 {
                     TestStruct myStruct = new TestStruct { Value = 42 };
-                    ITestInterface myInterface = {|ECS0009:myStruct|};  // Expected to trigger boxing warning
+                    ITestInterface myInterface = {|ECS0900:myStruct|};  // Expected to trigger boxing warning
                 }
             }
             """,
@@ -321,18 +322,18 @@ public class MyClass
             {
               static void Main()
               {
-            
+
                 // Using the Person in a collection
                 var attendees = new List<Person>();
                 var p = new Person { Name = "Old Name" };
                 attendees.Add(p);
-            
+
                 // Try to change the name
-                var p2 = {|ECS0009:attendees[0]|};
+                var p2 = {|ECS0900:attendees[0]|};
                 p2.Name = "New Name";
-            
+
                 // Writes "Old Name" because we pulled a copy of the struct
-                Console.WriteLine({|ECS0009:attendees[0]|}.ToString());
+                Console.WriteLine({|ECS0900:attendees[0]|}.ToString());
               }
             }
 
@@ -359,18 +360,18 @@ public class MyClass
             {
               static void Main()
               {
-            
+
                 // Using the Person in a collection
                 var attendees = new Dictionary<int, Person>();
                 var p = new Person { Name = "Old Name" };
                 attendees.Add(1, p);
-            
+
                 // Try to change the name
-                var p2 = {|ECS0009:attendees[1]|};
+                var p2 = {|ECS0900:attendees[1]|};
                 p2.Name = "New Name";
-            
+
                 // Writes "Old Name" because we pulled a copy of the struct
-                Console.WriteLine({|ECS0009:attendees[1]|}.ToString());
+                Console.WriteLine({|ECS0900:attendees[1]|}.ToString());
               }
             }
 
@@ -381,5 +382,48 @@ public class MyClass
             }
             """
             , ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task Lowered_string_does_not_box()
+    {
+        // The code for name is getting flagged
+        // It's lowered to
+        //
+        // string item = string.Concat("Foo", num.ToString());
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            using System;
+            using System.Collections.Generic;
+            public class C {
+                public void M() {
+                    List<string> names = new List<String>();
+                    for(var i = 0; i<100; i++) {
+                        var name = "Foo" + i;
+                        names.Add(name);
+                    }
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
+    public async Task Foo()
+    {
+        // The code for name is getting flagged
+        // It's lowered to
+        //
+        // string item = string.Concat("Foo", num.ToString());
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class C {
+                public void M() {
+                        var i = 0;
+                        var name = "Foo" + i;
+                }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
     }
 }

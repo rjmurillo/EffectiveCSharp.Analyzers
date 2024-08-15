@@ -7,24 +7,19 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AvoidStringlyTypedApisAnalyzer : DiagnosticAnalyzer
 {
-    private const string DiagnosticId = DiagnosticIds.AvoidStringlyTypedApis;
-    private const string Title = "Avoid stringly-typed APIs";
-    private const string MessageFormat = "Use 'nameof({0})' instead of the string literal \"{0}\"";
-
-    private const string Description =
-        "Replace string literals representing member names with the nameof operator to ensure type safety.";
-
-    private const string Category = "Refactoring";
+    private static readonly LocalizableString Title = "Avoid stringly-typed APIs";
+    private static readonly LocalizableString MessageFormat = "Use 'nameof({0})' instead of the string literal \"{0}\"";
+    private static readonly LocalizableString Description = "Replace string literals representing member names with the nameof operator to ensure type safety.";
 
     private static readonly DiagnosticDescriptor Rule = new(
-        DiagnosticId,
+        DiagnosticIds.AvoidStringlyTypedApis,
         Title,
         MessageFormat,
-        Category,
+        Categories.Refactoring,
         DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: Description,
-        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers{ThisAssembly.GitCommitId}/docs/{DiagnosticId}.md");
+        helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.AvoidStringlyTypedApis}.md");
 
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);

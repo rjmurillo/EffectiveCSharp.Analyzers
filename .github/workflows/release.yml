@@ -5,12 +5,18 @@ on:
   release:
     types:
       - published # Run the workflow when a new GitHub release is published
+      - edited
+      - prereleased
+      - released
 
 permissions:
   security-events: write  # required for CodeQL
   packages: read
   contents: read
   actions: read
+
+env:
+  PublicRelease: true # We want to generate stable package versions without the git hash in this action
 
 jobs:
   build:

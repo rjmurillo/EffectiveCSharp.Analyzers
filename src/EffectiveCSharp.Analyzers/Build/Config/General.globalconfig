@@ -11,3 +11,20 @@ dotnet_diagnostic.IDE0007.severity = suggestion
 csharp_style_var_elsewhere = true
 csharp_style_var_for_built_in_types = true
 csharp_style_var_when_type_is_apparent = true
+
+# Title    : Prefer the is or as Operators to Casts
+# Category : Style
+# Help Link: https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/safely-cast-using-pattern-matching-is-and-as-operators
+#
+# Effective C# Item #3 - Prefer the is or as Operators to casts
+csharp_style_pattern_matching_over_as_with_null_check = true:warning
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_prefer_not_pattern = true:warning
+csharp_style_prefer_pattern_matching = true:warning
+
+# Title    : Use the new Modifier Only to React to Base Class Updates
+# Category : Style
+# Help Link: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1061
+#
+# Effective C# Item #10 - Use the new modifier only to react to base class Updates
+dotnet_diagnostic.CA1061.severity = warning

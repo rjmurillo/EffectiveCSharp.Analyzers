@@ -8,7 +8,7 @@
 [Shared]
 public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Use nameof operator";
+    private static readonly string Title = "Use nameof operator";
 
     /// <inheritdoc/>
     public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DiagnosticIds.AvoidStringlyTypedApis);
@@ -47,6 +47,7 @@ public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
         }
     }
 
+#pragma warning disable MA0051 // Method is too long
     private static async Task<Solution> UseNameofOperatorAsync(Document document, LiteralExpressionSyntax? literalExpression, CancellationToken cancellationToken)
     {
         string? literalValue = literalExpression?.Token.ValueText;
@@ -92,7 +93,9 @@ public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
             return document.Project.Solution;
         }
 
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous
         if (literalExpression != null)
+#pragma warning restore S2589 // Boolean expressions should not be gratuitous
         {
             ExpressionSyntax nameofExpression = SyntaxFactory.ParseExpression(nameofExpressionText)
                 .WithTriviaFrom(literalExpression);
@@ -108,4 +111,5 @@ public class AvoidStringlyTypedApisCodeFixProvider : CodeFixProvider
 
         return document.Project.Solution;
     }
+#pragma warning restore MA0051 // Method is too long
 }
