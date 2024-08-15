@@ -1,5 +1,10 @@
 is_global = true
-global_level = -1
+# We need to be careful with the global_level value:
+# - In .NET 5: A compiler warning is reported and both entries are ignored
+# - In .NET 6+: The entry from the file with a higher value for global_level takes precedence. 
+#               If the global_level is equal in two files and the values configured conflict,
+#               a compiler warning is reported and BOTH entries are ignored.
+global_level = -12  
 
 # Title    : Use implicit type
 # Category : Style
