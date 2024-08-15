@@ -21,21 +21,21 @@ public class EventInvocationTests
             // When no event handlers have been attached to the Updated event
             // the code will throw NRE
             """
-            {|ECS0008:Updated(this, counter)|};
+            {|ECS0800:Updated(this, counter)|};
             """,
 
             // Developers need to wrap any event invocation in a check
             // This code has a bug: the null check can pass but the event
             // can be unsubscribed by another thread, and you still get NRE
             """
-            {|ECS0008:if (Updated != null)
+            {|ECS0800:if (Updated != null)
                 Updated(this, counter);|}
             """,
 
             // This code is correct in earlier versions of C#
             """
             var handler = Updated;
-            {|ECS0008:if (handler != null)
+            {|ECS0800:if (handler != null)
                 handler(this, counter);|}
             """,
 
@@ -84,7 +84,7 @@ public class EventInvocationTests
                 {
                     counter++;
                     var handler = Updated;
-                    {|ECS0008:if (handler != null)
+                    {|ECS0800:if (handler != null)
                         handler(this, counter);|}
                 }
             }
@@ -121,7 +121,7 @@ public class EventInvocationTests
                 public void RaiseUpdates()
                 {
                     counter++;
-                    {|ECS0008:if (Updated != null)
+                    {|ECS0800:if (Updated != null)
                         Updated(this, counter);|}
                 }
             }
@@ -158,7 +158,7 @@ public class EventInvocationTests
                 public void RaiseUpdates()
                 {
                     counter++;
-                    {|ECS0008:Updated(this, counter)|};
+                    {|ECS0800:Updated(this, counter)|};
                 }
             }
             """;

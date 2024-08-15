@@ -7,9 +7,9 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AvoidStringlyTypedApisAnalyzer : DiagnosticAnalyzer
 {
-    private static readonly string Title = "Avoid stringly-typed APIs";
-    private static readonly string MessageFormat = "Use 'nameof({0})' instead of the string literal \"{0}\"";
-    private static readonly string Description = "Replace string literals representing member names with the nameof operator to ensure type safety.";
+    private static readonly LocalizableString Title = "Avoid stringly-typed APIs";
+    private static readonly LocalizableString MessageFormat = "Use 'nameof({0})' instead of the string literal \"{0}\"";
+    private static readonly LocalizableString Description = "Replace string literals representing member names with the nameof operator to ensure type safety.";
 
     private static readonly DiagnosticDescriptor Rule = new(
         DiagnosticIds.AvoidStringlyTypedApis,

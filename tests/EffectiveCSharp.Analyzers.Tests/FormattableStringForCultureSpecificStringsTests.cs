@@ -13,19 +13,19 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
         {
             // This should trigger the analyzer because it implicitly uses the current culture of the machine
             """
-            private readonly string _message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+            private readonly string _message = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
             """,
 
             // Should trigger the analyzer: property initialization
             """
-            public string Message { get; set; } = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+            public string Message { get; set; } = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
             """,
 
             // Should trigger the analyzer: local variable assignment
             """
             public string M()
             {
-                string message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                string message = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
                 return message;
             }
             """,
@@ -53,7 +53,7 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
             // Conditional interpolated string
             """
             private const bool condition = false;
-            private readonly string? _message = condition ? {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|} : null;
+            private readonly string? _message = condition ? {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|} : null;
             """,
 
             // StringBuilder
@@ -61,19 +61,19 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
             private string M()
             {
               var builder = new StringBuilder();
-              builder.Append({|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|});
+              builder.Append({|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|});
               return builder.ToString();
             }
             """,
 
             // With formatting
             """
-            private readonly string _message = {|ECS0005:$"The speed of light is {SpeedOfLight,10:N3} km/s."|};
+            private readonly string _message = {|ECS0500:$"The speed of light is {SpeedOfLight,10:N3} km/s."|};
             """,
 
             // Nested interpolated strings
             """
-            private readonly string _message = {|ECS0005:$"The speed of light is {string.Create(CultureInfo.InvariantCulture, $"{SpeedOfLight:N3}")} km/s."|};
+            private readonly string _message = {|ECS0500:$"The speed of light is {string.Create(CultureInfo.InvariantCulture, $"{SpeedOfLight:N3}")} km/s."|};
             """,
 
             // Complex expressions in interpolated strings
@@ -86,7 +86,7 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
 
             // Local functions and lambdas
             """
-            Func<string> lambda = () => {|ECS0005:$"The speed of light is {SpeedOfLight,10:N3} km/s."|};
+            Func<string> lambda = () => {|ECS0500:$"The speed of light is {SpeedOfLight,10:N3} km/s."|};
             """,
         };
 
@@ -124,11 +124,11 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
                           public class C
                           {
                             private const double SpeedOfLight = 299_792.458;
-                            private readonly string _message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
-                            public string Message { get; set; } = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                            private readonly string _message = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                            public string Message { get; set; } = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
                             public string M()
                             {
-                              string message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                              string message = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
                               return message;
                             }
                             public string S()
@@ -170,11 +170,11 @@ public class FormattableStringForCultureSpecificStringsTests(ITestOutputHelper o
                           public class C
                           {
                             private const double SpeedOfLight = 299_792.458;
-                            private readonly string _message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
-                            public string Message { get; set; } = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                            private readonly string _message = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                            public string Message { get; set; } = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
                             public string M()
                             {
-                              string message = {|ECS0005:$"The speed of light is {SpeedOfLight:N3} km/s."|};
+                              string message = {|ECS0500:$"The speed of light is {SpeedOfLight:N3} km/s."|};
                               return message;
                             }
                             public string S()
