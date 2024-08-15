@@ -5,7 +5,7 @@
     "^refs/heads/main$",
     "^refs/heads/v\\d+(?:\\.\\d+)?$",
     "^refs/heads/release/v\\d+\\.\\d+\\.\\d+$",
-    "^refs/tags/v\\d+\\.\\d+\\.\\d+$"
+    "^refs/tags/v\\d+\\.\\d+\\.\\d+(-(alpha|beta|rc)(\\.\\d+)?)?$"
   ],
   "cloudBuild": {
     "buildNumber": {
