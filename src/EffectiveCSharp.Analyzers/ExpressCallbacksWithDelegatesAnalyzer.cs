@@ -104,9 +104,7 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
                 return true; // The delegate is being combined/multicasted
             }
         }
-#pragma warning restore S3267 // Loops should be simplified with "LINQ" expressions
 
-        // No issues detected
         return false;
     }
 
