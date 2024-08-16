@@ -55,32 +55,56 @@ public class ExpressCallbacksWithDelegatesAnalyzer : DiagnosticAnalyzer
 
     private static bool ShouldWarnForMethod(InvocationExpressionSyntax invocationExpr, SemanticModel semanticModel)
     {
-#pragma warning disable S3267 // Loops should be simplified with "LINQ" expressions
-        foreach (ArgumentSyntax argument in invocationExpr.ArgumentList.Arguments)
+        for (int i = 0; i < invocationExpr.ArgumentList.Arguments.Count; i++)
         {
+            ArgumentSyntax argument = invocationExpr.ArgumentList.Arguments[i];
             ITypeSymbol? argumentType = semanticModel.GetTypeInfo(argument.Expression).Type;
 
             // Check if the argument is a delegate type
-            if (IsDelegateType(argumentType))
+            if (!IsDelegateType(argumentType))
             {
-                // Check if the delegate is passed to another method or assigned to a field/property
-                SyntaxNode? parent = argument.Expression.Parent;
-                while (parent != null)
-                {
-                    if (parent is ArgumentSyntax or AssignmentExpressionSyntax)
-                    {
-                        return true;
-                    }
+                continue;
+            }
 
-                    parent = parent.Parent;
-                }
-
-                // Additional checks for specific scenarios can be added here
+            // Check if the delegate is being combined (multicast) within the method
+            MethodDeclarationSyntax? parentMethod = invocationExpr.FirstAncestorOrSelf<MethodDeclarationSyntax>();
+            if (parentMethod != null && IsDelegateMulticast(argument.Expression, parentMethod, semanticModel))
+            {
+                return true;
             }
         }
-#pragma warning restore S3267 // Loops should be simplified with "LINQ" expressions
 
         // No issues detected
+        return false;
+    }
+
+    private static bool IsDelegateMulticast(ExpressionSyntax delegateExpression, MethodDeclarationSyntax parentMethod, SemanticModel semanticModel)
+    {
+        BlockSyntax? blockSyntax = parentMethod.Body;
+
+        if (blockSyntax == null)
+        {
+            return false;
+        }
+
+        ISymbol? delegateSymbol = semanticModel.GetSymbolInfo(delegateExpression).Symbol;
+
+        // Analyze if the delegate is involved in a multicast operation
+        foreach (AssignmentExpressionSyntax? syntax in blockSyntax.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+        {
+            if (!syntax.OperatorToken.IsKind(SyntaxKind.PlusEqualsToken))
+            {
+                continue;
+            }
+
+            ISymbol? leftSymbol = semanticModel.GetSymbolInfo(syntax.Left).Symbol;
+
+            if (leftSymbol != null && leftSymbol.Equals(delegateSymbol, SymbolEqualityComparer.IncludeNullability))
+            {
+                return true; // The delegate is being combined/multicasted
+            }
+        }
+
         return false;
     }
 
