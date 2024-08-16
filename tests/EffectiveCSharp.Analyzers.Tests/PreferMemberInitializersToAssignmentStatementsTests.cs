@@ -136,7 +136,45 @@ public class PreferMemberInitializersToAssignmentStatementsTests
     }
 
     [Fact]
-    public async Task AnalyzerShouldFireWhenBeingInitializedInFieldAndConstructorsWith()
+    public async Task AnalyzerShouldFireWhenUsingLocalVariableInConstructorWithNoArgs()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private double mynum;
+
+              public MyClass()
+              {
+                double local = 5;
+                {|ECS1200:mynum = local;|}
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
+    public async Task AnalyzerShouldFireNotWhenUsingLocalVariableInConstructorWithArgs()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private double mynum;
+
+              public MyClass(double size)
+              {
+                double local = size;
+                mynum = local;
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
+    public async Task AnalyzerShouldFireWhenBeingInitializedInFieldAndConstructorsWithSameAssignments()
     {
         await Verifier.VerifyAnalyzerAsync(
             """
@@ -152,6 +190,28 @@ public class PreferMemberInitializersToAssignmentStatementsTests
               public MyClass(int size)
               {
                 {|ECS1200:listOfString = new List<string>();|}
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
+    public async Task AnalyzerShouldNotFireWhenBeingInitializedInFieldAndConstructorsWithDivergingImplementations()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              {|ECS1202:private List<string> listOfString = new List<string>();|}
+
+              public MyClass(int size)
+              {
+                listOfString = new List<string>(5);
+              }
+
+              public MyClass()
+              {
               }
             }
             """,

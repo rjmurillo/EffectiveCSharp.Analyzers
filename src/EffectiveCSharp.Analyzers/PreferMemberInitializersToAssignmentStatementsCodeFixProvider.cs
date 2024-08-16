@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace EffectiveCSharp.Analyzers;
+﻿namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
 /// A <see cref="CodeFixProvider"/> that provides a code fix for the <see cref="PreferMemberInitializersToAssignmentStatementsAnalyzer"/>.

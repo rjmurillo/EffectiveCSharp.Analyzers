@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace EffectiveCSharp.Analyzers;
+﻿namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
 /// Analyzer that checks for the use of assignment statements in constructors when member initializers could be used instead.
@@ -65,96 +63,128 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
     private static void AnalyzeNode(SyntaxNodeAnalysisContext context)
     {
         ClassDeclarationSyntax classSyntaxNode = (ClassDeclarationSyntax)context.Node;
-        IDictionary<string, FieldInitializationInfo> fieldInitializationInfo = GetAllFieldInitializationInformation(classSyntaxNode, context.SemanticModel, context.CancellationToken);
+        IDictionary<string, FieldInitializationInfo> fieldInitializationInfo = new Dictionary<string, FieldInitializationInfo>(StringComparer.Ordinal);
 
         // Check in every constructor if there are member initializer candidates
-        foreach (ConstructorDeclarationSyntax constructor in classSyntaxNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>())
+        foreach (ConstructorDeclarationSyntax constructor in classSyntaxNode.ChildNodes().OfType<ConstructorDeclarationSyntax>())
         {
             FindMemberInitializerCandidates(context, constructor, fieldInitializationInfo);
         }
 
         // Report diagnostics on field declarations
-        ReportDiagnosticsOnFieldDeclarations(context, fieldInitializationInfo);
+        ReportDiagnosticsOnFieldDeclarations(context, classSyntaxNode, fieldInitializationInfo);
     }
 
-    private static IDictionary<string, FieldInitializationInfo> GetAllFieldInitializationInformation(ClassDeclarationSyntax classSyntaxNode, SemanticModel semanticModel, CancellationToken cancellationToken)
+    private static void ReportDiagnosticsOnFieldDeclarations(SyntaxNodeAnalysisContext context, ClassDeclarationSyntax classDeclarationSyntax, IDictionary<string, FieldInitializationInfo> fieldInitializationInfos)
     {
-        IDictionary<string, FieldInitializationInfo> fieldInitializationInfo = new Dictionary<string, FieldInitializationInfo>(StringComparer.Ordinal);
-
-        foreach (FieldDeclarationSyntax field in classSyntaxNode.DescendantNodes().OfType<FieldDeclarationSyntax>())
+        foreach (FieldDeclarationSyntax field in classDeclarationSyntax.ChildNodes().OfType<FieldDeclarationSyntax>())
         {
-            foreach (VariableDeclaratorSyntax variable in field.Declaration.Variables)
+            SeparatedSyntaxList<VariableDeclaratorSyntax> variables = field.Declaration.Variables;
+
+            if (variables.Count != 1)
             {
-                IFieldSymbol? symbol = (IFieldSymbol?)semanticModel.GetDeclaredSymbol(variable, cancellationToken);
+                // We only support single variable declarations
+                continue;
+            }
 
-                string? fieldName = symbol?.Name;
+            VariableDeclaratorSyntax variable = variables[0];
+            EqualsValueClauseSyntax? initializer = variable.Initializer;
+            bool isInitializerPresent = initializer is not null;
 
-                if (fieldName is not null)
+            if (!fieldInitializationInfos.TryGetValue(variable.Identifier.Text, out FieldInitializationInfo fieldInfo))
+            {
+                // Check and report fields that are initialized to null or zero. Structs are also checked for empty initializers.
+                if (isInitializerPresent
+                    && (IsFieldNullOrZeroWithInitializer(context, initializer!)
+                    || IsStructInitializerEmpty(context, field.Declaration.Type, initializer!)))
                 {
-                    bool hasInitializer = variable.Initializer is not null;
-                    fieldInitializationInfo.Add(
-                        fieldName,
-                        new FieldInitializationInfo(
-                            fieldName,
-                            field,
-                            new List<ExpressionStatementSyntax>(),
-                            shouldNotInitializeInDeclaration: false,
-                            fieldHasInitializer: hasInitializer,
-                            fieldSymbol: symbol!));
+                    context.ReportDiagnostic(field.GetLocation().CreateDiagnostic(RuleExceptionInitializeToNullOrZero));
+                }
+                else if (!isInitializerPresent
+                        && context.SemanticModel.GetDeclaredSymbol(variable, cancellationToken: context.CancellationToken) is IFieldSymbol fieldSymbol
+                        && !IsZeroOrNullInitializableType(fieldSymbol))
+                {
+                    // An initializer is not present, so if the field is not a value type or nullable, the user should initialize it in the declaration
+                    context.ReportDiagnostic(field.GetLocation().CreateDiagnostic(RuleShouldInitializeInDeclarationWhenNoInitializationPresent));
+                }
+            }
+            else
+            {
+                if (isInitializerPresent
+                    && fieldInfo.ShouldNotInitializeInDeclaration)
+                {
+                    // An initializer is present, but the field should not be initialized in the declaration based on the constructor analysis
+                    // For example, if the field has diverging constructor initializations, we should not initialize it in the declaration
+                    context.ReportDiagnostic(field.GetLocation().CreateDiagnostic(RuleExceptionShouldNotInitializeInDeclaration));
+                }
+                else if (!fieldInfo.ShouldNotInitializeInDeclaration)
+                {
+                    IList<ExpressionStatementSyntax> fieldInitializersInConstructors = fieldInfo.FieldInitializersInConstructors;
+
+                    if (isInitializerPresent)
+                    {
+                        Diagnostic[] diagnotics = new Diagnostic[fieldInitializersInConstructors.Count];
+
+                        for (int i = 0; i < fieldInitializersInConstructors.Count; i++)
+                        {
+                            // If the field is initialized in the declaration, but it diverges from the constructor initializations, we should flag the declaration
+                            if (!((AssignmentExpressionSyntax)fieldInitializersInConstructors[i].Expression).Right.IsEquivalentTo(initializer!.Value))
+                            {
+                                context.ReportDiagnostic(field.GetLocation().CreateDiagnostic(RuleExceptionShouldNotInitializeInDeclaration));
+                                return;
+                            }
+
+                            diagnotics[i] = fieldInitializersInConstructors[i].GetLocation().CreateDiagnostic(GeneralRule);
+                        }
+
+                        for (int i = 0; i < diagnotics.Length; i++)
+                        {
+                            context.ReportDiagnostic(diagnotics[i]);
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < fieldInitializersInConstructors.Count; i++)
+                        {
+                            // Field should be initialized in the declaration since there are no diverging initializations in constructors.
+                            // We flag all the assignments in the constructors as diagnostics
+                            context.ReportDiagnostic(fieldInitializersInConstructors[i].GetLocation().CreateDiagnostic(GeneralRule));
+                        }
+                    }
                 }
             }
         }
-
-        return fieldInitializationInfo;
     }
 
-    private static void ReportDiagnosticsOnFieldDeclarations(SyntaxNodeAnalysisContext context, IDictionary<string, FieldInitializationInfo> fields)
+    private static bool IsFieldNullOrZeroWithInitializer(SyntaxNodeAnalysisContext context, EqualsValueClauseSyntax initializer)
     {
-        foreach (FieldInitializationInfo field in fields.Values)
+        SyntaxKind initializerKind = initializer.Value.Kind();
+
+        if (initializerKind == SyntaxKind.NullLiteralExpression)
         {
-            // Check and report fields that are initialized to null or zero. Structs are also checked for empty initializers.
-            if (IsFieldNullOrZeroWithInitializer(field) || IsStructInitializerEmpty(field))
-            {
-                context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleExceptionInitializeToNullOrZero));
-            }
-            else if (field.ShouldNotInitializeInDeclaration && field.FieldHasInitializer)
-            {
-                context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleExceptionShouldNotInitializeInDeclaration));
-            }
-            else if (field.MemberInitializers.Count > 0)
-            {
-                foreach (ExpressionStatementSyntax memberInitializer in field.MemberInitializers)
-                {
-                    context.ReportDiagnostic(memberInitializer.GetLocation().CreateDiagnostic(GeneralRule));
-                }
-            }
-            else if (!field.ShouldNotInitializeInDeclaration && !field.FieldHasInitializer && !field.IsZeroOrNullInitializableType)
-            {
-                context.ReportDiagnostic(field.FieldDeclaration.GetLocation().CreateDiagnostic(RuleShouldInitializeInDeclarationWhenNoInitializationPresent));
-            }
+            return string.Equals(((LiteralExpressionSyntax)initializer.Value).Token.ValueText, "null", StringComparison.Ordinal);
         }
+
+        if (initializerKind == SyntaxKind.NumericLiteralExpression)
+        {
+            Optional<object?> constantValue = context.SemanticModel.GetConstantValue(initializer.Value, context.CancellationToken);
+            return constantValue.HasValue && constantValue.Value is int intValue && intValue == 0;
+        }
+
+        return initializerKind == SyntaxKind.FalseLiteralExpression;
     }
 
-    private static bool IsFieldNullOrZeroWithInitializer(FieldInitializationInfo field)
+    private static bool IsStructInitializerEmpty(SyntaxNodeAnalysisContext context, TypeSyntax typeSyntax, EqualsValueClauseSyntax initializer)
     {
-        if (field.IsZeroOrNullInitializableType)
+        TypeInfo symbol = context.SemanticModel.GetTypeInfo(typeSyntax, context.CancellationToken);
+
+        if (symbol.Type?.TypeKind != TypeKind.Struct
+            || initializer.Value is not ObjectCreationExpressionSyntax objectCreation)
         {
-            IEnumerable<LiteralExpressionSyntax> literalExpressionEnumerable = field.FieldDeclaration.DescendantNodes().OfType<LiteralExpressionSyntax>();
-            return literalExpressionEnumerable.Count() == 1 && (literalExpressionEnumerable.Single().Token.Value is null or 0 or false);
+            return false;
         }
 
-        return false;
-    }
-
-    private static bool IsStructInitializerEmpty(FieldInitializationInfo field)
-    {
-        if (field.IsStruct)
-        {
-            IEnumerable<ObjectCreationExpressionSyntax> objectCreationNodeEnumerable = field.FieldDeclaration.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            return objectCreationNodeEnumerable.Count() == 1 && objectCreationNodeEnumerable.Single().ArgumentList?.Arguments.Count == 0;
-        }
-
-        return false;
+        return objectCreation.ArgumentList?.Arguments.Count == 0;
     }
 
     private static void FindMemberInitializerCandidates(SyntaxNodeAnalysisContext context, ConstructorDeclarationSyntax constructor, IDictionary<string, FieldInitializationInfo> fields)
@@ -179,15 +209,30 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         foreach (ExpressionStatementSyntax expressionStatement in constructor.DescendantNodes().OfType<ExpressionStatementSyntax>())
         {
             if (expressionStatement.Expression is AssignmentExpressionSyntax assignment
-                && assignment.Left is IdentifierNameSyntax identifierName
-                && context.SemanticModel.GetSymbolInfo(identifierName, cancellationToken: context.CancellationToken).Symbol is IFieldSymbol fieldSymbol
-                && fields.TryGetValue(fieldSymbol.Name, out FieldInitializationInfo fieldInitializationInfo)
-                && !fieldInitializationInfo.ShouldNotInitializeInDeclaration)
+                && assignment.Left is IdentifierNameSyntax identifierName)
             {
+                FieldInitializationInfo fieldInfo;
+
+                if (!fields.TryGetValue(identifierName.Identifier.Text, out fieldInfo))
+                {
+                    if (context.SemanticModel.GetSymbolInfo(identifierName, cancellationToken: context.CancellationToken).Symbol is not IFieldSymbol fieldSymbol)
+                    {
+                        return;
+                    }
+
+                    fieldInfo = new FieldInitializationInfo(fieldSymbol.Name);
+                    fields.Add(identifierName.Identifier.Text, fieldInfo);
+                }
+
+                if (fieldInfo.ShouldNotInitializeInDeclaration)
+                {
+                    return;
+                }
+
                 ProcessMemberInitializerCandidates(
                     assignment,
                     expressionStatement,
-                    fieldInitializationInfo);
+                    fieldInfo);
             }
         }
     }
@@ -197,23 +242,43 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         foreach (ExpressionStatementSyntax expressionStatement in constructor.DescendantNodes().OfType<ExpressionStatementSyntax>())
         {
             if (expressionStatement.Expression is AssignmentExpressionSyntax assignment
-                    && assignment.Left is IdentifierNameSyntax identifierName
-                    && context.SemanticModel.GetSymbolInfo(identifierName, cancellationToken: context.CancellationToken).Symbol is IFieldSymbol fieldSymbol
-                    && fields.TryGetValue(fieldSymbol.Name, out FieldInitializationInfo fieldInitializationInfo)
-                    && !fieldInitializationInfo.ShouldNotInitializeInDeclaration
-                    && context.SemanticModel.GetOperation(assignment.Right, context.CancellationToken) is not IParameterReferenceOperation)
+                    && assignment.Left is IdentifierNameSyntax identifierName)
             {
+                FieldInitializationInfo fieldInfo;
+
+                if (!fields.TryGetValue(identifierName.Identifier.Text, out fieldInfo))
+                {
+                    if (context.SemanticModel.GetSymbolInfo(identifierName, cancellationToken: context.CancellationToken).Symbol is not IFieldSymbol fieldSymbol)
+                    {
+                        return;
+                    }
+
+                    fieldInfo = new FieldInitializationInfo(fieldSymbol.Name);
+                    fields.Add(identifierName.Identifier.Text, fieldInfo);
+                }
+
+                if (fieldInfo.ShouldNotInitializeInDeclaration)
+                {
+                    return;
+                }
+
+                IOperation? operation = context.SemanticModel.GetOperation(assignment.Right, context.CancellationToken);
+
+                if (operation is IParameterReferenceOperation || operation is ILocalReferenceOperation)
+                {
+                    return;
+                }
+
                 if (!IsConstructorParameterInUse(assignment.Right, context))
                 {
                     ProcessMemberInitializerCandidates(
                         assignment,
                         expressionStatement,
-                        fieldInitializationInfo);
+                        fieldInfo);
                 }
                 else
                 {
-                    fieldInitializationInfo.ShouldNotInitializeInDeclaration = true;
-                    fieldInitializationInfo.MemberInitializers.Clear();
+                    fieldInfo.ShouldNotInitializeInDeclaration = true;
                 }
             }
         }
@@ -223,7 +288,6 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
     {
         return expression switch
         {
-            LiteralExpressionSyntax => true,
             InvocationExpressionSyntax invocationExpressionSyntax => IsConstructorParameterInUse(invocationExpressionSyntax.ArgumentList, context),
             ObjectCreationExpressionSyntax objectCreationExpressionSyntax => IsConstructorParameterInUse(objectCreationExpressionSyntax.ArgumentList, context),
             ImplicitObjectCreationExpressionSyntax implicitObjectCreationExpressionSyntax => IsConstructorParameterInUse(implicitObjectCreationExpressionSyntax.ArgumentList, context),
@@ -234,18 +298,31 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
 
     private static bool IsConstructorParameterInUse(SyntaxNode? argumentList, SyntaxNodeAnalysisContext context)
     {
-        return argumentList?
-            .DescendantNodes()
-            .OfType<IdentifierNameSyntax>()
-            .Any(argument => context.SemanticModel.GetOperation(argument, context.CancellationToken) is IParameterReferenceOperation) ?? false;
+        if (argumentList is null)
+        {
+            return false;
+        }
+
+        foreach (IdentifierNameSyntax identifierNameSyntax in argumentList.DescendantNodes().OfType<IdentifierNameSyntax>())
+        {
+            IOperation? operation = context.SemanticModel.GetOperation(identifierNameSyntax, context.CancellationToken);
+
+            if (operation is IParameterReferenceOperation || operation is ILocalReferenceOperation)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsConstructorParameterInUse(SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxNodeAnalysisContext context)
     {
-        foreach (ExpressionSyntax expression in expressions)
+        foreach (IdentifierNameSyntax identifierNameSyntax in expressions.OfType<IdentifierNameSyntax>())
         {
-            if (expression is IdentifierNameSyntax argument
-                && context.SemanticModel.GetOperation(argument, context.CancellationToken) is IParameterReferenceOperation)
+            IOperation? operation = context.SemanticModel.GetOperation(identifierNameSyntax, context.CancellationToken);
+
+            if (operation is IParameterReferenceOperation || operation is ILocalReferenceOperation)
             {
                 return true;
             }
@@ -259,9 +336,9 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         ExpressionStatementSyntax expressionStatement,
         FieldInitializationInfo fieldInitializationInfo)
     {
-        IList<ExpressionStatementSyntax> memberInitializersInConstructor = fieldInitializationInfo.MemberInitializers;
+        IList<ExpressionStatementSyntax> memberInitializersInConstructor = fieldInitializationInfo.FieldInitializersInConstructors;
 
-        if (memberInitializersInConstructor.Count == 0 && !fieldInitializationInfo.ShouldNotInitializeInDeclaration)
+        if (memberInitializersInConstructor.Count == 0)
         {
             memberInitializersInConstructor.Add(expressionStatement);
         }
@@ -272,41 +349,27 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         else
         {
             fieldInitializationInfo.ShouldNotInitializeInDeclaration = true;
-            fieldInitializationInfo.MemberInitializers.Clear();
         }
+    }
+
+    private static bool IsZeroOrNullInitializableType(IFieldSymbol fieldSymbol)
+    {
+        return fieldSymbol.Type.IsValueType || fieldSymbol.NullableAnnotation == NullableAnnotation.Annotated;
     }
 
     private sealed record FieldInitializationInfo
     {
         public FieldInitializationInfo(
-            string fieldName,
-            FieldDeclarationSyntax fieldDeclaration,
-            IList<ExpressionStatementSyntax> memberInitializers,
-            bool shouldNotInitializeInDeclaration,
-            bool fieldHasInitializer,
-            IFieldSymbol fieldSymbol)
+            string name)
         {
-            FieldName = fieldName;
-            FieldDeclaration = fieldDeclaration;
-            MemberInitializers = memberInitializers;
-            ShouldNotInitializeInDeclaration = shouldNotInitializeInDeclaration;
-            FieldHasInitializer = fieldHasInitializer;
-            IsStruct = fieldSymbol.Type.TypeKind == TypeKind.Struct;
-            IsZeroOrNullInitializableType = fieldSymbol.Type.IsValueType || fieldSymbol.NullableAnnotation == NullableAnnotation.Annotated;
+            FieldName = name;
+            FieldInitializersInConstructors = new List<ExpressionStatementSyntax>();
         }
 
         public string FieldName { get; init; }
 
-        public FieldDeclarationSyntax FieldDeclaration { get; init; }
-
-        public IList<ExpressionStatementSyntax> MemberInitializers { get; init; }
+        public IList<ExpressionStatementSyntax> FieldInitializersInConstructors { get; init; }
 
         public bool ShouldNotInitializeInDeclaration { get; set; }
-
-        public bool FieldHasInitializer { get; init; }
-
-        public bool IsStruct { get; init; }
-
-        public bool IsZeroOrNullInitializableType { get; init; }
     }
 }
