@@ -4,14 +4,13 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
         <IsPackable>false</IsPackable>
-        <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers> <!-- Use general Linux runtime identifier -->
     </PropertyGroup>
 
-    <!-- <ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="$(RepoRoot)/src/EffectiveCSharp.Analyzers/EffectiveCSharp.Analyzers.csproj" />
         <PackageReference Include="BenchmarkDotNet" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" />
-    </ItemGroup> -->
+    </ItemGroup>
 
 </Project>
