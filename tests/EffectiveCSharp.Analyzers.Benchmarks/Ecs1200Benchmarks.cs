@@ -31,7 +31,7 @@ internal class {name}
 
         (BaselineCompilation, TestCompilation) =
             BenchmarkCSharpCompilationFactory
-            .CreateAsync<PreferMemberInitializersToAssignmentStatementsAnalyzer>(sources.ToArray())
+            .CreateAsync<PreferDeclarationInitializersToAssignmentStatementsAnalyzer>(sources.ToArray())
             .GetAwaiter()
             .GetResult();
     }

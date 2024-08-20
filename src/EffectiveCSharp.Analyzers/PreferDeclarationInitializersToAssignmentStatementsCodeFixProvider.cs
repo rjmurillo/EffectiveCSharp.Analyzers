@@ -1,21 +1,21 @@
-﻿namespace EffectiveCSharp.Analyzers;
+namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
-/// A <see cref="CodeFixProvider"/> that provides a code fix for the <see cref="PreferMemberInitializersToAssignmentStatementsAnalyzer"/>.
+/// A <see cref="CodeFixProvider"/> that provides a code fix for the <see cref="PreferDeclarationInitializersToAssignmentStatementsAnalyzer"/>.
 /// </summary>
 /// <seealso cref="Microsoft.CodeAnalysis.CodeFixes.CodeFixProvider" />
-[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PreferMemberInitializersToAssignmentStatementsCodeFixProvider))]
+[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider))]
 [Shared]
-public class PreferMemberInitializersToAssignmentStatementsCodeFixProvider : CodeFixProvider
+public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider : CodeFixProvider
 {
     private static readonly IEqualityComparer<IFieldSymbol> _fieldSymbolNameComparer = new FieldSymbolNameComparer();
 
     /// <inheritdoc />
     public override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(
-        DiagnosticIds.PreferMemberInitializersToAssignmentStatement,
-        DiagnosticIds.PreferMemberInitializersExceptNullOrZero,
-        DiagnosticIds.PreferMemberInitializersExceptWhenVaryingInitializations,
-        DiagnosticIds.PreferMemberInitializersWhenNoInitializationPresent);
+        DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement,
+        DiagnosticIds.PreferDeclarationInitializersExceptNullOrZero,
+        DiagnosticIds.PreferDeclarationInitializersExceptWhenVaryingInitializations,
+        DiagnosticIds.PreferDeclarationInitializersWhenNoInitializationPresent);
 
     /// <inheritdoc />
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
@@ -38,7 +38,7 @@ public class PreferMemberInitializersToAssignmentStatementsCodeFixProvider : Cod
 
             switch (diagnostic.Id)
             {
-                case DiagnosticIds.PreferMemberInitializersToAssignmentStatement:
+                case DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement:
                     if (declaration is ExpressionStatementSyntax expressionStatement && expressionStatement.Expression is AssignmentExpressionSyntax assignmentExpressionSyntax)
                     {
                         // Get symbol info for the expression
@@ -59,7 +59,7 @@ public class PreferMemberInitializersToAssignmentStatementsCodeFixProvider : Cod
                     }
 
                     break;
-                case DiagnosticIds.PreferMemberInitializersExceptNullOrZero:
+                case DiagnosticIds.PreferDeclarationInitializersExceptNullOrZero:
                     context.RegisterCodeFix(
                         CodeAction.Create(
                             title: "Do not initialize to null or zero",
@@ -67,7 +67,7 @@ public class PreferMemberInitializersToAssignmentStatementsCodeFixProvider : Cod
                             equivalenceKey: "Use member initializer"),
                         diagnostic);
                     break;
-                case DiagnosticIds.PreferMemberInitializersExceptWhenVaryingInitializations:
+                case DiagnosticIds.PreferDeclarationInitializersExceptWhenVaryingInitializations:
                     context.RegisterCodeFix(
                         CodeAction.Create(
                             title: "Do not use field initializer when varying initializations",
@@ -75,7 +75,7 @@ public class PreferMemberInitializersToAssignmentStatementsCodeFixProvider : Cod
                             equivalenceKey: "Use member initializer"),
                         diagnostic);
                     break;
-                case DiagnosticIds.PreferMemberInitializersWhenNoInitializationPresent:
+                case DiagnosticIds.PreferDeclarationInitializersWhenNoInitializationPresent:
                     context.RegisterCodeFix(
                         CodeAction.Create(
                             title: "Use initializer in field declaration",

@@ -1,26 +1,26 @@
-﻿namespace EffectiveCSharp.Analyzers;
+namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
-/// Analyzer that checks for the use of assignment statements in constructors when member initializers could be used instead.
+/// Analyzer that checks for the use of assignment statements in constructors when field declaration initializers could be used instead.
 /// </summary>
 /// <seealso cref="DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class PreferMemberInitializersToAssignmentStatementsAnalyzer : DiagnosticAnalyzer
+public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : DiagnosticAnalyzer
 {
-    private const string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{DiagnosticIds.PreferMemberInitializersToAssignmentStatement}.md";
+    private const string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement}.md";
 
     private static readonly DiagnosticDescriptor GeneralRule = new(
-        id: DiagnosticIds.PreferMemberInitializersToAssignmentStatement,
-        title: "Prefer member initializers to assignment statements",
-        messageFormat: "Use a member initializer instead of an assignment statement",
+        id: DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement,
+        title: "Prefer field declaration initializers to assignment statements",
+        messageFormat: "Use a field declaration initializer instead of an assignment statement",
         category: "Maintainability",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "Field initialization in a constructor that does not use an argument should be done with a member initializer.",
+        description: "Field initialization in a constructor that does not use an argument should be done with a field declaration initializer.",
         helpLinkUri: HelpLinkUri);
 
     private static readonly DiagnosticDescriptor RuleExceptionShouldNotInitializeToNullOrZero = new(
-        id: DiagnosticIds.PreferMemberInitializersExceptNullOrZero,
+        id: DiagnosticIds.PreferDeclarationInitializersExceptNullOrZero,
         title: "Should not initialize to null or zero",
         messageFormat: "Do not initialize to null or zero as these already occur by default",
         category: "Maintainability",
@@ -30,7 +30,7 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         helpLinkUri: HelpLinkUri);
 
     private static readonly DiagnosticDescriptor RuleExceptionShouldNotInitializeInDeclaration = new(
-        id: DiagnosticIds.PreferMemberInitializersExceptWhenVaryingInitializations,
+        id: DiagnosticIds.PreferDeclarationInitializersExceptWhenVaryingInitializations,
         title: "Should not initialize in declaration due to diverging initializations in constructors",
         messageFormat: "Do not initialize a field in its declaration if you have diverging initializations in constructors. This is to prevent unnecessary allocations.",
         category: "Maintainability",
@@ -40,7 +40,7 @@ public class PreferMemberInitializersToAssignmentStatementsAnalyzer : Diagnostic
         helpLinkUri: HelpLinkUri);
 
     private static readonly DiagnosticDescriptor RuleShouldInitializeInDeclarationWhenNoInitializationPresent = new(
-        id: DiagnosticIds.PreferMemberInitializersWhenNoInitializationPresent,
+        id: DiagnosticIds.PreferDeclarationInitializersWhenNoInitializationPresent,
         title: "Should initialize in declaration when no initialization present",
         messageFormat: "Initialize the field in its declaration when no distint initializations will occur in constructors",
         category: "Maintainability",

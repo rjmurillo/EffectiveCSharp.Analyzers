@@ -1,9 +1,9 @@
-using CodeFixVerifier = EffectiveCSharp.Analyzers.Tests.Helpers.CodeFixVerifier<EffectiveCSharp.Analyzers.PreferMemberInitializersToAssignmentStatementsAnalyzer, EffectiveCSharp.Analyzers.PreferMemberInitializersToAssignmentStatementsCodeFixProvider>;
-using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.PreferMemberInitializersToAssignmentStatementsAnalyzer>;
+using CodeFixVerifier = EffectiveCSharp.Analyzers.Tests.Helpers.CodeFixVerifier<EffectiveCSharp.Analyzers.PreferDeclarationInitializersToAssignmentStatementsAnalyzer, EffectiveCSharp.Analyzers.PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider>;
+using Verifier = EffectiveCSharp.Analyzers.Tests.Helpers.AnalyzerVerifier<EffectiveCSharp.Analyzers.PreferDeclarationInitializersToAssignmentStatementsAnalyzer>;
 
 namespace EffectiveCSharp.Analyzers.Tests;
 
-public class PreferMemberInitializersToAssignmentStatementsTests
+public class PreferDeclarationInitializersToAssignmentStatementsTests
 {
     [Fact]
     public async Task AnalyzerSimpleCase()
