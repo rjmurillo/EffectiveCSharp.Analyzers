@@ -141,7 +141,6 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
             // but avoids having duplicate implementations of the same method for different scenarios.
             if (checkConstructorParameters)
             {
-                // We get the operation of the right side of the assignment to check if it is a parameter or local reference
                 IOperation? operation = context.SemanticModel.GetOperation(assignment.Right, context.CancellationToken);
 
                 // IParameterReferenceOperation: If it's a parameter reference, we know that the field is being initialized with a constructor parameter
@@ -393,11 +392,11 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <summary>
     /// Handles fields that are initialized in constructors.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="field"></param>
-    /// <param name="initializer"></param>
-    /// <param name="isInitializerPresent"></param>
-    /// <param name="fieldInfo"></param>
+    /// <param name="context">The <see cref="SyntaxNodeAnalysisContext"/>.</param>
+    /// <param name="field">The <see cref="FieldDeclarationSyntax"/> to handle.</param>
+    /// <param name="initializer">The <see cref="EqualsValueClauseSyntax"/> which contains the field initializer.</param>
+    /// <param name="isInitializerPresent">A bool on whether an initializer is present in the field declaration.</param>
+    /// <param name="fieldInfo">The field's initialization info found in the class's constructors.</param>
     private static void HandleFieldsInConstructors(
         SyntaxNodeAnalysisContext context,
         FieldDeclarationSyntax field,
