@@ -7,7 +7,7 @@ namespace EffectiveCSharp.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : DiagnosticAnalyzer
 {
-    private const string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement}.md";
+    private const string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement}.md";
 
     private static readonly DiagnosticDescriptor GeneralRule = new(
         id: DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement,
