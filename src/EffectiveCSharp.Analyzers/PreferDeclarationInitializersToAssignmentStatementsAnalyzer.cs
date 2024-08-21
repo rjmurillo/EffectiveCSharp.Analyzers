@@ -1,13 +1,13 @@
 namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
-/// Analyzer that checks for the use of assignment statements in constructors when field declaration initializers could be used instead.
+/// A <see cref="DiagnosticAnalyzer" /> for Effective C# Item #12 - Prefer field declaration initializers.
 /// </summary>
 /// <seealso cref="DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : DiagnosticAnalyzer
 {
-    private const string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/{DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement}.md";
+    private const string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement}.md";
 
     private static readonly DiagnosticDescriptor GeneralRule = new(
         id: DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement,
@@ -67,7 +67,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         // In order to keep track of the fields that are initialized in the constructors
         // We create this dictionary that will track a field's initialization in the constructors.
         // To save on time and memory, we only track fields that are initialized in the constructors.
-        IDictionary<string, FieldInitializationInfo> fieldInitializationInfo = new Dictionary<string, FieldInitializationInfo>(StringComparer.Ordinal);
+        Dictionary<string, FieldInitializationInfo> fieldInitializationInfo = new Dictionary<string, FieldInitializationInfo>(StringComparer.Ordinal);
 
         // Check in every constructor if there are field initializer candidates
         foreach (ConstructorDeclarationSyntax constructor in classSyntaxNode.ChildNodes().OfType<ConstructorDeclarationSyntax>())
@@ -86,7 +86,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <param name="context">The node analysis context.</param>
     /// <param name="constructor">The constructor declaration to search fields for.</param>
     /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
-    private static void FindFieldInitializerCandidates(SyntaxNodeAnalysisContext context, ConstructorDeclarationSyntax constructor, IDictionary<string, FieldInitializationInfo> fields)
+    private static void FindFieldInitializerCandidates(SyntaxNodeAnalysisContext context, ConstructorDeclarationSyntax constructor, Dictionary<string, FieldInitializationInfo> fields)
     {
         SeparatedSyntaxList<ParameterSyntax> arguments = constructor.ParameterList.Parameters;
 
@@ -106,7 +106,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     private static void HandleArgumentsList(
         ConstructorDeclarationSyntax constructor,
         SyntaxNodeAnalysisContext context,
-        IDictionary<string, FieldInitializationInfo> fields,
+        Dictionary<string, FieldInitializationInfo> fields,
         bool checkConstructorParameters)
     {
         foreach (AssignmentExpressionSyntax assignment in constructor.DescendantNodes().OfType<AssignmentExpressionSyntax>())
@@ -141,7 +141,6 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
             // but avoids having duplicate implementations of the same method for different scenarios.
             if (checkConstructorParameters)
             {
-                // We get the operation of the right side of the assignment to check if it is a parameter or local reference
                 IOperation? operation = context.SemanticModel.GetOperation(assignment.Right, context.CancellationToken);
 
                 // IParameterReferenceOperation: If it's a parameter reference, we know that the field is being initialized with a constructor parameter
@@ -263,7 +262,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <param name="context">The analysis context.</param>
     /// <param name="classDeclarationSyntax">The class declaration node to find the fields in.</param>
     /// <param name="fieldInitializationInfos">The initalization info for all fields present in a constructor.</param>
-    private static void ReportDiagnosticsOnFieldDeclarations(SyntaxNodeAnalysisContext context, ClassDeclarationSyntax classDeclarationSyntax, IDictionary<string, FieldInitializationInfo> fieldInitializationInfos)
+    private static void ReportDiagnosticsOnFieldDeclarations(SyntaxNodeAnalysisContext context, ClassDeclarationSyntax classDeclarationSyntax, Dictionary<string, FieldInitializationInfo> fieldInitializationInfos)
     {
         foreach (FieldDeclarationSyntax field in classDeclarationSyntax.ChildNodes().OfType<FieldDeclarationSyntax>())
         {
@@ -393,11 +392,11 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <summary>
     /// Handles fields that are initialized in constructors.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="field"></param>
-    /// <param name="initializer"></param>
-    /// <param name="isInitializerPresent"></param>
-    /// <param name="fieldInfo"></param>
+    /// <param name="context">The <see cref="SyntaxNodeAnalysisContext"/>.</param>
+    /// <param name="field">The <see cref="FieldDeclarationSyntax"/> to handle.</param>
+    /// <param name="initializer">The <see cref="EqualsValueClauseSyntax"/> which contains the field initializer.</param>
+    /// <param name="isInitializerPresent">A bool on whether an initializer is present in the field declaration.</param>
+    /// <param name="fieldInfo">The field's initialization info found in the class's constructors.</param>
     private static void HandleFieldsInConstructors(
         SyntaxNodeAnalysisContext context,
         FieldDeclarationSyntax field,
