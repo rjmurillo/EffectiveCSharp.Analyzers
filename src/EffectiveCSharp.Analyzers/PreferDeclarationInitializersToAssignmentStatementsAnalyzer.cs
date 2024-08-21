@@ -1,7 +1,7 @@
 namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
-/// Analyzer that checks for the use of assignment statements in constructors when field declaration initializers could be used instead.
+/// A <see cref="DiagnosticAnalyzer" /> for Effective C# Item #12 - Prefer field declaration initializers.
 /// </summary>
 /// <seealso cref="DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
