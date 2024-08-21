@@ -6,6 +6,378 @@ namespace EffectiveCSharp.Analyzers.Tests;
 public class PreferDeclarationInitializersToAssignmentStatementsTests
 {
     [Fact]
+    public async Task FieldsInitializedWithDefaultKeyword()
+    {
+        // Fields initialized with the `default` keyword
+        // Ensure that such initializations are correctly handled and not flagged
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private int value = default;
+              private MyClass instance = default;
+              
+              public MyClass()
+              {
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsInitializedInNestedTypes()
+    {
+        // Fields within nested classes or structs are initialized in their own ctors or the parent class
+        // The analyzer should recognize this case and should flag for declaration initialization
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class Outer
+            {
+              private string outerLabel;
+              {|ECS1202:private InnerClass inner = new() { innerLabel = "Inner" };|}
+            
+              public Outer()
+              {
+                {|ECS1200:outerLabel = "Outer";|}
+                inner = new InnerClass { innerLabel = outerLabel };
+              }
+            
+              public class InnerClass
+              {
+                internal string innerLabel;
+            
+                public InnerClass()
+                {
+                  {|ECS1200:innerLabel = "Inner";|}
+                }
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsInitializedWithPropertySetters()
+    {
+        // Fields are initialized within property setters rater than directly or with ctors
+        // The analyzer should recognize this case and should not flag for declaration initialization
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private string label;
+              
+              public string Label
+              {
+                get => label;
+                set => label = value;
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsWithCtorInitializationPartialClass()
+    {
+        // Fields in partial classes that are initialized in different parts of the class.
+        // Ensure the analyzer correctly handles partial classes and fields initialized across them.
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public partial class MyClass
+            {
+              {|ECS1203:private string label;|}
+            }
+            
+            public partial class MyClass
+            {  
+              public MyClass()
+              {
+                label = "Initialized in partial class ctor";
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsWithNoInitialization()
+    {
+        // Fields are not initialized either in the declaration or the ctor
+        // The analyzer suggests adding an initializer in such cases
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              {|ECS1203:private string label;|}
+              
+              public MyClass()
+              {
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsInitializedBasedOnExternalParametersOrData()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private string label;
+              
+              public MyClass(string label)
+              {
+                this.label = label;
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task InitializationWithCtorOverloadChains()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private string label;
+              
+              public MyClass() : this("Default Label")
+              {
+              }
+              
+              public MyClass(string label)
+              {
+                {|ECS1203:this.label = label;|}
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsAssignedWithExpressionsDependentOnOtherFieldsWithStaticAndInterpolation()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private static readonly string prefix;
+              private string label = $"{prefix} Label";
+              
+              static MyClass()
+              {
+                {|ECS1200:prefix = "Prefix";|}
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsAssignedWithExpressionsDependentOnOtherFields()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private string prefix;
+              private string label;
+              
+              public MyClass()
+              {
+                {|ECS1200:prefix = "Prefix";|}
+                {|ECS1200:label = prefix + " Label";|}
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldInitializedWithMethodIndirectly()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private string label;
+              
+              public MyClass()
+              {
+                EnsureInitialized();
+              }
+              
+              private void EnsureInitialized()
+              {
+                label = InitializeLabel();
+              }
+              
+              private string InitializeLabel()
+              {
+                return "Initialized by method";
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldInitializedWithMethodDirectly()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private string label;
+              
+              public MyClass()
+              {
+                label = InitializeLabel();
+              }
+              
+              private string InitializeLabel()
+              {
+                return "Initialized by method";
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task ObjectInitializers()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private List<string> listOfStrings = new List<string> { "Value1", "Value2" };
+              
+              public MyClass()
+              {
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task ConstantField()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private const int val = 42;
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task ReadonlyField()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private readonly string label;
+              
+              public MyClass()
+              {
+                {|ECS1200:label = "Initialized readonly in ctor";|}
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    
+    [Fact]
+    public async Task StaticCtor()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private static string label;
+              
+              static MyClass()
+              {
+                {|ECS1200:label = "Initialized in static ctor";|}
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsInitializedWithTernaryOperator()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private string label;
+              
+              public MyClass(bool condition)
+              {
+                  {|ECS1200:label = condition ? "True" : "False";|}
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task FieldsInitializedWithBranchingLogic()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private string label;
+              
+              public MyClass(bool condition)
+              {
+                  if (condition)
+                  {
+                    label = "Conditional";
+                  }
+                  else
+                  {
+                    label = "Default";
+                  }
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+    
+    [Fact]
+    public async Task MultipleVariablesInSingleDeclaration()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private int a = 1, b = 2;
+            
+              public MyClass()
+              {
+              }
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
     public async Task AnalyzerSimpleCase()
     {
         await Verifier.VerifyAnalyzerAsync(
