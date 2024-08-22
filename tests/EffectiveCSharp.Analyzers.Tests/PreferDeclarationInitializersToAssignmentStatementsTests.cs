@@ -24,7 +24,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsInitializedInNestedTypes()
     {
@@ -56,7 +56,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsInitializedWithPropertySetters()
     {
@@ -77,7 +77,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsWithCtorInitializationPartialClass()
     {
@@ -100,7 +100,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsWithNoInitialization()
     {
@@ -119,7 +119,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsInitializedBasedOnExternalParametersOrData()
     {
@@ -137,7 +137,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task InitializationWithCtorOverloadChains()
     {
@@ -159,7 +159,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsAssignedWithExpressionsDependentOnOtherFieldsWithStaticAndInterpolation()
     {
@@ -178,7 +178,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsAssignedWithExpressionsDependentOnOtherFields()
     {
@@ -198,7 +198,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldInitializedWithMethodIndirectly()
     {
@@ -226,7 +226,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldInitializedWithMethodDirectly()
     {
@@ -249,7 +249,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task ObjectInitializers()
     {
@@ -266,7 +266,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task ConstantField()
     {
@@ -279,7 +279,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task ReadonlyField()
     {
@@ -297,8 +297,8 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
-    
+
+
     [Fact]
     public async Task StaticCtor()
     {
@@ -316,7 +316,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsInitializedWithTernaryOperator()
     {
@@ -334,7 +334,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task FieldsInitializedWithBranchingLogic()
     {
@@ -359,7 +359,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             """,
             ReferenceAssemblyCatalog.Latest);
     }
-    
+
     [Fact]
     public async Task MultipleVariablesInSingleDeclaration()
     {
@@ -741,6 +741,46 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
           public class MyClass
           {
             private List<string> listOfString = new List<string>();
+
+            public MyClass()
+            {
+            }
+
+            public MyClass(int size)
+            {
+            }
+          }
+        """;
+
+        await CodeFixVerifier.VerifyCodeFixAsync(testCode, fixedCode, ReferenceAssemblyCatalog.Net80);
+    }
+
+    [Fact]
+    public async Task CodeFixInitializeInDeclarationWhenIdenticalNotDefaultInitializations()
+    {
+        const string testCode =
+        """
+          public class MyClass
+          {
+            private List<string> listOfString = new List<string>(5);
+
+            public MyClass()
+            {
+              {|ECS1200:listOfString = new List<string>(5);|}
+            }
+
+            public MyClass(int size)
+            {
+              {|ECS1200:listOfString = new List<string>(5);|}
+            }
+          }
+        """;
+
+        const string fixedCode =
+        """
+          public class MyClass
+          {
+            private List<string> listOfString = new List<string>(5);
 
             public MyClass()
             {

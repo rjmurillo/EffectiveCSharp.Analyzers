@@ -14,7 +14,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         title: "Prefer field declaration initializers to assignment statements",
         messageFormat: "Use a field declaration initializer instead of an assignment statement",
         category: "Maintainability",
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: "Field initialization in a constructor that does not use an argument should be done with a field declaration initializer.",
         helpLinkUri: HelpLinkUri);
@@ -24,7 +24,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         title: "Should not initialize to null or zero",
         messageFormat: "Do not initialize to null or zero as these already occur by default",
         category: "Maintainability",
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: "Field initialization to null or zero is redundant and should be avoided.",
         helpLinkUri: HelpLinkUri);
@@ -34,7 +34,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         title: "Should not initialize in declaration due to diverging initializations in constructors",
         messageFormat: "Do not initialize a field in its declaration if you have diverging initializations in constructors. This is to prevent unnecessary allocations.",
         category: "Maintainability",
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: "Field initialization should not occur when there are diverging initializations in constructos. This is to prevent unnecessary allocations.",
         helpLinkUri: HelpLinkUri);
@@ -44,7 +44,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         title: "Should initialize in declaration when no initialization present",
         messageFormat: "Initialize the field in its declaration when no distint initializations will occur in constructors",
         category: "Maintainability",
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: "Field initialization should occur in the declaration unless there are diverging initializations in constructors, or the field is a value type or nullable being initialized to the default.",
         helpLinkUri: HelpLinkUri);
