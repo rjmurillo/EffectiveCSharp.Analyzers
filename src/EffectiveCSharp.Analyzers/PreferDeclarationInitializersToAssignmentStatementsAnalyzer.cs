@@ -111,13 +111,17 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     {
         foreach (AssignmentExpressionSyntax assignment in constructor.DescendantNodes().OfType<AssignmentExpressionSyntax>())
         {
+            bool isFieldAssignment = assignment.Left is IdentifierNameSyntax;
+
             // We want to ignore assignments that are not part of an expression statement or are not an identifier
-            if (assignment.Parent is not ExpressionStatementSyntax || assignment.Left is not IdentifierNameSyntax)
+            if (assignment.Parent is not ExpressionStatementSyntax
+                || !(assignment.Left is MemberAccessExpressionSyntax
+                || isFieldAssignment))
             {
                 continue;
             }
 
-            IdentifierNameSyntax identifierName = (IdentifierNameSyntax)assignment.Left;
+            IdentifierNameSyntax identifierName = isFieldAssignment ? (IdentifierNameSyntax)assignment.Left : (IdentifierNameSyntax)((MemberAccessExpressionSyntax)assignment.Left).Name;
 
             // We check to see if the field is already being tracked. If not, we initialize it after checking if the assignment expression belongs to a field.
             if (!fields.TryGetValue(identifierName.Identifier.Text, out FieldInitializationInfo fieldInfo))
@@ -136,22 +140,19 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
                 continue;
             }
 
-            // If the assignment is to a constructor parameter, we can ignore it.
-            // This check is a performance hit for when the constructor has no arguments,
-            // but avoids having duplicate implementations of the same method for different scenarios.
+            if (assignment.Right is InvocationExpressionSyntax invocationExpressionSyntax
+                && !IsStaticMethodInvocation(invocationExpressionSyntax, context))
+            {
+                // If the assignment is to a non-static method invocation, we can ignore it.
+                fieldInfo.ShouldNotInitializeInDeclaration = true;
+                continue;
+            }
+
             if (checkConstructorParameters)
             {
                 IOperation? operation = context.SemanticModel.GetOperation(assignment.Right, context.CancellationToken);
 
-                // IParameterReferenceOperation: If it's a parameter reference, we know that the field is being initialized with a constructor parameter
-                // and it should not initialize in the declaration.
-
-                // ILocalReferenceOperation: If it's a local reference, we know that the field is being initialized with a local variable, and
-                // since we don't have logic yet to track if that local variable is somehow related to a constructor parameter,
-                // we will assume that the field should not initialize in the declaration.
-
-                // IsConstructorParameterInUse: If a constructor parameter is somehow in use in the right side of the assignment,
-                // we know the field should not initialize in the declaration.
+                // ILocalReferenceOperation: We do not yet have logic to verify if it is related to a constructor parameter, so we assume it is.
                 if (operation is IParameterReferenceOperation
                     || operation is ILocalReferenceOperation
                     || IsConstructorParameterInUse(assignment.Right, context))
@@ -161,13 +162,26 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
                 }
             }
 
-            // We now know this is a field initializer that could be a candidate for the GeneralRule diagnostic
-            // so we process it accordingly.
             ProcessFieldInitializerCandidate(
                 assignment,
                 (ExpressionStatementSyntax)assignment.Parent!,
                 fieldInfo);
         }
+    }
+
+    /// <summary>
+    /// Checks whether the invocation expression is a static method invocation.
+    /// </summary>
+    /// <param name="invocationExpression">The target <see cref="InvocationExpressionSyntax"/>.</param>
+    /// <param name="context">The <see cref="SyntaxNodeAnalysisContext"/>.</param>
+    /// <returns>A bool on whether the invocation is for a static method.</returns>
+    private static bool IsStaticMethodInvocation(InvocationExpressionSyntax invocationExpression, SyntaxNodeAnalysisContext context)
+    {
+        // Get the symbol information for the method being invoked
+        IMethodSymbol? methodSymbol = (IMethodSymbol?)context.SemanticModel.GetSymbolInfo(invocationExpression, context.CancellationToken).Symbol;
+
+        // Check if the method symbol is not null and is not static
+        return methodSymbol?.IsStatic is true;
     }
 
     /// <summary>
