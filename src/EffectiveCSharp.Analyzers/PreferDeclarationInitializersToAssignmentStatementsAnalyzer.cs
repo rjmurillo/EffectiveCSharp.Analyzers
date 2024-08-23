@@ -67,16 +67,60 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         // In order to keep track of the fields that are initialized in the constructors
         // We create this dictionary that will track a field's initialization in the constructors.
         // To save on time and memory, we only track fields that are initialized in the constructors.
-        Dictionary<string, FieldInitializationInfo> fieldInitializationInfo = new Dictionary<string, FieldInitializationInfo>(StringComparer.Ordinal);
+        Dictionary<string, FieldInitializationInfo> fieldInitializationInfo = new(StringComparer.Ordinal);
+
+        IEnumerable<SyntaxNode> childNodes = classSyntaxNode.ChildNodes();
 
         // Check in every constructor if there are field initializer candidates
-        foreach (ConstructorDeclarationSyntax constructor in classSyntaxNode.ChildNodes().OfType<ConstructorDeclarationSyntax>())
+        foreach (ConstructorDeclarationSyntax constructor in childNodes.OfType<ConstructorDeclarationSyntax>())
         {
-            FindFieldInitializerCandidates(context, constructor, fieldInitializationInfo);
+            FindFieldInitializerCandidatesInConstructors(context, constructor, fieldInitializationInfo);
+        }
+
+        // Check in every property declaration if there are field initializer candidates
+        foreach (PropertyDeclarationSyntax propertyDeclarationSyntax in childNodes.OfType<PropertyDeclarationSyntax>())
+        {
+            FindFieldInitializerCandidatesInPropertyDeclaration(context, propertyDeclarationSyntax, fieldInitializationInfo);
         }
 
         // Report diagnostics on field declarations
         ReportDiagnosticsOnFieldDeclarations(context, classSyntaxNode, fieldInitializationInfo);
+    }
+
+    /// <summary>
+    /// This method finds field initializer candidates in property declarations.
+    /// This should not be as common as in constructors, but it is still a valid scenario.
+    /// </summary>
+    /// <param name="context">The node analysis context.</param>
+    /// <param name="propertyDeclaration">The property declaration syntax to analyze.</param>
+    /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
+    private static void FindFieldInitializerCandidatesInPropertyDeclaration(SyntaxNodeAnalysisContext context, PropertyDeclarationSyntax propertyDeclaration, Dictionary<string, FieldInitializationInfo> fields)
+    {
+        AccessorDeclarationSyntax? setter = propertyDeclaration.AccessorList?.Accessors.FirstOrDefault((accessor) => accessor.Kind() == SyntaxKind.GetAccessorDeclaration);
+
+        if (setter is null)
+        {
+            return;
+        }
+
+        foreach (IdentifierNameSyntax identifierNameSyntax in setter.DescendantNodes().OfType<IdentifierNameSyntax>())
+        {
+            // In most cases, the symbol should not be a field symbol, so we want continue as soon as possible.
+            if (context.SemanticModel.GetSymbolInfo(identifierNameSyntax, cancellationToken: context.CancellationToken).Symbol is not IFieldSymbol fieldSymbol)
+            {
+                continue;
+            }
+
+            if (!fields.TryGetValue(identifierNameSyntax.Identifier.Text, out FieldInitializationInfo fieldInfo))
+            {
+                fieldInfo = new FieldInitializationInfo(fieldSymbol.Name);
+                fields.Add(identifierNameSyntax.Identifier.Text, fieldInfo);
+            }
+
+            // We assume hat if you use a field in a setter, you are initializing it in some form
+            // and therefore we should initialize in the declaration.
+            fieldInfo.ShouldNotInitializeInDeclaration = true;
+        }
     }
 
     /// <summary>
@@ -86,30 +130,29 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <param name="context">The node analysis context.</param>
     /// <param name="constructor">The constructor declaration to search fields for.</param>
     /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
-    private static void FindFieldInitializerCandidates(SyntaxNodeAnalysisContext context, ConstructorDeclarationSyntax constructor, Dictionary<string, FieldInitializationInfo> fields)
+    private static void FindFieldInitializerCandidatesInConstructors(SyntaxNodeAnalysisContext context, ConstructorDeclarationSyntax constructor, Dictionary<string, FieldInitializationInfo> fields)
     {
         SeparatedSyntaxList<ParameterSyntax> arguments = constructor.ParameterList.Parameters;
+        IEnumerable<SyntaxNode> descendantNodes = constructor.DescendantNodes();
 
-        if (arguments.Count == 0)
-        {
-            // If the constructor has no arguments, we can consider all fields as candidates
-            HandleArgumentsList(constructor, context, fields, checkConstructorParameters: false);
-        }
-        else
-        {
-            // If we can only add literal field assignments and invocation expressions that do not reference parameters
-            // The analyzer does not support more complex scenarios such as whether the argument list contains something that depends on a parameter
-            HandleArgumentsList(constructor, context, fields, checkConstructorParameters: true);
-        }
+        HandleArgumentsList(descendantNodes, context, fields, checkConstructorParameters: arguments.Count != 0);
+        HandleInvocations(descendantNodes, context, fields);
     }
 
+    /// <summary>
+    /// This method handles assignment expression in constructors to find field initializer candidates.
+    /// </summary>
+    /// <param name="descendantNodes">The constructor's descendant nodes.</param>
+    /// <param name="context">The node analysis context.</param>
+    /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
+    /// <param name="checkConstructorParameters">A bool on whether to check constructor parameters for field initializations.</param>
     private static void HandleArgumentsList(
-        ConstructorDeclarationSyntax constructor,
+        IEnumerable<SyntaxNode> descendantNodes,
         SyntaxNodeAnalysisContext context,
         Dictionary<string, FieldInitializationInfo> fields,
         bool checkConstructorParameters)
     {
-        foreach (AssignmentExpressionSyntax assignment in constructor.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+        foreach (AssignmentExpressionSyntax assignment in descendantNodes.OfType<AssignmentExpressionSyntax>())
         {
             bool isFieldAssignment = assignment.Left is IdentifierNameSyntax;
 
@@ -267,6 +310,107 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         else
         {
             fieldInitializationInfo.ShouldNotInitializeInDeclaration = true;
+        }
+    }
+
+    /// <summary>
+    /// This method handles invocations in constructors that are not part of an assignment expression.
+    /// </summary>
+    /// <param name="descendantNodes">The constructor's descendant nodes.</param>
+    /// <param name="context">The node analysis context.</param>
+    /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
+    private static void HandleInvocations(IEnumerable<SyntaxNode> descendantNodes, SyntaxNodeAnalysisContext context, Dictionary<string, FieldInitializationInfo> fields)
+    {
+        Stack<ExpressionStatementSyntax> nodeStack = new();
+
+        foreach (InvocationExpressionSyntax invocation in descendantNodes.OfType<InvocationExpressionSyntax>())
+        {
+            // If the invocation is part of an assignment expression, we ignore it
+            // since we are only interested in invocations that are not part of an assignment.
+            if (invocation.Ancestors().OfType<AssignmentExpressionSyntax>().Any()
+                || !TryGetMethodDeclaration(invocation, context, out MethodDeclarationSyntax? methodDeclaration))
+            {
+                continue;
+            }
+
+            PushExpressionStatements(methodDeclaration!, nodeStack);
+
+            // We DFS through the method to find all invocations that are not part of an assignment expression.
+            // This includes searching method declarations invoked by the method.
+            while (nodeStack.Count > 0)
+            {
+                ExpressionStatementSyntax node = nodeStack.Pop();
+                ProcessExpressionStatementFromMethod(node, context, fields, nodeStack);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tries to get the method declaration from an invocation expression.
+    /// </summary>
+    /// <param name="invocation">The invocation expression to check for a method.</param>
+    /// <param name="context">The syntax analysis context.</param>
+    /// <param name="methodDeclaration">The output <see cref="MethodDeclarationSyntax"/>, if found.</param>
+    /// <returns>A bool on whether we sucessfully found a method declaration from <paramref name="invocation"/>.</returns>
+    private static bool TryGetMethodDeclaration(InvocationExpressionSyntax invocation, SyntaxNodeAnalysisContext context, out MethodDeclarationSyntax? methodDeclaration)
+    {
+        if (context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken).Symbol is not IMethodSymbol methodSymbol
+            || methodSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax(context.CancellationToken) is not MethodDeclarationSyntax methodDeclarationFound)
+        {
+            methodDeclaration = null;
+            return false;
+        }
+
+        methodDeclaration = methodDeclarationFound;
+        return true;
+    }
+
+    /// <summary>
+    /// Pushes all expression statements in a method declaration to a stack.
+    /// </summary>
+    /// <param name="methodDeclaration">The <see cref="MethodDeclarationSyntax"/> to find <see cref="ExpressionStatementSyntax"/> descendants.</param>
+    /// <param name="nodeStack">The <see cref="Stack{T}"/> to push <see cref="ExpressionStatementSyntax"/> nodes.</param>
+    private static void PushExpressionStatements(MethodDeclarationSyntax methodDeclaration, Stack<ExpressionStatementSyntax> nodeStack)
+    {
+        foreach (ExpressionStatementSyntax expressionStatement in methodDeclaration.DescendantNodes().OfType<ExpressionStatementSyntax>())
+        {
+            nodeStack.Push(expressionStatement);
+        }
+    }
+
+    /// <summary>
+    /// Processes an expression statement from a method declaration.
+    /// If the expression is an invocation, it retrieves the method declaration and pushes its expression statements onto the stack.
+    /// If the expression is an assignment to a field, it marks the field as initialized to avoid initialization in the declaration.
+    /// It ignores all other expressions.
+    /// </summary>
+    /// <param name="node">The expression statement to process.</param>
+    /// <param name="context">The context for the syntax node analysis.</param>
+    /// <param name="fields">A dictionary of field initialization information.</param>
+    /// <param name="nodeStack">A stack to hold expression statements for further processing.</param>
+    private static void ProcessExpressionStatementFromMethod(ExpressionStatementSyntax node, SyntaxNodeAnalysisContext context, Dictionary<string, FieldInitializationInfo> fields, Stack<ExpressionStatementSyntax> nodeStack)
+    {
+        if (node.Expression is InvocationExpressionSyntax invocationExpressionSyntax)
+        {
+            if (TryGetMethodDeclaration(invocationExpressionSyntax, context, out MethodDeclarationSyntax? nestedMethodDeclaration))
+            {
+                // We found an invocation expression to a method declaration, so we push the expression statements in the method to the stack.
+                PushExpressionStatements(nestedMethodDeclaration!, nodeStack);
+            }
+        }
+        else if (node.Expression is AssignmentExpressionSyntax assignmentExpressionSyntax
+            && assignmentExpressionSyntax.Left is IdentifierNameSyntax identifierNameSyntax
+            && context.SemanticModel.GetSymbolInfo(identifierNameSyntax, context.CancellationToken).Symbol is IFieldSymbol fieldSymbol)
+        {
+            // We found a field assignment inside this method, so we assume the field is being initialized
+            // and we should not initialize in the declaration.
+            if (!fields.TryGetValue(identifierNameSyntax.Identifier.Text, out FieldInitializationInfo fieldInfo))
+            {
+                fieldInfo = new FieldInitializationInfo(fieldSymbol.Name);
+                fields.Add(identifierNameSyntax.Identifier.Text, fieldInfo);
+            }
+
+            fieldInfo.ShouldNotInitializeInDeclaration = true;
         }
     }
 
