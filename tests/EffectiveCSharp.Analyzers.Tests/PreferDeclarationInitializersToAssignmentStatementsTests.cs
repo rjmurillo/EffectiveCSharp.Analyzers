@@ -153,7 +153,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
               
               public MyClass(string label)
               {
-                {|ECS1203:this.label = label;|}
+                this.label = label;
               }
             }
             """,
