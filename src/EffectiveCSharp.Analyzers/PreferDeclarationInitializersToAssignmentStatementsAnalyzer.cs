@@ -121,19 +121,14 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
 
         foreach (IdentifierNameSyntax identifierNameSyntax in setter.DescendantNodes().OfType<IdentifierNameSyntax>())
         {
-            // In most cases, the symbol should not be a field symbol, so we want continue as soon as possible.
-            if (context.SemanticModel.GetSymbolInfo(identifierNameSyntax, cancellationToken: context.CancellationToken).Symbol is not IFieldSymbol fieldSymbol)
+            string fieldName = identifierNameSyntax.Identifier.Text;
+            if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
             {
-                continue;
+                fieldInfo = new FieldInitializationInfo(fieldName);
+                fields.Add(fieldName, fieldInfo);
             }
 
-            if (!fields.TryGetValue(identifierNameSyntax.Identifier.Text, out FieldInitializationInfo fieldInfo))
-            {
-                fieldInfo = new FieldInitializationInfo(fieldSymbol.Name);
-                fields.Add(identifierNameSyntax.Identifier.Text, fieldInfo);
-            }
-
-            // We assume hat if you use a field in a setter, you are initializing it in some form
+            // We assume hat if you use a field in a setter, you are initializing it in some form,
             // and therefore we should initialize in the declaration.
             fieldInfo.ShouldNotInitializeInDeclaration = true;
         }
@@ -182,16 +177,12 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
 
             IdentifierNameSyntax identifierName = isFieldAssignment ? (IdentifierNameSyntax)assignment.Left : (IdentifierNameSyntax)((MemberAccessExpressionSyntax)assignment.Left).Name;
 
-            // We check to see if the field is already being tracked. If not, we initialize it after checking if the assignment expression belongs to a field.
-            if (!fields.TryGetValue(identifierName.Identifier.Text, out FieldInitializationInfo fieldInfo))
+            // We assume the identifier is a field. Calls to semantic model are super expensive, so we want to avoid them as much as possible.
+            string fieldName = identifierName.Identifier.Text;
+            if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
             {
-                if (context.SemanticModel.GetSymbolInfo(identifierName, cancellationToken: context.CancellationToken).Symbol is not IFieldSymbol fieldSymbol)
-                {
-                    continue;
-                }
-
-                fieldInfo = new FieldInitializationInfo(fieldSymbol.Name);
-                fields.Add(identifierName.Identifier.Text, fieldInfo);
+                fieldInfo = new FieldInitializationInfo(fieldName);
+                fields.Add(fieldName, fieldInfo);
             }
 
             if (fieldInfo.ShouldNotInitializeInDeclaration)
@@ -414,16 +405,15 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
                 PushExpressionStatements(nestedMethodDeclaration!, nodeStack);
             }
         }
-        else if (node.Expression is AssignmentExpressionSyntax assignmentExpressionSyntax
-            && assignmentExpressionSyntax.Left is IdentifierNameSyntax identifierNameSyntax
-            && context.SemanticModel.GetSymbolInfo(identifierNameSyntax, context.CancellationToken).Symbol is IFieldSymbol fieldSymbol)
+        else if (node.Expression is AssignmentExpressionSyntax { Left: IdentifierNameSyntax identifierNameSyntax })
         {
-            // We found a field assignment inside this method, so we assume the field is being initialized
+            // We found a field assignment inside this method, so we assume the field is being initialized,
             // and we should not initialize in the declaration.
-            if (!fields.TryGetValue(identifierNameSyntax.Identifier.Text, out FieldInitializationInfo fieldInfo))
+            string fieldName = identifierNameSyntax.Identifier.Text;
+            if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
             {
-                fieldInfo = new FieldInitializationInfo(fieldSymbol.Name);
-                fields.Add(identifierNameSyntax.Identifier.Text, fieldInfo);
+                fieldInfo = new FieldInitializationInfo(fieldName);
+                fields.Add(fieldName, fieldInfo);
             }
 
             fieldInfo.ShouldNotInitializeInDeclaration = true;
