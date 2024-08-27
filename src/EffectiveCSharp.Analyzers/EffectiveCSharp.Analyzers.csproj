@@ -52,4 +52,8 @@
     <Content Include="build\*" PackagePath="build" />
     <Content Include="build\config\*" PackagePath="build\config" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EffectiveCSharp.Analyzers.Tests" />
+  </ItemGroup>
 </Project>

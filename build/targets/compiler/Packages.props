@@ -1,5 +1,4 @@
 <Project>
-  <ItemGroup>
-    <PackageVersion Include="PolySharp" Version="1.14.1" />
-</ItemGroup>
+  <ItemGroup>    
+  </ItemGroup>
 </Project>

@@ -8,7 +8,7 @@ namespace EffectiveCSharp.Analyzers;
 [Shared]
 public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider : CodeFixProvider
 {
-    private const string EquivalenceKey = "ECS1200CodeFix";
+    private static readonly string EquivalenceKey = "ECS1200CodeFix";
 
     /// <inheritdoc />
     public override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(
@@ -88,7 +88,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
             || fieldSymbol.DeclaringSyntaxReferences.SingleOrDefault() is not SyntaxReference syntaxReference // Let's get a reference to the field declaration
             || (await syntaxReference.GetSyntaxAsync(cancellationToken).ConfigureAwait(false)).Parent?.Parent is not FieldDeclarationSyntax existingFieldDeclaration // Let's get the field declaration
             || root.RemoveNode(diagnosticNode, SyntaxRemoveOptions.KeepNoTrivia) is not SyntaxNode newRoot // Let's remove the assignment statement since we've found the field and have an initializer
-            || CreateFieldDeclaration(existingFieldDeclaration, GetInitializerFromExpressionSyntax(assignmentExpression.Right)) is not FieldDeclarationSyntax fieldDeclarationWithNewInitializer) // Let's create a new field declaration with the initializer
+            || CreateFieldDeclaration(existingFieldDeclaration, GetInitializerFromExpressionSyntax(assignmentExpression.Right)) is not FieldDeclarationSyntax fieldDeclarationWithNewInitializer)
         {
             // If any of the above conditions are not met, return the current solution
             return context.Document.Project.Solution;
@@ -111,7 +111,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
 
         if (root is null
             || declaration is not FieldDeclarationSyntax fieldDeclaration // The declaration should be a field declaration
-            || CreateFieldDeclaration(fieldDeclaration) is not FieldDeclarationSyntax newFieldDeclaration) // Let's create a new field declaration without an initializer
+            || CreateFieldDeclaration(fieldDeclaration) is not FieldDeclarationSyntax newFieldDeclaration)
         {
             // If any of the above conditions are not met, return the current solution
             return document.Project.Solution;
@@ -130,7 +130,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
             || fieldDeclaration.Declaration.Variables.SingleOrDefault() is not VariableDeclaratorSyntax variableDeclarator // The field declaration should have a variable declarator
             || semanticModel?.GetDeclaredSymbol(variableDeclarator, cancellationToken) is not IFieldSymbol fieldSymbol // Let's get the field symbol
             || GetDefaultInitializerForType(fieldSymbol.Type) is not EqualsValueClauseSyntax newInitializer // Let's try to get an initializer for the field type
-            || CreateFieldDeclaration(fieldDeclaration, newInitializer) is not FieldDeclarationSyntax fieldDeclarationWithInitializer) // Let's create a new field declaration with the initializer
+            || CreateFieldDeclaration(fieldDeclaration, newInitializer) is not FieldDeclarationSyntax fieldDeclarationWithInitializer)
         {
             // If any of the above conditions are not met, return the current solution
             return document.Project.Solution;

@@ -2,9 +2,10 @@
 
 internal static class TestDataExtensions
 {
-    public static TheoryData<string, string> WithReferenceAssemblyGroups(this TheoryData<string> data)
+    internal static TheoryData<string, string> WithReferenceAssemblyGroups(this TheoryData<string> data, Predicate<string>? predicate = null)
     {
         TheoryData<string, string> retVal = [];
+        predicate ??= _ => true;
 
         foreach (object[]? theoryDataItem in data)
         {
@@ -12,7 +13,10 @@ internal static class TestDataExtensions
             {
                 foreach (string referenceAssembly in ReferenceAssemblyCatalog.Catalog.Keys)
                 {
-                    retVal.Add(referenceAssembly, (string)entry);
+                    if (predicate(referenceAssembly))
+                    {
+                        retVal.Add(referenceAssembly, (string)entry);
+                    }
                 }
             }
         }

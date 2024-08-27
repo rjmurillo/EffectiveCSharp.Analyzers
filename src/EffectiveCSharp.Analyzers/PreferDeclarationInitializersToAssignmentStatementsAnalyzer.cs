@@ -7,7 +7,7 @@ namespace EffectiveCSharp.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : DiagnosticAnalyzer
 {
-    private const string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement}.md";
+    private static readonly string HelpLinkUri = $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement}.md";
 
     private static readonly DiagnosticDescriptor GeneralRule = new(
         id: DiagnosticIds.PreferDeclarationInitializersToAssignmentStatement,
@@ -96,7 +96,23 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
     private static void FindFieldInitializerCandidatesInPropertyDeclaration(SyntaxNodeAnalysisContext context, PropertyDeclarationSyntax propertyDeclaration, Dictionary<string, FieldInitializationInfo> fields)
     {
-        AccessorDeclarationSyntax? setter = propertyDeclaration.AccessorList?.Accessors.FirstOrDefault((accessor) => accessor.Kind() == SyntaxKind.GetAccessorDeclaration);
+        SyntaxList<AccessorDeclarationSyntax>? accessors = propertyDeclaration.AccessorList?.Accessors;
+
+        if (accessors is null)
+        {
+            return;
+        }
+
+        AccessorDeclarationSyntax? setter = null;
+
+        for (int i = 0; i < accessors.Value.Count; ++i)
+        {
+            if (accessors.Value[i].Kind() == SyntaxKind.SetAccessorDeclaration)
+            {
+                setter = accessors.Value[i];
+                break;
+            }
+        }
 
         if (setter is null)
         {
@@ -267,7 +283,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <returns>A bool, on whether a constructor parameter was found in the nodes to check.</returns>
     private static bool AreIdentifierNodesReferencingConstructorParameters(IEnumerable<IdentifierNameSyntax> identifiers, SyntaxNodeAnalysisContext context)
     {
-        foreach (IdentifierNameSyntax identifierNameSyntax in identifiers.OfType<IdentifierNameSyntax>())
+        foreach (IdentifierNameSyntax identifierNameSyntax in identifiers)
         {
             IOperation? operation = context.SemanticModel.GetOperation(identifierNameSyntax, context.CancellationToken);
 
@@ -636,12 +652,12 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         /// <summary>
         /// Gets the field name.
         /// </summary>
-        public string FieldName { get; init; }
+        public string FieldName { get; }
 
         /// <summary>
         /// Gets the field initializers in constructors.
         /// </summary>
-        public IList<ExpressionStatementSyntax> FieldInitializersInConstructors { get; init; }
+        public IList<ExpressionStatementSyntax> FieldInitializersInConstructors { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the field should not initialize in the declaration.

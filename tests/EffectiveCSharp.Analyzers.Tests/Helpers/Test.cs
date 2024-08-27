@@ -17,8 +17,13 @@ internal class Test<TAnalyzer, TCodeFixProvider> : CSharpCodeFixTest<TAnalyzer, 
         // Add common usings to all test cases to avoid test authoring errors.
         const string globalUsings =
             """
-            global using System;
-            global using System.Collections.Generic;
+            global using global::System;
+            global using global::System.Collections.Generic;
+            global using global::System.Globalization;
+            global using global::System.IO;
+            global using global::System.Linq;
+            global using global::System.Text;
+            global using global::System.Threading;
             """;
 
         TestState.Sources.Add(globalUsings);

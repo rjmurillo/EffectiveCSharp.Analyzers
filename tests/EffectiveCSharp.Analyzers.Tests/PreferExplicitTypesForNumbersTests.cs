@@ -20,8 +20,8 @@ public class PreferExplicitTypesForNumbersTests
             {
               public void MyMethod()
               {
-                {|ECS0001:var f = GetMagicNumber();|}
-                {|ECS0001:var total = 100 * f / 6;|}
+                {|ECS0100:var f = GetMagicNumber();|}
+                {|ECS0100:var total = 100 * f / 6;|}
                 Console.WriteLine($"Declared Type:{total.GetType().Name}, Value:{total}");
               }
 
@@ -44,7 +44,7 @@ public class PreferExplicitTypesForNumbersTests
             {
               public void MyMethod()
               {
-                {|ECS0001:var total = 100 * GetMagicNumber() / 6;|}
+                {|ECS0100:var total = 100 * GetMagicNumber() / 6;|}
                 Console.WriteLine($"Declared Type:{total.GetType().Name}, Value:{total}");
               }
 
@@ -68,7 +68,7 @@ public class PreferExplicitTypesForNumbersTests
             {
               public void MyMethod()
               {
-                double total = {|ECS0001:100 * GetMagicNumber() / 6|};
+                double total = {|ECS0100:100 * GetMagicNumber() / 6|};
                 Console.WriteLine($"Declared Type:{total.GetType().Name}, Value:{total}");
               }
 
@@ -86,8 +86,8 @@ public class PreferExplicitTypesForNumbersTests
                                 {
                                   public void MyMethod()
                                   {
-                                    {|ECS0001:var f = GetMagicNumber();|}
-                                    {|ECS0001:var total = 100 * f / 6;|}
+                                    {|ECS0100:var f = GetMagicNumber();|}
+                                    {|ECS0100:var total = 100 * f / 6;|}
                                     Console.WriteLine($"Declared Type:{total.GetType().Name}, Value:{total}");
                                   }
 

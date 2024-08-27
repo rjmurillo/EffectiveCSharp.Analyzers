@@ -16,14 +16,14 @@ public class AvoidStringlyTypedApisTests
 
             // This should fire because it's referring to a member name using a string literal
             """
-                {|ECS0006:"thisCantBeNull"|}
+                {|ECS0600:"thisCantBeNull"|}
             """,
 
             // This should not fire because it's suppressed
             """
-            #pragma warning disable ECS0006
+            #pragma warning disable ECS0600
             "thisCantBeNull"
-            #pragma warning restore ECS0006
+            #pragma warning restore ECS0600
             """,
         };
         return data.WithReferenceAssemblyGroups();
@@ -63,7 +63,7 @@ public class AvoidStringlyTypedApisTests
                                       if (thisCantBeNull == null)
                                       {
                                           throw new ArgumentNullException(
-                                              {|ECS0006:"thisCantBeNull"|},
+                                              {|ECS0600:"thisCantBeNull"|},
                                               "We told you this cant be null");
                                       }
                                   }

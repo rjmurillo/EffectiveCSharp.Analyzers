@@ -8,7 +8,7 @@
 [Shared]
 public class PreferReadonlyOverConstCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Use readonly instead of const";
+    private static readonly string Title = "Use readonly instead of const";
 
     /// <inheritdoc />
     public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DiagnosticIds.PreferReadonlyOverConst);
@@ -40,7 +40,16 @@ public class PreferReadonlyOverConstCodeFixProvider : CodeFixProvider
         SyntaxTokenList modifiers = constDeclaration.Modifiers;
 
         // Find the const token within the modifiers
-        SyntaxToken constToken = modifiers.FirstOrDefault(m => m.IsKind(SyntaxKind.ConstKeyword));
+        SyntaxToken constToken = default;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            SyntaxToken modifier = modifiers[i];
+            if (modifier.IsKind(SyntaxKind.ConstKeyword))
+            {
+                constToken = modifier;
+                break;
+            }
+        }
 
         if (constToken == default)
         {
