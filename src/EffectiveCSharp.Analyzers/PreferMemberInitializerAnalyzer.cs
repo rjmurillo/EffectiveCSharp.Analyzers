@@ -134,22 +134,31 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
 
         VariableDeclaratorSyntax? fieldDeclaration = fieldSymbol.DeclaringSyntaxReferences[0].GetSyntax(context.CancellationToken) as VariableDeclaratorSyntax;
 
+        // Skip if the field is already initialized in the declaration
         if (fieldDeclaration?.Initializer != null)
         {
             return;
         }
 
+        // Ensure the assignment is not redundant (check if it matches the default value)
         if (IsDefaultInitialization(fieldSymbol.Type, assignment.Right, context.SemanticModel))
         {
             return;
         }
 
-        if (!IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel))
+        // Ensure the field is not being initialized with a constructor parameter or method call
+        if (!IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
+            && !IsInitializedFromMethodCall(assignment.Right, context.SemanticModel))
         {
-            // TODO: Determine what type for the message
-            Diagnostic diagnostic = identifierName.GetLocation().CreateDiagnostic(Rule, fieldSymbol.Name);
+            Diagnostic diagnostic = identifierName.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
             context.ReportDiagnostic(diagnostic);
         }
+    }
+
+    private static bool IsInitializedFromMethodCall(ExpressionSyntax right, SemanticModel semanticModel)
+    {
+        // Check if the right side of the assignment is a method call
+        return semanticModel.GetOperation(right) is IInvocationOperation;
     }
 
     private static bool IsDefaultInitialization(ITypeSymbol fieldType, ExpressionSyntax right, SemanticModel semanticModel)
