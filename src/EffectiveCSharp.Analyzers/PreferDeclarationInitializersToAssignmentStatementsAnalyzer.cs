@@ -80,7 +80,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         // Check in every property declaration if there are field initializer candidates
         foreach (PropertyDeclarationSyntax propertyDeclarationSyntax in childNodes.OfType<PropertyDeclarationSyntax>())
         {
-            FindFieldInitializerCandidatesInPropertyDeclaration(context, propertyDeclarationSyntax, fieldInitializationInfo);
+            FindFieldInitializerCandidatesInPropertyDeclaration(propertyDeclarationSyntax, fieldInitializationInfo);
         }
 
         // Report diagnostics on field declarations
@@ -91,10 +91,9 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// This method finds field initializer candidates in property declarations.
     /// This should not be as common as in constructors, but it is still a valid scenario.
     /// </summary>
-    /// <param name="context">The node analysis context.</param>
     /// <param name="propertyDeclaration">The property declaration syntax to analyze.</param>
     /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
-    private static void FindFieldInitializerCandidatesInPropertyDeclaration(SyntaxNodeAnalysisContext context, PropertyDeclarationSyntax propertyDeclaration, Dictionary<string, FieldInitializationInfo> fields)
+    private static void FindFieldInitializerCandidatesInPropertyDeclaration(PropertyDeclarationSyntax propertyDeclaration, Dictionary<string, FieldInitializationInfo> fields)
     {
         SyntaxList<AccessorDeclarationSyntax>? accessors = propertyDeclaration.AccessorList?.Accessors;
 

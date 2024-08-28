@@ -298,7 +298,6 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             ReferenceAssemblyCatalog.Latest);
     }
 
-
     [Fact]
     public async Task StaticCtor()
     {
