@@ -348,10 +348,6 @@ public class PreferMemberInitializerAnalyzerTests
             public class MyClass
             {
               private int a = 1, b = 2;
-
-              public MyClass()
-              {
-              }
             }
             """,
             ReferenceAssemblyCatalog.Latest);

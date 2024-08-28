@@ -167,7 +167,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         if (fieldType.IsValueType)
         {
             Optional<object?> defaultValue = semanticModel.GetConstantValue(right);
-            if (defaultValue.HasValue && (defaultValue.Value is 0 || defaultValue.Value.Equals(Activator.CreateInstance(fieldType.GetType()))))
+            if (defaultValue.HasValue && IsDefaultValue(defaultValue.Value, fieldType))
             {
                 return true;
             }
@@ -187,6 +187,42 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         }
 
         return false;
+    }
+
+    private static bool IsDefaultValue(object? value, ITypeSymbol fieldType)
+    {
+        if (value == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            switch (fieldType.SpecialType)
+            {
+                // Handle numeric conversions
+                case SpecialType.System_Double when Convert.ToDouble(value) == 0.0:
+                case SpecialType.System_Single when Convert.ToSingle(value) == 0.0f:
+                case SpecialType.System_Int32 when Convert.ToInt32(value) == 0:
+                case SpecialType.System_Int64 when Convert.ToInt64(value) == 0L:
+                case SpecialType.System_Int16 when Convert.ToInt16(value) == 0:
+                case SpecialType.System_Byte when Convert.ToByte(value) == 0:
+                // Handle other types like boolean, char, etc.
+                case SpecialType.System_Boolean when value is bool and false:
+                case SpecialType.System_Char when value is char and '\0':
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        catch (InvalidCastException)
+        {
+            return false; // If conversion fails, it's not the default value.
+        }
+        catch (FormatException)
+        {
+            return false; // If conversion fails, it's not the default value.
+        }
     }
 
     private static bool IsInitializedFromConstructorParameter(ExpressionSyntax right, SemanticModel semanticModel)
