@@ -16,10 +16,7 @@ public class PreferMemberInitializerAnalyzerTests
             {
               private int value = default;
               private MyClass instance = default;
-
-              public MyClass()
-              {
-              }
+              private MyClass? nullableInstance = default;
             }
             """,
             ReferenceAssemblyCatalog.Latest);

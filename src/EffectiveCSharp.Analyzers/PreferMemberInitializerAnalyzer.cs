@@ -66,18 +66,14 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
                 continue;
             }
 
-            // TODO: track fields initialized in the declaration and check them later against constructor assignments?
-            if (!IsDefaultInitialization(fieldSymbol.Type, initializer.Value, context.SemanticModel))
+            if (IsDefaultInitialization(fieldSymbol.Type, initializer.Value, context.SemanticModel))
             {
-                continue;
+                // Report a diagnostic if the field is being initialized to a redundant default value
+                Diagnostic diagnostic = variable.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
+                context.ReportDiagnostic(diagnostic);
             }
-
-            // Report a diagnostic if the field is being initialized to a redundant default value
-            Diagnostic diagnostic = variable.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
-            context.ReportDiagnostic(diagnostic);
         }
     }
-
 
     private static void AnalyzeConstructor(SyntaxNodeAnalysisContext context, ConstructorDeclarationSyntax constructor)
     {
@@ -90,7 +86,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         {
             if (statement.Expression is AssignmentExpressionSyntax assignment)
             {
-                AnalyzeAssignment(context, assignment, constructor);
+                AnalyzeAssignment(context, assignment);
             }
         }
     }
@@ -113,13 +109,13 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
             {
                 if (statement.Expression is AssignmentExpressionSyntax assignment)
                 {
-                    AnalyzeAssignment(context, assignment, property);
+                    AnalyzeAssignment(context, assignment);
                 }
             }
         }
     }
 
-    private static void AnalyzeAssignment(SyntaxNodeAnalysisContext context, AssignmentExpressionSyntax assignment, SyntaxNode parentNode)
+    private static void AnalyzeAssignment(SyntaxNodeAnalysisContext context, AssignmentExpressionSyntax assignment)
     {
         if (assignment.Left is not IdentifierNameSyntax identifierName)
         {
@@ -163,6 +159,19 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
 
     private static bool IsDefaultInitialization(ITypeSymbol fieldType, ExpressionSyntax right, SemanticModel semanticModel)
     {
+        // Handle default keyword
+        if (right.IsKind(SyntaxKind.DefaultExpression))
+        {
+            TypeInfo typeInfo = semanticModel.GetTypeInfo(right);
+            return typeInfo.Type?.Equals(fieldType, SymbolEqualityComparer.IncludeNullability) == true;
+        }
+
+        // Handle cases where the 'default' literal is used directly (e.g., `default` or `default(int)`)
+        if (right.IsKind(SyntaxKind.DefaultLiteralExpression))
+        {
+            return true; // 'default' literal always indicates default initialization
+        }
+
         // Handle numeric types (int, double, etc.)
         if (fieldType.IsValueType)
         {
@@ -183,7 +192,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         if (right.IsKind(SyntaxKind.DefaultExpression))
         {
             ITypeSymbol? expressionType = semanticModel.GetTypeInfo(right).Type;
-            return expressionType?.Equals(fieldType, SymbolEqualityComparer.Default) == true;
+            return expressionType?.Equals(fieldType, SymbolEqualityComparer.IncludeNullability) == true;
         }
 
         return false;
