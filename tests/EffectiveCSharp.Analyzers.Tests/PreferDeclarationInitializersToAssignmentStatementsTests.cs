@@ -327,7 +327,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
               
               public MyClass(bool condition)
               {
-                  {|ECS1200:label = condition ? "True" : "False";|}
+                  label = condition ? "True" : "False";
               }
             }
             """,

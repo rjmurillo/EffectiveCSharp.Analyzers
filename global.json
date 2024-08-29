@@ -1,6 +1,6 @@
 {
   "sdk": {
-    "version": "8.0.107",
+    "version": "8.0.401",
     "rollForward": "disable" /* setup-dotnet is broken and we don't want to have differences in CI vs local, so make this disabled */
   },
   "msbuild-sdks": {

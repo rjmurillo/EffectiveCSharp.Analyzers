@@ -67,24 +67,39 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         // In order to keep track of the fields that are initialized in the constructors
         // We create this dictionary that will track a field's initialization in the constructors.
         // To save on time and memory, we only track fields that are initialized in the constructors.
-        Dictionary<string, FieldInitializationInfo> fieldInitializationInfo = new(StringComparer.Ordinal);
+        Dictionary<string, FieldInitializationInfo> fieldInitializationInfo = new(10, StringComparer.Ordinal);
 
         IEnumerable<SyntaxNode> childNodes = classSyntaxNode.ChildNodes();
+        List<FieldDeclarationSyntax> fields = new(10);
 
         // Check in every constructor if there are field initializer candidates
-        foreach (ConstructorDeclarationSyntax constructor in childNodes.OfType<ConstructorDeclarationSyntax>())
+        foreach (SyntaxNode node in childNodes)
         {
-            FindFieldInitializerCandidatesInConstructors(context, constructor, fieldInitializationInfo);
-        }
+            switch (node)
+            {
+                case ConstructorDeclarationSyntax constructor:
+                    IEnumerable<SyntaxNode>? nodes = constructor.Body?.ChildNodes();
 
-        // Check in every property declaration if there are field initializer candidates
-        foreach (PropertyDeclarationSyntax propertyDeclarationSyntax in childNodes.OfType<PropertyDeclarationSyntax>())
-        {
-            FindFieldInitializerCandidatesInPropertyDeclaration(propertyDeclarationSyntax, fieldInitializationInfo);
+                    if (nodes is null)
+                    {
+                        continue;
+                    }
+
+                    bool isConstructorParameterless = constructor.ParameterList.Parameters.Count == 0;
+
+                    FindFieldInitializerCandidatesInScope(context, nodes, fieldInitializationInfo, isConstructorParameterless);
+                    break;
+                case PropertyDeclarationSyntax propertyDeclarationSyntax:
+                    FindFieldInitializerCandidatesInPropertyDeclaration(propertyDeclarationSyntax, fieldInitializationInfo);
+                    break;
+                case FieldDeclarationSyntax fieldDeclarationSyntax:
+                    fields.Add(fieldDeclarationSyntax);
+                    break;
+            }
         }
 
         // Report diagnostics on field declarations
-        ReportDiagnosticsOnFieldDeclarations(context, classSyntaxNode, fieldInitializationInfo);
+        ReportDiagnosticsOnFieldDeclarations(context, fields, fieldInitializationInfo);
     }
 
     /// <summary>
@@ -140,82 +155,179 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <param name="context">The node analysis context.</param>
     /// <param name="constructor">The constructor declaration to search fields for.</param>
     /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
-    private static void FindFieldInitializerCandidatesInConstructors(SyntaxNodeAnalysisContext context, ConstructorDeclarationSyntax constructor, Dictionary<string, FieldInitializationInfo> fields)
+    private static void FindFieldInitializerCandidatesInScope(SyntaxNodeAnalysisContext context, IEnumerable<SyntaxNode> nodes, Dictionary<string, FieldInitializationInfo> fields, bool isConstructorParameterless, bool isScopeConstructor = true)
     {
-        SeparatedSyntaxList<ParameterSyntax> arguments = constructor.ParameterList.Parameters;
-        IEnumerable<SyntaxNode> descendantNodes = constructor.DescendantNodes();
+        foreach (SyntaxNode node in nodes)
+        {
+            switch (node)
+            {
+                case IfStatementSyntax ifStatementSyntax:
+                    FindFieldInitializerCandidatesInScope(context, ifStatementSyntax.Statement.ChildNodes(), fields, isConstructorParameterless, false);
 
-        HandleArgumentsList(descendantNodes, context, fields, checkConstructorParameters: arguments.Count != 0);
-        HandleInvocations(descendantNodes, context, fields);
+                    if (ifStatementSyntax.Else is not null)
+                    {
+                        FindFieldInitializerCandidatesInScope(context, ifStatementSyntax.Else.ChildNodes(), fields, isConstructorParameterless, false);
+                    }
+
+                    break;
+
+                case ExpressionStatementSyntax expressionSyntax:
+                    if (expressionSyntax.Expression is AssignmentExpressionSyntax assignment)
+                    {
+                        HandleConstructorExpressions(expressionSyntax, assignment, context, fields, isConstructorParameterless, isScopeConstructor);
+                    }
+
+                    break;
+                case InvocationExpressionSyntax invocationExpressionSyntax:
+                    HandleInvocation(invocationExpressionSyntax, context, fields);
+                    break;
+            }
+        }
     }
 
     /// <summary>
-    /// This method handles assignment expression in constructors to find field initializer candidates.
+    /// This method handles an expression in a constructor to find field initializer candidates.
     /// </summary>
-    /// <param name="descendantNodes">The constructor's descendant nodes.</param>
+    /// <param name="expressionStatementSyntax">The expression where the candidate assignment was found.</param>
+    /// <param name="assignment">The assignment to check if for field initializations.</param>
     /// <param name="context">The node analysis context.</param>
-    /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
-    /// <param name="checkConstructorParameters">A bool on whether to check constructor parameters for field initializations.</param>
-    private static void HandleArgumentsList(
-        IEnumerable<SyntaxNode> descendantNodes,
+    /// <param name="fields">A dictionary tracking all fields initializations in constructors.</param>
+    /// <param name="isConstructorParameterless">A bool on whether the constructor has parameters.</param>
+    private static void HandleConstructorExpressions(
+        ExpressionStatementSyntax expressionStatementSyntax,
+        AssignmentExpressionSyntax assignment,
         SyntaxNodeAnalysisContext context,
         Dictionary<string, FieldInitializationInfo> fields,
-        bool checkConstructorParameters)
+        bool isConstructorParameterless,
+        bool isScopeConstructor)
     {
-        foreach (AssignmentExpressionSyntax assignment in descendantNodes.OfType<AssignmentExpressionSyntax>())
+        IdentifierNameSyntax? identifierName = assignment.Left switch
         {
-            bool isFieldAssignment = assignment.Left is IdentifierNameSyntax;
+            IdentifierNameSyntax idName => idName,
+            MemberAccessExpressionSyntax { Name: IdentifierNameSyntax idName } => idName,
+            _ => null,
+        };
 
-            // We want to ignore assignments that are not part of an expression statement or are not an identifier
-            if (assignment.Parent is not ExpressionStatementSyntax
-                || !(assignment.Left is MemberAccessExpressionSyntax
-                || isFieldAssignment))
-            {
-                continue;
-            }
-
-            IdentifierNameSyntax identifierName = isFieldAssignment ? (IdentifierNameSyntax)assignment.Left : (IdentifierNameSyntax)((MemberAccessExpressionSyntax)assignment.Left).Name;
-
-            // We assume the identifier is a field. Calls to semantic model are super expensive, so we want to avoid them as much as possible.
-            string fieldName = identifierName.Identifier.Text;
-            if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
-            {
-                fieldInfo = new FieldInitializationInfo(fieldName);
-                fields.Add(fieldName, fieldInfo);
-            }
-
-            if (fieldInfo.ShouldNotInitializeInDeclaration)
-            {
-                continue;
-            }
-
-            if (assignment.Right is InvocationExpressionSyntax invocationExpressionSyntax
-                && !IsStaticMethodInvocation(invocationExpressionSyntax, context))
-            {
-                // If the assignment is to a non-static method invocation, we can ignore it.
-                fieldInfo.ShouldNotInitializeInDeclaration = true;
-                continue;
-            }
-
-            if (checkConstructorParameters)
-            {
-                IOperation? operation = context.SemanticModel.GetOperation(assignment.Right, context.CancellationToken);
-
-                // ILocalReferenceOperation: We do not yet have logic to verify if it is related to a constructor parameter, so we assume it is.
-                if (operation is IParameterReferenceOperation
-                    || operation is ILocalReferenceOperation
-                    || IsConstructorParameterInUse(assignment.Right, context))
-                {
-                    fieldInfo.ShouldNotInitializeInDeclaration = true;
-                    continue;
-                }
-            }
-
-            ProcessFieldInitializerCandidate(
-                assignment,
-                (ExpressionStatementSyntax)assignment.Parent!,
-                fieldInfo);
+        if (identifierName is null)
+        {
+            return;
         }
+
+        // We assume the identifier is a field.
+        // Calls to semantic model are super expensive, so we want to avoid them as much as possible.
+        string fieldName = identifierName.Identifier.Text;
+        if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
+        {
+            fieldInfo = new FieldInitializationInfo(fieldName);
+            fields.Add(fieldName, fieldInfo);
+            goto FIELD_SHOULD_BE_CHECKED;
+        }
+
+        if (fieldInfo.ShouldNotInitializeInDeclaration)
+        {
+            return;
+        }
+
+        FIELD_SHOULD_BE_CHECKED:
+        if (isConstructorParameterless)
+        {
+            goto PROCESS_FIELD_CANDIDATE;
+        }
+
+        if (!isScopeConstructor)
+        {
+            fieldInfo.ShouldNotInitializeInDeclaration = true;
+            return;
+        }
+
+        ExpressionSyntax rightSide = assignment.Right;
+
+        if (rightSide is LiteralExpressionSyntax
+                or MemberAccessExpressionSyntax)
+        {
+            goto PROCESS_FIELD_CANDIDATE;
+        }
+
+        if (rightSide is IdentifierNameSyntax
+            || !IsExpressionValidDeclarationInitialization(rightSide, context))
+        {
+            fieldInfo.ShouldNotInitializeInDeclaration = true;
+            return;
+        }
+
+        PROCESS_FIELD_CANDIDATE:
+        ProcessFieldInitializerCandidate(
+            assignment,
+            expressionStatementSyntax,
+            fieldInfo);
+    }
+
+    /// <summary>
+    /// Checks whether the constructor parameter is in use in the expression.
+    /// </summary>
+    /// <param name="expression">The expression to evaluate.</param>
+    /// <param name="context">The analysis context.</param>
+    /// <returns>A bool, on whether we've found a constructor parameter in use.</returns>
+    private static bool IsExpressionValidDeclarationInitialization(ExpressionSyntax expression, SyntaxNodeAnalysisContext context)
+    {
+        return expression switch
+        {
+            // There are many ways of initializing the same field, so we need to check many different types of expressions.
+            // For example, new List<string>() == [] == new List<string> { }. So we need to consider these scenarios.
+            LiteralExpressionSyntax => true,
+            MemberAccessExpressionSyntax => true,
+            InvocationExpressionSyntax invocationExpressionSyntax => IsExpressionValidDeclarationInitialization(invocationExpressionSyntax, context),
+            ObjectCreationExpressionSyntax objectCreationExpressionSyntax => IsExpressionValidDeclarationInitialization(objectCreationExpressionSyntax.ArgumentList, context),
+            ImplicitObjectCreationExpressionSyntax implicitObjectCreationExpressionSyntax => IsExpressionValidDeclarationInitialization(implicitObjectCreationExpressionSyntax.ArgumentList, context),
+            InitializerExpressionSyntax initializerExpressionSyntax => IsExpressionValidDeclarationInitialization(initializerExpressionSyntax.Expressions, context),
+            BinaryExpressionSyntax binaryExpressionSyntax => IsExpressionValidDeclarationInitialization(binaryExpressionSyntax, context),
+            _ => false,
+        };
+    }
+
+    private static bool IsExpressionValidDeclarationInitialization(InvocationExpressionSyntax invocation, SyntaxNodeAnalysisContext context)
+    {
+        return IsExpressionValidDeclarationInitialization(invocation.ArgumentList, context) &&
+               IsStaticMethodInvocation(invocation, context);
+    }
+
+    // Overload for SyntaxNode
+    private static bool IsExpressionValidDeclarationInitialization(ArgumentListSyntax? argumentList, SyntaxNodeAnalysisContext context)
+    {
+        if (argumentList is null)
+        {
+            return false;
+        }
+
+        foreach (SyntaxNode node in argumentList.ChildNodes())
+        {
+            if (node is not ArgumentSyntax argument)
+            {
+                continue;
+            }
+
+            if (argument.Expression is IdentifierNameSyntax
+                || !IsExpressionValidDeclarationInitialization(argument.Expression, context))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Overload for SeparatedSyntaxList<ExpressionSyntax>
+    private static bool IsExpressionValidDeclarationInitialization(SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxNodeAnalysisContext context)
+    {
+        foreach (ExpressionSyntax expression in expressions)
+        {
+            if (!IsExpressionValidDeclarationInitialization(expression, context))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -234,62 +346,6 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     }
 
     /// <summary>
-    /// Checks whether the constructor parameter is in use in the expression.
-    /// </summary>
-    /// <param name="expression">The expression to evaluate.</param>
-    /// <param name="context">The analysis context.</param>
-    /// <returns>A bool, on whether we've found a constructor parameter in use.</returns>
-    private static bool IsConstructorParameterInUse(ExpressionSyntax expression, SyntaxNodeAnalysisContext context)
-    {
-        return expression switch
-        {
-            // There are many ways of initializing the same field, so we need to check many different types of expressions.
-            // For example, new List<string>() == [] == new List<string> { }. So we need to consider these scenarios.
-            InvocationExpressionSyntax invocationExpressionSyntax => IsConstructorParameterInUse(invocationExpressionSyntax.ArgumentList, context),
-            ObjectCreationExpressionSyntax objectCreationExpressionSyntax => IsConstructorParameterInUse(objectCreationExpressionSyntax.ArgumentList, context),
-            ImplicitObjectCreationExpressionSyntax implicitObjectCreationExpressionSyntax => IsConstructorParameterInUse(implicitObjectCreationExpressionSyntax.ArgumentList, context),
-            InitializerExpressionSyntax initializerExpressionSyntax => IsConstructorParameterInUse(initializerExpressionSyntax.Expressions, context),
-            _ => false,
-        };
-    }
-
-    // Overload for SyntaxNode
-    private static bool IsConstructorParameterInUse(SyntaxNode? argumentList, SyntaxNodeAnalysisContext context)
-    {
-        return argumentList is not null && AreIdentifierNodesReferencingConstructorParameters(argumentList.DescendantNodes().OfType<IdentifierNameSyntax>(), context);
-    }
-
-    // Overload for SeparatedSyntaxList<ExpressionSyntax>
-    private static bool IsConstructorParameterInUse(SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxNodeAnalysisContext context)
-    {
-        return AreIdentifierNodesReferencingConstructorParameters(expressions.OfType<IdentifierNameSyntax>(), context);
-    }
-
-    /// <summary>
-    /// Checks whether the constructor parameter is in use in the given nodes.
-    /// </summary>
-    /// <param name="identifiers">The <see cref="IEnumerable{IdentifierNameSyntax}"/> to check for constructor parameter usage.</param>
-    /// <param name="context">The analysis context.</param>
-    /// <returns>A bool, on whether a constructor parameter was found in the nodes to check.</returns>
-    private static bool AreIdentifierNodesReferencingConstructorParameters(IEnumerable<IdentifierNameSyntax> identifiers, SyntaxNodeAnalysisContext context)
-    {
-        foreach (IdentifierNameSyntax identifierNameSyntax in identifiers)
-        {
-            IOperation? operation = context.SemanticModel.GetOperation(identifierNameSyntax, context.CancellationToken);
-
-            // If the operation is a parameter reference, we know that the constructor parameter is in use.
-            // If the operation is a local reference, we know that the local variable is in use, and
-            // we do not have logic yet to verify if it is related to a constructor parameter, so we assume it is.
-            if (operation is IParameterReferenceOperation || operation is ILocalReferenceOperation)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
     /// Processes a field initializer candidate.
     /// If the initialization is not being tracked or is identical to the first tracked initialization,
     /// it is added to the list of initializers.
@@ -303,7 +359,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         ExpressionStatementSyntax expressionStatement,
         FieldInitializationInfo fieldInitializationInfo)
     {
-        IList<ExpressionStatementSyntax> fieldInitializersInConstructors = fieldInitializationInfo.FieldInitializersInConstructors;
+        List<ExpressionStatementSyntax> fieldInitializersInConstructors = fieldInitializationInfo.FieldInitializersInConstructors;
 
         if (fieldInitializersInConstructors.Count == 0)
         {
@@ -325,29 +381,23 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <param name="descendantNodes">The constructor's descendant nodes.</param>
     /// <param name="context">The node analysis context.</param>
     /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
-    private static void HandleInvocations(IEnumerable<SyntaxNode> descendantNodes, SyntaxNodeAnalysisContext context, Dictionary<string, FieldInitializationInfo> fields)
+    private static void HandleInvocation(InvocationExpressionSyntax invocation, SyntaxNodeAnalysisContext context, Dictionary<string, FieldInitializationInfo> fields)
     {
         Stack<ExpressionStatementSyntax> nodeStack = new();
 
-        foreach (InvocationExpressionSyntax invocation in descendantNodes.OfType<InvocationExpressionSyntax>())
+        if (!TryGetMethodDeclaration(invocation, context, out MethodDeclarationSyntax? methodDeclaration))
         {
-            // If the invocation is part of an assignment expression, we ignore it
-            // since we are only interested in invocations that are not part of an assignment.
-            if (invocation.Ancestors().OfType<AssignmentExpressionSyntax>().Any()
-                || !TryGetMethodDeclaration(invocation, context, out MethodDeclarationSyntax? methodDeclaration))
-            {
-                continue;
-            }
+            return;
+        }
 
-            PushExpressionStatements(methodDeclaration!, nodeStack);
+        PushExpressionStatements(methodDeclaration!, nodeStack);
 
-            // We DFS through the method to find all invocations that are not part of an assignment expression.
-            // This includes searching method declarations invoked by the method.
-            while (nodeStack.Count > 0)
-            {
-                ExpressionStatementSyntax node = nodeStack.Pop();
-                ProcessExpressionStatementFromMethod(node, context, fields, nodeStack);
-            }
+        // We DFS through the method to find all invocations that are not part of an assignment expression.
+        // This includes searching method declarations invoked by the method.
+        while (nodeStack.Count > 0)
+        {
+            ExpressionStatementSyntax node = nodeStack.Pop();
+            ProcessExpressionStatementFromMethod(node, context, fields, nodeStack);
         }
     }
 
@@ -423,12 +473,14 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// Reports diagnostics on field declarations.
     /// </summary>
     /// <param name="context">The analysis context.</param>
-    /// <param name="classDeclarationSyntax">The class declaration node to find the fields in.</param>
+    /// <param name="classDeclarationChildNodes">The class declaration child nodes to iterate through.</param>
     /// <param name="fieldInitializationInfos">The initalization info for all fields present in a constructor.</param>
-    private static void ReportDiagnosticsOnFieldDeclarations(SyntaxNodeAnalysisContext context, ClassDeclarationSyntax classDeclarationSyntax, Dictionary<string, FieldInitializationInfo> fieldInitializationInfos)
+    private static void ReportDiagnosticsOnFieldDeclarations(SyntaxNodeAnalysisContext context, List<FieldDeclarationSyntax> classDeclarationChildNodes, Dictionary<string, FieldInitializationInfo> fieldInitializationInfos)
     {
-        foreach (FieldDeclarationSyntax field in classDeclarationSyntax.ChildNodes().OfType<FieldDeclarationSyntax>())
+        for (int i = 0; i < classDeclarationChildNodes.Count; ++i)
         {
+            FieldDeclarationSyntax field = classDeclarationChildNodes[i];
+
             SeparatedSyntaxList<VariableDeclaratorSyntax> variables = field.Declaration.Variables;
 
             if (variables.Count != 1)
@@ -625,7 +677,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <summary>
     /// A record to track field initialization information in constructors.
     /// </summary>
-    private sealed record FieldInitializationInfo
+    private sealed class FieldInitializationInfo
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="FieldInitializationInfo"/> class.
@@ -635,7 +687,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
             string name)
         {
             FieldName = name;
-            FieldInitializersInConstructors = new List<ExpressionStatementSyntax>();
+            FieldInitializersInConstructors = new List<ExpressionStatementSyntax>(5);
         }
 
         /// <summary>
@@ -646,7 +698,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         /// <summary>
         /// Gets the field initializers in constructors.
         /// </summary>
-        public IList<ExpressionStatementSyntax> FieldInitializersInConstructors { get; }
+        public List<ExpressionStatementSyntax> FieldInitializersInConstructors { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the field should not initialize in the declaration.
