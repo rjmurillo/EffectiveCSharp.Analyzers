@@ -82,12 +82,14 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        foreach (ExpressionStatementSyntax? statement in constructor.Body.Statements.OfType<ExpressionStatementSyntax>())
+        for(int i = 0; i < constructor.Body.Statements.Count; i++)
         {
-            if (statement.Expression is AssignmentExpressionSyntax assignment)
+            if (constructor.Body.Statements[i] is not ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assignment })
             {
-                AnalyzeAssignment(context, assignment);
+                continue;
             }
+
+            AnalyzeAssignment(context, assignment);
         }
     }
 
@@ -105,12 +107,14 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
                 continue;
             }
 
-            foreach (ExpressionStatementSyntax? statement in accessor.Body.Statements.OfType<ExpressionStatementSyntax>())
+            for(int i = 0; i < accessor.Body.Statements.Count; i++)
             {
-                if (statement.Expression is AssignmentExpressionSyntax assignment)
+                if (accessor.Body.Statements[i] is not ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assignment })
                 {
-                    AnalyzeAssignment(context, assignment);
+                    continue;
                 }
+                
+                AnalyzeAssignment(context, assignment);
             }
         }
     }
