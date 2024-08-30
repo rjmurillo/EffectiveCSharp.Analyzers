@@ -149,7 +149,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         // Skip if the field is already initialized in the declaration with the same value and
         // check if the initializer value in the declaration is the same as in the constructor assignment
         if (fieldDeclaration?.Initializer != null
-            && AreExpressionsEquivalent(fieldDeclaration.Initializer.Value, assignment.Right, context.SemanticModel))
+            && context.SemanticModel.AreExpressionsEquivalent(fieldDeclaration.Initializer.Value, assignment.Right))
         {
             // Ensure we only trigger a diagnostic if the constructor has no parameters,
             // or if the assignment is not dependent on a constructor parameter or a method call.
@@ -241,16 +241,6 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         }
 
         return false;
-    }
-
-    private static bool AreExpressionsEquivalent(ExpressionSyntax left, ExpressionSyntax right, SemanticModel semanticModel)
-    {
-        // This method checks if the two expressions represent the same value/initialization
-        IOperation? leftOperation = semanticModel.GetOperation(left);
-        IOperation? rightOperation = semanticModel.GetOperation(right);
-
-        // Compare the operations for semantic equivalence
-        return leftOperation != null && rightOperation != null && leftOperation.Kind == rightOperation.Kind && leftOperation.ConstantValue.Equals(rightOperation.ConstantValue);
     }
 
     private static bool IsInitializedFromMethodCall(ExpressionSyntax right, SemanticModel semanticModel)
