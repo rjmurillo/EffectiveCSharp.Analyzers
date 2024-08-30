@@ -82,7 +82,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        for(int i = 0; i < constructor.Body.Statements.Count; i++)
+        for (int i = 0; i < constructor.Body.Statements.Count; i++)
         {
             if (constructor.Body.Statements[i] is not ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assignment })
             {
@@ -107,13 +107,13 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
                 continue;
             }
 
-            for(int i = 0; i < accessor.Body.Statements.Count; i++)
+            for (int i = 0; i < accessor.Body.Statements.Count; i++)
             {
                 if (accessor.Body.Statements[i] is not ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assignment })
                 {
                     continue;
                 }
-                
+
                 AnalyzeAssignment(context, assignment);
             }
         }
