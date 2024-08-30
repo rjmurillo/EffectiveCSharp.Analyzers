@@ -504,12 +504,7 @@ public class PreferMemberInitializerAnalyzerTests
 
               public MyClass()
               {
-                {|ECS1200:listOfString = new List<string>();|}
-              }
-
-              public MyClass(int size)
-              {
-                {|ECS1200:listOfString = new List<string>(size);|}
+                {|ECS1200:listOfString = new List<string>()|};
               }
             }
             """,
@@ -527,7 +522,7 @@ public class PreferMemberInitializerAnalyzerTests
 
               public MyClass(int size)
               {
-                listOfString = new List<string>(5);
+                {|ECS1200:listOfString = new List<string>(5)|};
               }
 
               public MyClass()
@@ -549,7 +544,7 @@ public class PreferMemberInitializerAnalyzerTests
 
               public MyClass()
               {
-                {|ECS1200:listOfString = new List<string>();|}
+                {|ECS1200:listOfString = new List<string>()|};
               }
             }
             """,

@@ -142,10 +142,23 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
 
         VariableDeclaratorSyntax? fieldDeclaration = fieldSymbol.DeclaringSyntaxReferences[0].GetSyntax(context.CancellationToken) as VariableDeclaratorSyntax;
 
-        // Skip if the field is already initialized in the declaration
+        // Skip if the field is already initialized in the declaration with the same value
         if (fieldDeclaration?.Initializer != null)
         {
-            return;
+            // Check if the initializer value in the declaration is the same as in the constructor assignment
+            if (AreExpressionsEquivalent(fieldDeclaration.Initializer.Value, assignment.Right, context.SemanticModel))
+            {
+                // Ensure we only trigger a diagnostic if the constructor has no parameters,
+                // or if the assignment is not dependent on a constructor parameter.
+                if (!IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
+                    && !IsInitializedFromMethodCall(assignment.Right, context.SemanticModel))
+                {
+                    Diagnostic d = assignment.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
+                    context.ReportDiagnostic(d);
+                }
+
+                return;
+            }
         }
 
         // Ensure the assignment is not redundant (check if it matches the default value)
@@ -155,12 +168,25 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         }
 
         // Ensure the field is not being initialized with a constructor parameter or method call
-        if (!IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
-            && !IsInitializedFromMethodCall(assignment.Right, context.SemanticModel))
+        if (IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
+            || IsInitializedFromMethodCall(assignment.Right, context.SemanticModel))
         {
-            Diagnostic diagnostic = identifierName.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
-            context.ReportDiagnostic(diagnostic);
+            return;
         }
+
+        // If the assignment does not match any of the conditions, report it as redundant
+        Diagnostic diagnostic = identifierName.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
+        context.ReportDiagnostic(diagnostic);
+    }
+
+    private static bool AreExpressionsEquivalent(ExpressionSyntax left, ExpressionSyntax right, SemanticModel semanticModel)
+    {
+        // This method checks if the two expressions represent the same value/initialization
+        var leftOperation = semanticModel.GetOperation(left);
+        var rightOperation = semanticModel.GetOperation(right);
+
+        // Compare the operations for semantic equivalence
+        return leftOperation != null && rightOperation != null && leftOperation.Kind == rightOperation.Kind && leftOperation.ConstantValue.Equals(rightOperation.ConstantValue);
     }
 
     private static bool IsInitializedFromMethodCall(ExpressionSyntax right, SemanticModel semanticModel)
@@ -257,11 +283,13 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
     {
         IOperation? operation = semanticModel.GetOperation(right);
 
+        // Check if the assignment directly involves a constructor parameter
         if (operation is IParameterReferenceOperation)
         {
             return true;
         }
 
+        // Check for local variables initialized from constructor parameters (like dependency injection)
         if (operation is ILocalReferenceOperation localReference)
         {
             ILocalSymbol localSymbol = localReference.Local;
@@ -271,6 +299,19 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
             {
                 IOperation? initializerOperation = semanticModel.GetOperation(localDeclaration.Initializer.Value);
                 return initializerOperation is IParameterReferenceOperation;
+            }
+        }
+
+        // Check if the assignment involves an object creation where the constructor uses a parameter
+        if (operation is IObjectCreationOperation objectCreation)
+        {
+            for (int i = 0; i < objectCreation.Arguments.Length; i++)
+            {
+                IArgumentOperation argument = objectCreation.Arguments[i];
+                if (argument.Value is IParameterReferenceOperation)
+                {
+                    return true;
+                }
             }
         }
 
