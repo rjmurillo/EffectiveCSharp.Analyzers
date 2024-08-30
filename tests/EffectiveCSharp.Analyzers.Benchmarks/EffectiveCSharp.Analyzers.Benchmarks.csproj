@@ -9,6 +9,7 @@
     <ItemGroup>
         <ProjectReference Include="$(RepoRoot)/src/EffectiveCSharp.Analyzers/EffectiveCSharp.Analyzers.csproj" />
         <PackageReference Include="BenchmarkDotNet" />
+        <PackageReference Include="BenchmarkDotNet.Diagnostics.dotTrace" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" />
     </ItemGroup>
