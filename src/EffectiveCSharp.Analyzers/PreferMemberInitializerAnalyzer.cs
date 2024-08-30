@@ -66,6 +66,12 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
                 continue;
             }
 
+            // Handle cases where the 'default' literal is used directly (e.g., `default` or `default(int)`)
+            if (initializer.Value.IsKind(SyntaxKind.DefaultLiteralExpression))
+            {
+                continue; // 'default' literal always indicates default initialization and is okay for fields
+            }
+
             if (IsDefaultInitialization(fieldSymbol.Type, initializer.Value, context.SemanticModel, context.CancellationToken))
             {
                 // Report a diagnostic if the field is being initialized to a redundant default value
