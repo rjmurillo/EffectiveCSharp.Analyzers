@@ -436,7 +436,7 @@ public class PreferMemberInitializerAnalyzerTests
 
             public class MyClass
             {
-              {|ECS1200:private MyStruct structInstance = new MyStruct();|}
+              private MyStruct {|ECS1200:structInstance = new MyStruct()|};
             }
             """,
             ReferenceAssemblyCatalog.Latest);

@@ -66,7 +66,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
                 continue;
             }
 
-            if (IsDefaultInitialization(fieldSymbol.Type, initializer.Value, context.SemanticModel))
+            if (IsDefaultInitialization(fieldSymbol.Type, initializer.Value, context.SemanticModel, context.CancellationToken))
             {
                 // Report a diagnostic if the field is being initialized to a redundant default value
                 Diagnostic diagnostic = variable.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
@@ -143,7 +143,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         }
 
         // Ensure the assignment is not redundant (check if it matches the default value)
-        if (IsDefaultInitialization(fieldSymbol.Type, assignment.Right, context.SemanticModel))
+        if (IsDefaultInitialization(fieldSymbol.Type, assignment.Right, context.SemanticModel, context.CancellationToken))
         {
             return;
         }
@@ -163,12 +163,12 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         return semanticModel.GetOperation(right) is IInvocationOperation;
     }
 
-    private static bool IsDefaultInitialization(ITypeSymbol fieldType, ExpressionSyntax right, SemanticModel semanticModel)
+    private static bool IsDefaultInitialization(ITypeSymbol fieldType, ExpressionSyntax right, SemanticModel semanticModel, CancellationToken cancellationToken)
     {
         // Handle default keyword
         if (right.IsKind(SyntaxKind.DefaultExpression))
         {
-            TypeInfo typeInfo = semanticModel.GetTypeInfo(right);
+            TypeInfo typeInfo = semanticModel.GetTypeInfo(right, cancellationToken);
             return typeInfo.Type?.Equals(fieldType, SymbolEqualityComparer.IncludeNullability) == true;
         }
 
@@ -181,8 +181,15 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         // Handle numeric types (int, double, etc.)
         if (fieldType.IsValueType)
         {
-            Optional<object?> defaultValue = semanticModel.GetConstantValue(right);
+            Optional<object?> defaultValue = semanticModel.GetConstantValue(right, cancellationToken);
             if (defaultValue.HasValue && IsDefaultValue(defaultValue.Value, fieldType))
+            {
+                return true;
+            }
+
+            // Handle user-defined structs initialized with 'new'
+            if (right is ObjectCreationExpressionSyntax { ArgumentList.Arguments.Count: 0 } objectCreation
+                && semanticModel.GetTypeInfo(objectCreation, cancellationToken).Type?.Equals(fieldType, SymbolEqualityComparer.IncludeNullability) == true)
             {
                 return true;
             }
@@ -197,7 +204,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         // Handle default expressions
         if (right.IsKind(SyntaxKind.DefaultExpression))
         {
-            ITypeSymbol? expressionType = semanticModel.GetTypeInfo(right).Type;
+            ITypeSymbol? expressionType = semanticModel.GetTypeInfo(right, cancellationToken).Type;
             return expressionType?.Equals(fieldType, SymbolEqualityComparer.IncludeNullability) == true;
         }
 
