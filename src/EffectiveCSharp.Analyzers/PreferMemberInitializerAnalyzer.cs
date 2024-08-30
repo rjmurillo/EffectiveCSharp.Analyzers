@@ -32,7 +32,6 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         context.RegisterSyntaxNodeAction(
             AnalyzeNode,
             SyntaxKind.ConstructorDeclaration,
-            SyntaxKind.PropertyDeclaration,
             SyntaxKind.SimpleAssignmentExpression,
             SyntaxKind.FieldDeclaration);
     }
@@ -43,9 +42,6 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         {
             case ConstructorDeclarationSyntax constructor:
                 AnalyzeConstructor(context, constructor);
-                break;
-            case PropertyDeclarationSyntax property:
-                AnalyzeProperty(context, property);
                 break;
             case FieldDeclarationSyntax field:
                 AnalyzeField(context, field);
@@ -76,7 +72,7 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
                 continue; // 'default' literal always indicates default initialization and is okay for fields
             }
 
-            if (IsDefaultInitialization(fieldSymbol.Type, initializer.Value, context.SemanticModel, context.CancellationToken))
+            if (context.IsDefaultInitialization(fieldSymbol.Type, initializer.Value))
             {
                 // Report a diagnostic if the field is being initialized to a redundant default value
                 Diagnostic diagnostic = variable.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
@@ -103,34 +99,6 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static void AnalyzeProperty(SyntaxNodeAnalysisContext context, PropertyDeclarationSyntax property)
-    {
-        if (property.AccessorList == null)
-        {
-            return;
-        }
-
-        for (int a = 0; a < property.AccessorList.Accessors.Count; a++)
-        {
-            AccessorDeclarationSyntax accessor = property.AccessorList.Accessors[a];
-
-            if (accessor.Body == null)
-            {
-                continue;
-            }
-
-            for (int i = 0; i < accessor.Body.Statements.Count; i++)
-            {
-                if (accessor.Body.Statements[i] is not ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assignment })
-                {
-                    continue;
-                }
-
-                AnalyzeAssignment(context, assignment);
-            }
-        }
-    }
-
     private static void AnalyzeAssignment(SyntaxNodeAnalysisContext context, AssignmentExpressionSyntax assignment)
     {
         if (assignment.Left is not IdentifierNameSyntax identifierName)
@@ -153,9 +121,9 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         {
             // Ensure we only trigger a diagnostic if the constructor has no parameters,
             // or if the assignment is not dependent on a constructor parameter or a method call.
-            if (!IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
-                && !IsInitializedFromMethodCall(assignment.Right, context.SemanticModel)
-                && !IsInitializedFromInstanceMember(assignment.Right, context.SemanticModel))
+            if (!context.SemanticModel.IsInitializedFromConstructorParameter(assignment.Right)
+                && !context.SemanticModel.IsInitializedFromMethodCall(assignment.Right)
+                && !context.SemanticModel.IsInitializedFromInstanceMember(assignment.Right))
             {
                 Diagnostic d = assignment.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
                 context.ReportDiagnostic(d);
@@ -165,14 +133,14 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         }
 
         // Ensure the assignment is not redundant (check if it matches the default value)
-        if (IsDefaultInitialization(fieldSymbol.Type, assignment.Right, context.SemanticModel, context.CancellationToken))
+        if (context.IsDefaultInitialization(fieldSymbol.Type, assignment.Right))
         {
             return;
         }
 
         // Ensure the field is not being initialized with a constructor parameter or method call
-        if (IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
-            || IsInitializedFromMethodCall(assignment.Right, context.SemanticModel))
+        if (context.SemanticModel.IsInitializedFromConstructorParameter(assignment.Right)
+            || context.SemanticModel.IsInitializedFromMethodCall(assignment.Right))
         {
             return;
         }
@@ -180,195 +148,5 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         // If the assignment does not match any of the conditions, report it as redundant
         Diagnostic diagnostic = identifierName.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
         context.ReportDiagnostic(diagnostic);
-    }
-
-    private static bool IsInitializedFromInstanceMember(ExpressionSyntax right, SemanticModel semanticModel)
-    {
-        IOperation? operation = semanticModel.GetOperation(right);
-
-        if (operation is IObjectCreationOperation objectCreation)
-        {
-            // Check if the object initializer references any instance members
-            foreach (IOperation? initializer in objectCreation.Initializer?.Initializers ?? Enumerable.Empty<IOperation>())
-            {
-                if (initializer is ISimpleAssignmentOperation { Value: IMemberReferenceOperation mro } && IsInstanceMemberOfContainingType(mro, semanticModel, right))
-                {
-                    return true;
-                }
-            }
-        }
-
-        // Check if the operation is a member reference and whether that member is an instance (non-static) member of the containing type.
-        if (operation is IMemberReferenceOperation memberReference && IsInstanceMemberOfContainingType(memberReference, semanticModel, right))
-        {
-            return true;
-        }
-
-        // Also check for nested member access, such as accessing a field inside another field (e.g., `this.otherField.Field`)
-        if (operation is IFieldReferenceOperation { Instance: not null, Field.IsStatic: false })
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Determines whether the specified <see cref="IMemberReferenceOperation"/> refers to a non-static member
-    /// of the containing type where the member reference is located.
-    /// </summary>
-    /// <param name="memberReferenceOperation">The member reference operation to evaluate.</param>
-    /// <param name="semanticModel">An instance of <see cref="SemanticModel"/>.</param>
-    /// <param name="right">The <see cref="ExpressionSyntax"/> to get the containing type.</param>
-    /// <returns>
-    /// <c>true</c> if the member referenced by <paramref name="memberReferenceOperation"/> is a non-static member
-    /// of the containing type; otherwise, <c>false</c>.
-    /// </returns>
-    /// <remarks>
-    /// This method checks if the member being referenced belongs to the same type that contains the operation
-    /// and ensures that the member is not static.
-    /// </remarks>
-
-    private static bool IsInstanceMemberOfContainingType(IMemberReferenceOperation memberReferenceOperation, SemanticModel semanticModel, ExpressionSyntax right)
-    {
-        INamedTypeSymbol? containingType = semanticModel.GetEnclosingSymbol(right.SpanStart)?.ContainingType;
-
-        if (containingType != null
-            && memberReferenceOperation.Member.ContainingType.Equals(containingType, SymbolEqualityComparer.IncludeNullability)
-            && !memberReferenceOperation.Member.IsStatic)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool IsInitializedFromMethodCall(ExpressionSyntax right, SemanticModel semanticModel)
-    {
-        // Check if the right side of the assignment is a method call
-        return semanticModel.GetOperation(right) is IInvocationOperation;
-    }
-
-    private static bool IsDefaultInitialization(ITypeSymbol fieldType, ExpressionSyntax right, SemanticModel semanticModel, CancellationToken cancellationToken)
-    {
-        // Handle default keyword
-        if (right.IsKind(SyntaxKind.DefaultExpression))
-        {
-            TypeInfo typeInfo = semanticModel.GetTypeInfo(right, cancellationToken);
-            return typeInfo.Type?.Equals(fieldType, SymbolEqualityComparer.IncludeNullability) == true;
-        }
-
-        // Handle cases where the 'default' literal is used directly (e.g., `default` or `default(int)`)
-        if (right.IsKind(SyntaxKind.DefaultLiteralExpression))
-        {
-            return true; // 'default' literal always indicates default initialization
-        }
-
-        // Handle numeric types (int, double, etc.)
-        if (fieldType.IsValueType)
-        {
-            Optional<object?> defaultValue = semanticModel.GetConstantValue(right, cancellationToken);
-            if (defaultValue.HasValue && IsDefaultValue(defaultValue.Value, fieldType))
-            {
-                return true;
-            }
-
-            // Handle user-defined structs initialized with 'new'
-            if (right is ObjectCreationExpressionSyntax { ArgumentList.Arguments.Count: 0 } objectCreation
-                && semanticModel.GetTypeInfo(objectCreation, cancellationToken).Type?.Equals(fieldType, SymbolEqualityComparer.IncludeNullability) == true)
-            {
-                return true;
-            }
-        }
-
-        // Handle string types
-        if (fieldType.SpecialType == SpecialType.System_String && right.IsKind(SyntaxKind.StringLiteralExpression))
-        {
-            return ((LiteralExpressionSyntax)right).Token.ValueText == string.Empty;
-        }
-
-        // Handle default expressions
-        if (right.IsKind(SyntaxKind.DefaultExpression))
-        {
-            ITypeSymbol? expressionType = semanticModel.GetTypeInfo(right, cancellationToken).Type;
-            return expressionType?.Equals(fieldType, SymbolEqualityComparer.IncludeNullability) == true;
-        }
-
-        return false;
-    }
-
-    private static bool IsDefaultValue(object? value, ITypeSymbol fieldType)
-    {
-        if (value == null)
-        {
-            return false;
-        }
-
-        try
-        {
-            switch (fieldType.SpecialType)
-            {
-                // Handle numeric conversions
-                case SpecialType.System_Double when Convert.ToDouble(value) == 0.0:
-                case SpecialType.System_Single when Convert.ToSingle(value) == 0.0f:
-                case SpecialType.System_Int32 when Convert.ToInt32(value) == 0:
-                case SpecialType.System_Int64 when Convert.ToInt64(value) == 0L:
-                case SpecialType.System_Int16 when Convert.ToInt16(value) == 0:
-                case SpecialType.System_Byte when Convert.ToByte(value) == 0:
-                // Handle other types like boolean, char, etc.
-                case SpecialType.System_Boolean when value is bool and false:
-                case SpecialType.System_Char when value is char and '\0':
-                    return true;
-                default:
-                    return false;
-            }
-        }
-        catch (InvalidCastException)
-        {
-            return false; // If conversion fails, it's not the default value.
-        }
-        catch (FormatException)
-        {
-            return false; // If conversion fails, it's not the default value.
-        }
-    }
-
-    private static bool IsInitializedFromConstructorParameter(ExpressionSyntax right, SemanticModel semanticModel)
-    {
-        IOperation? operation = semanticModel.GetOperation(right);
-
-        // Check if the assignment directly involves a constructor parameter
-        if (operation is IParameterReferenceOperation)
-        {
-            return true;
-        }
-
-        // Check for local variables initialized from constructor parameters (like dependency injection)
-        if (operation is ILocalReferenceOperation localReference)
-        {
-            ILocalSymbol localSymbol = localReference.Local;
-            VariableDeclaratorSyntax? localDeclaration = localSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as VariableDeclaratorSyntax;
-
-            if (localDeclaration?.Initializer?.Value != null)
-            {
-                IOperation? initializerOperation = semanticModel.GetOperation(localDeclaration.Initializer.Value);
-                return initializerOperation is IParameterReferenceOperation;
-            }
-        }
-
-        // Check if the assignment involves an object creation where the constructor uses a parameter
-        if (operation is IObjectCreationOperation objectCreation)
-        {
-            for (int i = 0; i < objectCreation.Arguments.Length; i++)
-            {
-                IArgumentOperation argument = objectCreation.Arguments[i];
-                if (argument.Value is IParameterReferenceOperation)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 }
