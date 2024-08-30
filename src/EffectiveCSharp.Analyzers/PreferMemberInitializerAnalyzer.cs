@@ -1,5 +1,9 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
+/// <summary>
+/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #12 - Prefer member initializers to assignment statements.
+/// </summary>
+/// <seealso cref="Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
 {
@@ -142,24 +146,22 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
 
         VariableDeclaratorSyntax? fieldDeclaration = fieldSymbol.DeclaringSyntaxReferences[0].GetSyntax(context.CancellationToken) as VariableDeclaratorSyntax;
 
-        // Skip if the field is already initialized in the declaration with the same value
-        if (fieldDeclaration?.Initializer != null)
+        // Skip if the field is already initialized in the declaration with the same value and
+        // check if the initializer value in the declaration is the same as in the constructor assignment
+        if (fieldDeclaration?.Initializer != null
+            && AreExpressionsEquivalent(fieldDeclaration.Initializer.Value, assignment.Right, context.SemanticModel))
         {
-            // Check if the initializer value in the declaration is the same as in the constructor assignment
-            if (AreExpressionsEquivalent(fieldDeclaration.Initializer.Value, assignment.Right, context.SemanticModel))
+            // Ensure we only trigger a diagnostic if the constructor has no parameters,
+            // or if the assignment is not dependent on a constructor parameter or a method call.
+            if (!IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
+                && !IsInitializedFromMethodCall(assignment.Right, context.SemanticModel)
+                && !IsInitializedFromInstanceMember(assignment.Right, context.SemanticModel))
             {
-                // Ensure we only trigger a diagnostic if the constructor has no parameters,
-                // or if the assignment is not dependent on a constructor parameter or a method call.
-                if (!IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
-                    && !IsInitializedFromMethodCall(assignment.Right, context.SemanticModel)
-                    && !IsInitializedFromInstanceMember(assignment.Right, context.SemanticModel))
-                {
-                    Diagnostic d = assignment.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
-                    context.ReportDiagnostic(d);
-                }
-
-                return;
+                Diagnostic d = assignment.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
+                context.ReportDiagnostic(d);
             }
+
+            return;
         }
 
         // Ensure the assignment is not redundant (check if it matches the default value)
