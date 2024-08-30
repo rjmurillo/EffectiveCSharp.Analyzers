@@ -100,8 +100,10 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        foreach (AccessorDeclarationSyntax accessor in property.AccessorList.Accessors)
+        for (int a = 0; a < property.AccessorList.Accessors.Count; a++)
         {
+            AccessorDeclarationSyntax accessor = property.AccessorList.Accessors[a];
+
             if (accessor.Body == null)
             {
                 continue;
