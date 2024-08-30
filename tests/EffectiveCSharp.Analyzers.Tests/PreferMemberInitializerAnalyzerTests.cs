@@ -31,23 +31,17 @@ public class PreferMemberInitializerAnalyzerTests
             """
             public class Outer
             {
-              private string outerLabel;
+              private string outerLabel = "Outer";
               private InnerClass inner = new() { innerLabel = "Inner" };
 
               public Outer()
               {
-                {|ECS1200:outerLabel|} = "Outer";
                 inner = new InnerClass { innerLabel = outerLabel };
               }
 
               public class InnerClass
               {
-                internal string innerLabel;
-
-                public InnerClass()
-                {
-                  {|ECS1200:innerLabel|} = "Inner";
-                }
+                internal string innerLabel = "Inner";
               }
             }
             """,

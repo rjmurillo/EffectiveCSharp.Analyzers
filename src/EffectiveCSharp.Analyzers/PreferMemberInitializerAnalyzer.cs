@@ -149,9 +149,10 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
             if (AreExpressionsEquivalent(fieldDeclaration.Initializer.Value, assignment.Right, context.SemanticModel))
             {
                 // Ensure we only trigger a diagnostic if the constructor has no parameters,
-                // or if the assignment is not dependent on a constructor parameter.
+                // or if the assignment is not dependent on a constructor parameter or a method call.
                 if (!IsInitializedFromConstructorParameter(assignment.Right, context.SemanticModel)
-                    && !IsInitializedFromMethodCall(assignment.Right, context.SemanticModel))
+                    && !IsInitializedFromMethodCall(assignment.Right, context.SemanticModel)
+                    && !IsInitializedFromInstanceMember(assignment.Right, context.SemanticModel))
                 {
                     Diagnostic d = assignment.GetLocation().CreateDiagnostic(Rule, FieldDeclaration, fieldSymbol.Name);
                     context.ReportDiagnostic(d);
@@ -179,11 +180,72 @@ public class PreferMemberInitializerAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(diagnostic);
     }
 
+    private static bool IsInitializedFromInstanceMember(ExpressionSyntax right, SemanticModel semanticModel)
+    {
+        IOperation? operation = semanticModel.GetOperation(right);
+
+        if (operation is IObjectCreationOperation objectCreation)
+        {
+            // Check if the object initializer references any instance members
+            foreach (IOperation? initializer in objectCreation.Initializer?.Initializers ?? Enumerable.Empty<IOperation>())
+            {
+                if (initializer is ISimpleAssignmentOperation { Value: IMemberReferenceOperation mro } && IsInstanceMemberOfContainingType(mro, semanticModel, right))
+                {
+                    return true;
+                }
+            }
+        }
+
+        // Check if the operation is a member reference and whether that member is an instance (non-static) member of the containing type.
+        if (operation is IMemberReferenceOperation memberReference && IsInstanceMemberOfContainingType(memberReference, semanticModel, right))
+        {
+            return true;
+        }
+
+        // Also check for nested member access, such as accessing a field inside another field (e.g., `this.otherField.Field`)
+        if (operation is IFieldReferenceOperation { Instance: not null, Field.IsStatic: false })
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Determines whether the specified <see cref="IMemberReferenceOperation"/> refers to a non-static member
+    /// of the containing type where the member reference is located.
+    /// </summary>
+    /// <param name="memberReferenceOperation">The member reference operation to evaluate.</param>
+    /// <param name="semanticModel">An instance of <see cref="SemanticModel"/>.</param>
+    /// <param name="right">The <see cref="ExpressionSyntax"/> to get the containing type.</param>
+    /// <returns>
+    /// <c>true</c> if the member referenced by <paramref name="memberReferenceOperation"/> is a non-static member
+    /// of the containing type; otherwise, <c>false</c>.
+    /// </returns>
+    /// <remarks>
+    /// This method checks if the member being referenced belongs to the same type that contains the operation
+    /// and ensures that the member is not static.
+    /// </remarks>
+
+    private static bool IsInstanceMemberOfContainingType(IMemberReferenceOperation memberReferenceOperation, SemanticModel semanticModel, ExpressionSyntax right)
+    {
+        INamedTypeSymbol? containingType = semanticModel.GetEnclosingSymbol(right.SpanStart)?.ContainingType;
+
+        if (containingType != null
+            && memberReferenceOperation.Member.ContainingType.Equals(containingType, SymbolEqualityComparer.IncludeNullability)
+            && !memberReferenceOperation.Member.IsStatic)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     private static bool AreExpressionsEquivalent(ExpressionSyntax left, ExpressionSyntax right, SemanticModel semanticModel)
     {
         // This method checks if the two expressions represent the same value/initialization
-        var leftOperation = semanticModel.GetOperation(left);
-        var rightOperation = semanticModel.GetOperation(right);
+        IOperation? leftOperation = semanticModel.GetOperation(left);
+        IOperation? rightOperation = semanticModel.GetOperation(right);
 
         // Compare the operations for semantic equivalence
         return leftOperation != null && rightOperation != null && leftOperation.Kind == rightOperation.Kind && leftOperation.ConstantValue.Equals(rightOperation.ConstantValue);
