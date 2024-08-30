@@ -2,14 +2,37 @@
 
 internal static class SemanticModelExtensions
 {
+    /// <summary>
+    /// This method checks if the two expressions represent the same value/initialization.
+    /// </summary>
+    /// <param name="semanticModel">The semantic model.</param>
+    /// <param name="left">The left.</param>
+    /// <param name="right">The right.</param>
+    /// <returns><c>true</c> if <paramref name="left"/> is the same <see cref="OperationKind"/>, has a constant value, and the values are the same; otherwise, <c>false</c>.</returns>
     internal static bool AreExpressionsEquivalent(this SemanticModel semanticModel, ExpressionSyntax left, ExpressionSyntax right)
     {
-        // This method checks if the two expressions represent the same value/initialization
         IOperation? leftOperation = semanticModel.GetOperation(left);
         IOperation? rightOperation = semanticModel.GetOperation(right);
 
-        // Compare the operations for semantic equivalence
-        return leftOperation != null && rightOperation != null && leftOperation.Kind == rightOperation.Kind && leftOperation.ConstantValue.Equals(rightOperation.ConstantValue);
+        if (leftOperation == null || rightOperation == null)
+        {
+            return false;
+        }
+
+        // Compare the kinds of operations first
+        if (leftOperation.Kind != rightOperation.Kind)
+        {
+            return false;
+        }
+
+        // Ensure both operations have constant values
+        if (!leftOperation.ConstantValue.HasValue || !rightOperation.ConstantValue.HasValue)
+        {
+            return false;
+        }
+
+        // Compare the constant values directly using EqualityComparer<T>
+        return EqualityComparer<object?>.Default.Equals(leftOperation.ConstantValue.Value, rightOperation.ConstantValue.Value);
     }
 
     internal static bool IsDefaultInitialization(
@@ -149,6 +172,9 @@ internal static class SemanticModelExtensions
 
         try
         {
+            // REVIEW: This is a silly way to do this
+#pragma warning disable S1244 // Do not check floating point equality with exact values
+#pragma warning disable MA0011 // Use an overload that has IFormatProvider as a parameter
             switch (fieldType.SpecialType)
             {
                 // Handle numeric conversions

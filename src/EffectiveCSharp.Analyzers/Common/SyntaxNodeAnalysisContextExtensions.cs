@@ -1,4 +1,5 @@
 ﻿namespace EffectiveCSharp.Analyzers.Common;
+
 internal static class SyntaxNodeAnalysisContextExtensions
 {
     internal static bool IsDefaultInitialization(

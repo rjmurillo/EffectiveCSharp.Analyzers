@@ -121,7 +121,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
         return document.WithSyntaxRoot(root.ReplaceNode(fieldDeclaration, newFieldDeclaration)).Project.Solution;
     }
 
-    private static async Task<Solution> EnforceFieldDeclarationInitializationAsync(Document document,  SemanticModel semanticModel, SyntaxNode declaration, CancellationToken cancellationToken)
+    private static async Task<Solution> EnforceFieldDeclarationInitializationAsync(Document document, SemanticModel semanticModel, SyntaxNode declaration, CancellationToken cancellationToken)
     {
         SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
