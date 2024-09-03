@@ -39,7 +39,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             
               public Outer()
               {
-                {|ECS1200:outerLabel = "Outer";|}
+                outerLabel = {|ECS1200:"Outer"|};
                 inner = new InnerClass { innerLabel = outerLabel };
               }
             
@@ -49,7 +49,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
             
                 public InnerClass()
                 {
-                  {|ECS1200:innerLabel = "Inner";|}
+                  innerLabel = {|ECS1200:"Inner"|};
                 }
               }
             }
@@ -172,7 +172,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
               
               static MyClass()
               {
-                {|ECS1200:prefix = "Prefix";|}
+                prefix = {|ECS1200:"Prefix"|};
               }
             }
             """,
@@ -191,8 +191,8 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
               
               public MyClass()
               {
-                {|ECS1200:prefix = "Prefix";|}
-                {|ECS1200:label = prefix + " Label";|}
+                prefix = {|ECS1200:"Prefix"|};
+                label = {|ECS1200:prefix + " Label"|};
               }
             }
             """,
@@ -291,7 +291,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
               
               public MyClass()
               {
-                {|ECS1200:label = "Initialized readonly in ctor";|}
+                label = {|ECS1200:"Initialized readonly in ctor"|};
               }
             }
             """,
@@ -309,7 +309,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
               
               static MyClass()
               {
-                {|ECS1200:label = "Initialized in static ctor";|}
+                label = {|ECS1200:"Initialized in static ctor"|};
               }
             }
             """,
@@ -387,7 +387,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
 
               public MyClass()
               {
-                {|ECS1200:labels = string.Empty;|}
+                labels = {|ECS1200:string.Empty|};
               }
             }
             """,
@@ -518,7 +518,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
               public MyClass()
               {
                 double local = 5;
-                {|ECS1200:mynum = local;|}
+                mynum = {|ECS1200:local|};
               }
             }
             """,
@@ -555,12 +555,12 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
 
               public MyClass()
               {
-                {|ECS1200:listOfString = new List<string>();|}
+                listOfString = {|ECS1200:new List<string>()|};
               }
 
               public MyClass(int size)
               {
-                {|ECS1200:listOfString = new List<string>();|}
+                listOfString = {|ECS1200:new List<string>()|};
               }
             }
             """,
@@ -725,12 +725,12 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
 
             public MyClass()
             {
-              {|ECS1200:listOfString = new List<string>();|}
+              listOfString = {|ECS1200:new List<string>()|};
             }
 
             public MyClass(int size)
             {
-              {|ECS1200:listOfString = new List<string>();|}
+              listOfString = {|ECS1200:new List<string>()|};
             }
           }
         """;
@@ -765,12 +765,12 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
 
             public MyClass()
             {
-              {|ECS1200:listOfString = new List<string>(5);|}
+              listOfString = {|ECS1200:new List<string>(5)|};
             }
 
             public MyClass(int size)
             {
-              {|ECS1200:listOfString = new List<string>(5);|}
+              listOfString = {|ECS1200:new List<string>(5)|};
             }
           }
         """;

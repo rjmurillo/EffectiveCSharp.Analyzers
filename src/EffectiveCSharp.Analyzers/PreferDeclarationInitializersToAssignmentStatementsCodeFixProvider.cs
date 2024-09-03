@@ -82,12 +82,12 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
         SyntaxNode? root = await context.Document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
         if (root is null
-            || diagnosticNode is not ExpressionStatementSyntax expressionStatement // The diagnostic should be an expression statement
-            || expressionStatement.Expression is not AssignmentExpressionSyntax assignmentExpression // The expression statement should contain an assignment expression
+            || diagnosticNode.Parent is not AssignmentExpressionSyntax assignmentExpression // The diagnostic should be an expression statement
+            || assignmentExpression.Parent is not ExpressionStatementSyntax expressionStatementSyntax
             || semanticModel.GetSymbolInfo(assignmentExpression.Left, context.CancellationToken).Symbol is not IFieldSymbol fieldSymbol // The left side of the assignment should be a field
             || fieldSymbol.DeclaringSyntaxReferences.SingleOrDefault() is not SyntaxReference syntaxReference // Let's get a reference to the field declaration
             || (await syntaxReference.GetSyntaxAsync(cancellationToken).ConfigureAwait(false)).Parent?.Parent is not FieldDeclarationSyntax existingFieldDeclaration // Let's get the field declaration
-            || root.RemoveNode(diagnosticNode, SyntaxRemoveOptions.KeepNoTrivia) is not SyntaxNode newRoot // Let's remove the assignment statement since we've found the field and have an initializer
+            || root.RemoveNode(expressionStatementSyntax, SyntaxRemoveOptions.KeepNoTrivia) is not SyntaxNode newRoot // Let's remove the assignment statement since we've found the field and have an initializer
             || CreateFieldDeclaration(existingFieldDeclaration, GetInitializerFromExpressionSyntax(assignmentExpression.Right)) is not FieldDeclarationSyntax fieldDeclarationWithNewInitializer)
         {
             // If any of the above conditions are not met, return the current solution
@@ -127,7 +127,8 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
 
         if (root is null
             || declaration is not FieldDeclarationSyntax fieldDeclaration // The declaration should be a field declaration
-            || fieldDeclaration.Declaration.Variables.SingleOrDefault() is not VariableDeclaratorSyntax variableDeclarator // The field declaration should have a variable declarator
+            || fieldDeclaration.Declaration.Variables.Count != 1 // The field declaration should have a variable declarator
+            || fieldDeclaration.Declaration.Variables[0] is not VariableDeclaratorSyntax variableDeclarator // The field declaration should have a variable declarator
             || semanticModel?.GetDeclaredSymbol(variableDeclarator, cancellationToken) is not IFieldSymbol fieldSymbol // Let's get the field symbol
             || GetDefaultInitializerForType(fieldSymbol.Type) is not EqualsValueClauseSyntax newInitializer // Let's try to get an initializer for the field type
             || CreateFieldDeclaration(fieldDeclaration, newInitializer) is not FieldDeclarationSyntax fieldDeclarationWithInitializer)

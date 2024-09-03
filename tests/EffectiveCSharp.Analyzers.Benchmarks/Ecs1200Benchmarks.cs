@@ -1,4 +1,7 @@
-﻿namespace EffectiveCSharp.Analyzers.Benchmarks;
+﻿using BenchmarkDotNet.Diagnostics.dotMemory;
+using BenchmarkDotNet.Diagnostics.dotTrace;
+
+namespace EffectiveCSharp.Analyzers.Benchmarks;
 
 [InProcess]
 [MemoryDiagnoser]

@@ -93,7 +93,26 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
                     FindFieldInitializerCandidatesInPropertyDeclaration(propertyDeclarationSyntax, fieldInitializationInfo);
                     break;
                 case FieldDeclarationSyntax fieldDeclarationSyntax:
-                    fields.Add(fieldDeclarationSyntax);
+                    bool isConst = false;
+                    for (int i = 0; i < fieldDeclarationSyntax.Modifiers.Count; ++i)
+                    {
+                        SyntaxKind kind = fieldDeclarationSyntax.Modifiers[i].Kind();
+
+                        if (kind is not SyntaxKind.ConstKeyword)
+                        {
+                            continue;
+                        }
+
+                        // We only care about instance fields.
+                        isConst = true;
+                        break;
+                    }
+
+                    if (!isConst)
+                    {
+                        fields.Add(fieldDeclarationSyntax);
+                    }
+
                     break;
             }
         }
@@ -138,7 +157,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
             string fieldName = identifierNameSyntax.Identifier.Text;
             if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
             {
-                fieldInfo = new FieldInitializationInfo(fieldName);
+                fieldInfo = new FieldInitializationInfo();
                 fields.Add(fieldName, fieldInfo);
             }
 
@@ -178,10 +197,11 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
                     {
                         HandleConstructorExpressions(expressionSyntax, assignment, context, fields, isConstructorParameterless, isScopeConstructor);
                     }
+                    else if (expressionSyntax.Expression is InvocationExpressionSyntax invocationExpressionSyntax)
+                    {
+                        HandleInvocation(invocationExpressionSyntax, context, fields, isConstructorParameterless);
+                    }
 
-                    break;
-                case InvocationExpressionSyntax invocationExpressionSyntax:
-                    HandleInvocation(invocationExpressionSyntax, context, fields);
                     break;
             }
         }
@@ -221,17 +241,14 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         string fieldName = identifierName.Identifier.Text;
         if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
         {
-            fieldInfo = new FieldInitializationInfo(fieldName);
+            fieldInfo = new FieldInitializationInfo();
             fields.Add(fieldName, fieldInfo);
-            goto FIELD_SHOULD_BE_CHECKED;
         }
-
-        if (fieldInfo.ShouldNotInitializeInDeclaration)
+        else if (fieldInfo.ShouldNotInitializeInDeclaration)
         {
             return;
         }
 
-        FIELD_SHOULD_BE_CHECKED:
         if (!isScopeConstructor)
         {
             fieldInfo.ShouldNotInitializeInDeclaration = true;
@@ -241,24 +258,26 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         ExpressionSyntax rightSide = assignment.Right;
 
         if ((isConstructorParameterless && rightSide is IdentifierNameSyntax)
-                || rightSide is LiteralExpressionSyntax
-                    or MemberAccessExpressionSyntax { Expression: PredefinedTypeSyntax })
+            || rightSide is LiteralExpressionSyntax
+            || rightSide is MemberAccessExpressionSyntax { Expression: PredefinedTypeSyntax })
         {
-            goto PROCESS_FIELD_CANDIDATE;
+            ProcessFieldInitializerCandidate(
+                assignment,
+                expressionStatementSyntax,
+                fieldInfo);
         }
-
-        if (rightSide is IdentifierNameSyntax
-            || !IsExpressionValidDeclarationInitialization(rightSide, context, isConstructorParameterless))
+        else if (rightSide is IdentifierNameSyntax
+                 || !IsExpressionValidDeclarationInitialization(rightSide, context, isConstructorParameterless))
         {
             fieldInfo.ShouldNotInitializeInDeclaration = true;
-            return;
         }
-
-        PROCESS_FIELD_CANDIDATE:
-        ProcessFieldInitializerCandidate(
-            assignment,
-            expressionStatementSyntax,
-            fieldInfo);
+        else
+        {
+            ProcessFieldInitializerCandidate(
+                assignment,
+                expressionStatementSyntax,
+                fieldInfo);
+        }
     }
 
     /// <summary>
@@ -381,20 +400,17 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <param name="invocation">The invocation expression to check for field initialization candidates.</param>
     /// <param name="context">The node analysis context.</param>
     /// <param name="fields">A dictionary tracking all fields initialization in constructors.</param>
-    private static void HandleInvocation(InvocationExpressionSyntax invocation, SyntaxNodeAnalysisContext context, Dictionary<string, FieldInitializationInfo> fields, bool isConstructorParameterless, bool isScopeConstructor)
+    /// <param name="isConstructorParameterless">A bool on whether the constructor has parameters.</param>
+    private static void HandleInvocation(InvocationExpressionSyntax invocation, SyntaxNodeAnalysisContext context, Dictionary<string, FieldInitializationInfo> fields, bool isConstructorParameterless)
     {
         if (context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken).Symbol is not IMethodSymbol methodSymbol
-            || methodSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax(context.CancellationToken) is not MethodDeclarationSyntax methodDeclaration)
+            || methodSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax(context.CancellationToken) is not MethodDeclarationSyntax methodDeclaration
+            || methodDeclaration.Body is null)
         {
             return;
         }
 
-        if (methodDeclaration.Body is null)
-        {
-            return;
-        }
-
-        FindFieldInitializerCandidatesInScope(context, methodDeclaration.Body.ChildNodes(), fields, isConstructorParameterless, isScopeConstructor);
+        FindFieldInitializerCandidatesInScope(context, methodDeclaration.Body.ChildNodes(), fields, isConstructorParameterless,  isScopeConstructor: false);
     }
 
     /// <summary>
@@ -552,14 +568,14 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
             if (isInitializerPresent)
             {
                 // The field was marked as not to initialize in the declaration due to diverging initializations in constructors.
-                // and an initializer is presen, meaning we report a diagnostic.ssssssssssssssss
+                // and an initializer is present, meaning we report a diagnostic.
                 context.ReportDiagnostic(field.GetLocation().CreateDiagnostic(RuleExceptionShouldNotInitializeInDeclaration));
             }
 
             return;
         }
 
-        IList<ExpressionStatementSyntax> fieldInitializersInConstructors = fieldInfo.FieldInitializersInConstructors;
+        List<ExpressionStatementSyntax> fieldInitializersInConstructors = fieldInfo.FieldInitializersInConstructors;
 
         // If the field is initialized in the declaration and in the constructors,
         // we check if the initializations are diverging.
@@ -594,11 +610,12 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// </summary>
     /// <param name="context">The analysis context.</param>
     /// <param name="initializers">The list of constructor field initializers.</param>
-    private static void ReportDiagnosticsForInitializersInConstructors(SyntaxNodeAnalysisContext context, IList<ExpressionStatementSyntax> initializers)
+    private static void ReportDiagnosticsForInitializersInConstructors(SyntaxNodeAnalysisContext context, List<ExpressionStatementSyntax> initializers)
     {
         for (int i = 0; i < initializers.Count; i++)
         {
-            context.ReportDiagnostic(initializers[i].GetLocation().CreateDiagnostic(GeneralRule));
+            AssignmentExpressionSyntax assignment = (AssignmentExpressionSyntax)initializers[i].Expression;
+            context.ReportDiagnostic(assignment.Right.GetLocation().CreateDiagnostic(GeneralRule));
         }
     }
 
@@ -608,25 +625,9 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     private sealed class FieldInitializationInfo
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="FieldInitializationInfo"/> class.
-        /// </summary>
-        /// <param name="name">The field name.</param>
-        public FieldInitializationInfo(
-            string name)
-        {
-            FieldName = name;
-            FieldInitializersInConstructors = new List<ExpressionStatementSyntax>(5);
-        }
-
-        /// <summary>
-        /// Gets the field name.
-        /// </summary>
-        public string FieldName { get; }
-
-        /// <summary>
         /// Gets the field initializers in constructors.
         /// </summary>
-        public List<ExpressionStatementSyntax> FieldInitializersInConstructors { get; }
+        public List<ExpressionStatementSyntax> FieldInitializersInConstructors { get; } = new(3);
 
         /// <summary>
         /// Gets or sets a value indicating whether the field should not initialize in the declaration.
