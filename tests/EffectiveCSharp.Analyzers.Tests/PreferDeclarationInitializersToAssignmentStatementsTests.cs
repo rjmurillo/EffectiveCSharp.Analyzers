@@ -590,6 +590,19 @@ public class PreferDeclarationInitializersToAssignmentStatementsTests
     }
 
     [Fact]
+    public async Task AnalyzerShouldNotFireForConstFields()
+    {
+        await Verifier.VerifyAnalyzerAsync(
+            """
+            public class MyClass
+            {
+              private const string label = "test";
+            }
+            """,
+            ReferenceAssemblyCatalog.Latest);
+    }
+
+    [Fact]
     public async Task AnalyzerShouldFireWhenBeingInitializedInFieldAndConstructorsWithArgUse()
     {
         await Verifier.VerifyAnalyzerAsync(

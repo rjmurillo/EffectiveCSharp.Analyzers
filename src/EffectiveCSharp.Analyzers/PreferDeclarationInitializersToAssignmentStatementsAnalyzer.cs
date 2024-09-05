@@ -36,13 +36,13 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         category: "Maintainability",
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: "Field initialization should not occur when there are diverging initializations in constructos. This is to prevent unnecessary allocations.",
+        description: "Field initialization should not occur when there are diverging initializations in constructors. This is to prevent unnecessary allocations.",
         helpLinkUri: HelpLinkUri);
 
     private static readonly DiagnosticDescriptor RuleShouldInitializeInDeclarationWhenNoInitializationPresent = new(
         id: DiagnosticIds.PreferDeclarationInitializersWhenNoInitializationPresent,
         title: "Should initialize in declaration when no initialization present",
-        messageFormat: "Initialize the field in its declaration when no distint initializations will occur in constructors",
+        messageFormat: "Initialize the field in its declaration when no distinct initializations will occur in constructors",
         category: "Maintainability",
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
@@ -70,6 +70,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         Dictionary<string, FieldInitializationInfo> fieldInitializationInfo = new(5, StringComparer.Ordinal);
 
         IEnumerable<SyntaxNode> childNodes = classSyntaxNode.ChildNodes();
+
         List<FieldDeclarationSyntax> fields = new(5);
 
         // Check in every constructor if there are field initializer candidates
@@ -126,7 +127,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// This should not be as common as in constructors, but it is still a valid scenario.
     /// </summary>
     /// <param name="propertyDeclaration">The property declaration syntax to analyze.</param>
-    /// <param name="fields">A dictionary tracking all fields intializations in constructors.</param>
+    /// <param name="fields">A dictionary tracking all fields initializations in constructors.</param>
     private static void FindFieldInitializerCandidatesInPropertyDeclaration(PropertyDeclarationSyntax propertyDeclaration, Dictionary<string, FieldInitializationInfo> fields)
     {
         SyntaxList<AccessorDeclarationSyntax>? accessors = propertyDeclaration.AccessorList?.Accessors;
@@ -140,31 +141,31 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
 
         for (int i = 0; i < accessors.Value.Count; ++i)
         {
-            if (accessors.Value[i].Kind() == SyntaxKind.SetAccessorDeclaration)
+            if (accessors.Value[i].Kind() != SyntaxKind.SetAccessorDeclaration)
             {
-                setter = accessors.Value[i];
-                break;
+                continue;
             }
+
+            setter = accessors.Value[i];
+            break;
         }
 
-        if (setter is null)
+        if (setter?.ExpressionBody?.Expression is not AssignmentExpressionSyntax { Left: IdentifierNameSyntax identifierNameSyntax })
         {
             return;
         }
 
-        foreach (IdentifierNameSyntax identifierNameSyntax in setter.DescendantNodes().OfType<IdentifierNameSyntax>())
-        {
-            string fieldName = identifierNameSyntax.Identifier.Text;
-            if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
-            {
-                fieldInfo = new FieldInitializationInfo();
-                fields.Add(fieldName, fieldInfo);
-            }
+        string fieldName = identifierNameSyntax.Identifier.Text;
 
-            // We assume hat if you use a field in a setter, you are initializing it in some form,
-            // and therefore we should initialize in the declaration.
-            fieldInfo.ShouldNotInitializeInDeclaration = true;
+        if (!fields.TryGetValue(fieldName, out FieldInitializationInfo fieldInfo))
+        {
+            fieldInfo = new FieldInitializationInfo();
+            fields.Add(fieldName, fieldInfo);
         }
+
+        // We assume hat if you use a field in a setter, you are initializing it in some form,
+        // and therefore we should initialize in the declaration.
+        fieldInfo.ShouldNotInitializeInDeclaration = true;
     }
 
     /// <summary>
@@ -372,7 +373,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// </summary>
     /// <param name="assignment">The assignment node to check for equivalence.</param>
     /// <param name="expressionStatement">The expression statement to cache if needed.</param>
-    /// <param name="fieldInitializationInfo">The field intialization info object tracking the field's initializers' state.</param>
+    /// <param name="fieldInitializationInfo">The field initialization info object tracking the field's initializers' state.</param>
     private static void ProcessFieldInitializerCandidate(
         AssignmentExpressionSyntax assignment,
         ExpressionStatementSyntax expressionStatement,
@@ -418,7 +419,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// </summary>
     /// <param name="context">The analysis context.</param>
     /// <param name="classDeclarationChildNodes">The class declaration child nodes to iterate through.</param>
-    /// <param name="fieldInitializationInfos">The initalization info for all fields present in a constructor.</param>
+    /// <param name="fieldInitializationInfos">The initialization info for all fields present in a constructor.</param>
     private static void ReportDiagnosticsOnFieldDeclarations(SyntaxNodeAnalysisContext context, List<FieldDeclarationSyntax> classDeclarationChildNodes, Dictionary<string, FieldInitializationInfo> fieldInitializationInfos)
     {
         for (int i = 0; i < classDeclarationChildNodes.Count; ++i)
@@ -435,24 +436,23 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
 
             VariableDeclaratorSyntax variable = variables[0];
             EqualsValueClauseSyntax? initializer = variable.Initializer;
-            bool isInitializerPresent = initializer is not null;
 
             if (!fieldInitializationInfos.TryGetValue(variable.Identifier.Text, out FieldInitializationInfo fieldInfo))
             {
                 // Field was not found in constructors.
-                HandleFieldNotInConstructors(context, field, variable, initializer, isInitializerPresent);
+                HandleFieldNotInConstructors(context, field, variable, initializer);
             }
             else
             {
                 // Field was found in constructors.
-                HandleFieldsInConstructors(context, field, initializer!, isInitializerPresent, fieldInfo);
+                HandleFieldsInConstructors(context, field, fieldInfo, initializer);
             }
         }
     }
 
     /// <summary>
     /// Handles fields that are not initialized in constructors.
-    /// If the initializer is present, and the field is a value type that is initialied to null, zero, false or an empty struct,
+    /// If the initializer is present, and the field is a value type that is initialized to null, zero, false or an empty struct,
     /// a diagnostic is reported to remove the initialization in the declaration.
     /// If the initializer is not present, and the field is not a value type or nullable, a diagnostic is reported to
     /// initialize in declaration.
@@ -461,29 +461,32 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// <param name="field">The field declaration to analyze.</param>
     /// <param name="variable">The variable declarator node.</param>
     /// <param name="initializer">The field initializer.</param>
-    /// <param name="isInitializerPresent">A bool on whether the initializer already exists or not.</param>
     private static void HandleFieldNotInConstructors(
         SyntaxNodeAnalysisContext context,
         FieldDeclarationSyntax field,
         VariableDeclaratorSyntax variable,
-        EqualsValueClauseSyntax? initializer,
-        bool isInitializerPresent)
+        EqualsValueClauseSyntax? initializer)
     {
-        if (isInitializerPresent
-            && (IsFieldNullZeroOrFalseWithInitializer(context, initializer!)
-            || IsStructInitializerEmpty(context, field.Declaration.Type, initializer!)))
+        if (initializer is not null)
         {
-            // If the initializer is present, and the field is a value type that is initialied to null, zero, false or an empty struct,
-            // a diagnostic is reported to remove the initialization in the declaration.
-            context.ReportDiagnostic(field.GetLocation().CreateDiagnostic(RuleExceptionShouldNotInitializeToNullOrZero));
+            if (IsFieldNullZeroOrFalseWithInitializer(context, initializer)
+                || IsStructInitializerEmpty(context, field.Declaration.Type, initializer))
+            {
+                // If the initializer is present, and the field is a value type that is initialized to null, zero, false or an empty struct,
+                // a diagnostic is reported to remove the initialization in the declaration.
+                context.ReportDiagnostic(field.GetLocation().CreateDiagnostic(RuleExceptionShouldNotInitializeToNullOrZero));
+            }
         }
-        else if (!isInitializerPresent
-            && context.SemanticModel.GetDeclaredSymbol(variable, cancellationToken: context.CancellationToken) is IFieldSymbol fieldSymbol
-            && !IsZeroOrNullInitializableType(fieldSymbol))
+        else
         {
-            // If the initializer is not present, and the field is not a value type or nullable, a diagnostic is reported to
-            // initialize in declaration.
-            context.ReportDiagnostic(field.GetLocation().CreateDiagnostic(RuleShouldInitializeInDeclarationWhenNoInitializationPresent));
+            if (context.SemanticModel.GetDeclaredSymbol(variable, cancellationToken: context.CancellationToken) is IFieldSymbol fieldSymbol
+                && !CanTypeInitializeToZeroOrNull(fieldSymbol))
+            {
+                // If the initializer is not present, and the field is not a value type or nullable, a diagnostic is reported to
+                // initialize in declaration.
+                context.ReportDiagnostic(field.GetLocation()
+                    .CreateDiagnostic(RuleShouldInitializeInDeclarationWhenNoInitializationPresent));
+            }
         }
     }
 
@@ -497,22 +500,23 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     {
         SyntaxKind initializerKind = initializer.Value.Kind();
 
-        if (initializerKind == SyntaxKind.NullLiteralExpression)
+        switch (initializerKind)
         {
-            // To avoid calling the semanticmode, we simply check if the value text is "null".
-            return string.Equals(((LiteralExpressionSyntax)initializer.Value).Token.ValueText, "null", StringComparison.Ordinal);
-        }
+            case SyntaxKind.NullLiteralExpression:
+                // To avoid calling the semantic model, we simply check if the value text is "null".
+                return string.Equals(((LiteralExpressionSyntax)initializer.Value).Token.ValueText, "null", StringComparison.Ordinal);
+            case SyntaxKind.NumericLiteralExpression:
+                {
+                    // There are many ways of initializing to zero (0, 0d, 0f, etc.), so we use the semantic model to check the constant value
+                    // since that is 0 regardless of the syntax used.
+                    Optional<object?> constantValue = context.SemanticModel.GetConstantValue(initializer.Value, context.CancellationToken);
+                    return constantValue is { HasValue: true, Value: int and 0 };
+                }
 
-        if (initializerKind == SyntaxKind.NumericLiteralExpression)
-        {
-            // There are many ways of intializing to zero (0, 0d, 0f, etc), so we use the semantic model to check the constant value
-            // since that is 0 regardless of the syntax used.
-            Optional<object?> constantValue = context.SemanticModel.GetConstantValue(initializer.Value, context.CancellationToken);
-            return constantValue.HasValue && constantValue.Value is int intValue && intValue == 0;
+            default:
+                // We check if the initializer is a false literal expression.
+                return initializerKind == SyntaxKind.FalseLiteralExpression;
         }
-
-        // We check if the initializer is a false literal expression.
-        return initializerKind == SyntaxKind.FalseLiteralExpression;
     }
 
     /// <summary>
@@ -539,11 +543,11 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     }
 
     /// <summary>
-    /// Determines whether the field is a zero or null initializable type.
+    /// Determines whether the field is a type that can be initialized to zero or null.
     /// </summary>
     /// <param name="fieldSymbol">The field symbol information to check.</param>
     /// <returns>A bool, on whether the field is a type that can be initialized to null or 0.</returns>
-    private static bool IsZeroOrNullInitializableType(IFieldSymbol fieldSymbol)
+    private static bool CanTypeInitializeToZeroOrNull(IFieldSymbol fieldSymbol)
     {
         return fieldSymbol.Type.IsValueType || fieldSymbol.NullableAnnotation == NullableAnnotation.Annotated;
     }
@@ -553,19 +557,17 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
     /// </summary>
     /// <param name="context">The <see cref="SyntaxNodeAnalysisContext"/>.</param>
     /// <param name="field">The <see cref="FieldDeclarationSyntax"/> to handle.</param>
-    /// <param name="initializer">The <see cref="EqualsValueClauseSyntax"/> which contains the field initializer.</param>
-    /// <param name="isInitializerPresent">A bool on whether an initializer is present in the field declaration.</param>
     /// <param name="fieldInfo">The field's initialization info found in the class's constructors.</param>
+    /// <param name="initializer">The <see cref="EqualsValueClauseSyntax"/> which contains the field initializer.</param>
     private static void HandleFieldsInConstructors(
         SyntaxNodeAnalysisContext context,
         FieldDeclarationSyntax field,
-        EqualsValueClauseSyntax initializer,
-        bool isInitializerPresent,
-        FieldInitializationInfo fieldInfo)
+        FieldInitializationInfo fieldInfo,
+        EqualsValueClauseSyntax? initializer)
     {
         if (fieldInfo.ShouldNotInitializeInDeclaration)
         {
-            if (isInitializerPresent)
+            if (initializer is not null)
             {
                 // The field was marked as not to initialize in the declaration due to diverging initializations in constructors.
                 // and an initializer is present, meaning we report a diagnostic.
@@ -582,7 +584,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsAnalyzer : Diagn
         // Since we already checked if the field should not initialize in the declaration,
         // we know all initializations in the constructors are the same.
         // So we only need to check if the initializer is diverging from the constructor initializations.
-        if (isInitializerPresent
+        if (initializer is not null
             && fieldInitializersInConstructors.Count != 0
             && HasDivergingInitializations(fieldInitializersInConstructors[0], initializer))
         {

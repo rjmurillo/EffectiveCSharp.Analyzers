@@ -85,10 +85,11 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
             || diagnosticNode.Parent is not AssignmentExpressionSyntax assignmentExpression // The diagnostic should be an expression statement
             || assignmentExpression.Parent is not ExpressionStatementSyntax expressionStatementSyntax
             || semanticModel.GetSymbolInfo(assignmentExpression.Left, context.CancellationToken).Symbol is not IFieldSymbol fieldSymbol // The left side of the assignment should be a field
-            || fieldSymbol.DeclaringSyntaxReferences.SingleOrDefault() is not SyntaxReference syntaxReference // Let's get a reference to the field declaration
+            || fieldSymbol.DeclaringSyntaxReferences.Length != 1 // The field should have a single declaration
+            || fieldSymbol.DeclaringSyntaxReferences[0] is not { } syntaxReference // Let's get a reference to the field declaration
             || (await syntaxReference.GetSyntaxAsync(cancellationToken).ConfigureAwait(false)).Parent?.Parent is not FieldDeclarationSyntax existingFieldDeclaration // Let's get the field declaration
-            || root.RemoveNode(expressionStatementSyntax, SyntaxRemoveOptions.KeepNoTrivia) is not SyntaxNode newRoot // Let's remove the assignment statement since we've found the field and have an initializer
-            || CreateFieldDeclaration(existingFieldDeclaration, GetInitializerFromExpressionSyntax(assignmentExpression.Right)) is not FieldDeclarationSyntax fieldDeclarationWithNewInitializer)
+            || root.RemoveNode(expressionStatementSyntax, SyntaxRemoveOptions.KeepNoTrivia) is not { } newRoot // Let's remove the assignment statement since we've found the field and have an initializer
+            || CreateFieldDeclaration(existingFieldDeclaration, GetInitializerFromExpressionSyntax(assignmentExpression.Right)) is not { } fieldDeclarationWithNewInitializer)
         {
             // If any of the above conditions are not met, return the current solution
             return context.Document.Project.Solution;
@@ -111,7 +112,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
 
         if (root is null
             || declaration is not FieldDeclarationSyntax fieldDeclaration // The declaration should be a field declaration
-            || CreateFieldDeclaration(fieldDeclaration) is not FieldDeclarationSyntax newFieldDeclaration)
+            || CreateFieldDeclaration(fieldDeclaration) is not { } newFieldDeclaration)
         {
             // If any of the above conditions are not met, return the current solution
             return document.Project.Solution;
@@ -128,10 +129,10 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
         if (root is null
             || declaration is not FieldDeclarationSyntax fieldDeclaration // The declaration should be a field declaration
             || fieldDeclaration.Declaration.Variables.Count != 1 // The field declaration should have a variable declarator
-            || fieldDeclaration.Declaration.Variables[0] is not VariableDeclaratorSyntax variableDeclarator // The field declaration should have a variable declarator
-            || semanticModel?.GetDeclaredSymbol(variableDeclarator, cancellationToken) is not IFieldSymbol fieldSymbol // Let's get the field symbol
-            || GetDefaultInitializerForType(fieldSymbol.Type) is not EqualsValueClauseSyntax newInitializer // Let's try to get an initializer for the field type
-            || CreateFieldDeclaration(fieldDeclaration, newInitializer) is not FieldDeclarationSyntax fieldDeclarationWithInitializer)
+            || fieldDeclaration.Declaration.Variables[0] is not { } variableDeclarator // The field declaration should have a variable declarator
+            || semanticModel.GetDeclaredSymbol(variableDeclarator, cancellationToken) is not IFieldSymbol fieldSymbol // Let's get the field symbol
+            || GetDefaultInitializerForType(fieldSymbol.Type) is not { } newInitializer // Let's try to get an initializer for the field type
+            || CreateFieldDeclaration(fieldDeclaration, newInitializer) is not { } fieldDeclarationWithInitializer)
         {
             // If any of the above conditions are not met, return the current solution
             return document.Project.Solution;
@@ -157,7 +158,7 @@ public class PreferDeclarationInitializersToAssignmentStatementsCodeFixProvider 
         }
 
         // If the field type is a generic type, we need to create a generic object creation expression
-        if (fieldType is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.IsGenericType)
+        if (fieldType is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol)
         {
             string genericTypeName = namedTypeSymbol.Name;
             string genericArguments = string.Join(", ", namedTypeSymbol.TypeArguments.Select(arg => arg.ToDisplayString()));
