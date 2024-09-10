@@ -1,8 +1,11 @@
-﻿namespace EffectiveCSharp.Analyzers.Common;
+﻿using System.Runtime.CompilerServices;
+
+namespace EffectiveCSharp.Analyzers.Common;
 
 internal static class DiagnosticExtensions
 {
     [DebuggerStepThrough]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Diagnostic CreateDiagnostic(
         this Location location,
         DiagnosticDescriptor rule,
@@ -13,6 +16,8 @@ internal static class DiagnosticExtensions
                 properties: null,
                 messageArgs: messageArgs);
 
+    [DebuggerStepThrough]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Diagnostic CreateDiagnostic(
         this Location location,
         DiagnosticDescriptor rule,
@@ -25,6 +30,7 @@ internal static class DiagnosticExtensions
             messageArgs: messageArgs);
 
     [DebuggerStepThrough]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Diagnostic CreateDiagnostic(
         this Location location,
         DiagnosticDescriptor rule,
