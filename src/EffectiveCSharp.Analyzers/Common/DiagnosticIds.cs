@@ -16,7 +16,4 @@ internal static class DiagnosticIds
     internal const string BeAwareOfValueTypeCopyInReferenceTypes = "ECS0901";
     internal const string UseSpanInstead = "ECS1000";
     internal const string PreferDeclarationInitializersToAssignmentStatement = "ECS1200";
-    internal const string PreferDeclarationInitializersExceptNullOrZero = "ECS1201";
-    internal const string PreferDeclarationInitializersExceptWhenVaryingInitializations = "ECS1202";
-    internal const string PreferDeclarationInitializersWhenNoInitializationPresent = "ECS1203";
 }

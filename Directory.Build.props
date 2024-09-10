@@ -1,7 +1,6 @@
 <Project>
   <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
-    <RuntimeIdentifier Condition="'$(OS)' == 'Unix'">linux-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <Import Project="build/targets/artifacts/Artifacts.props" />
