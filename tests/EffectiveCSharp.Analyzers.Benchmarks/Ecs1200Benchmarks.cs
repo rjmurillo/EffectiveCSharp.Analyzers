@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Diagnostics.dotTrace;
+﻿using System.Globalization;
+using BenchmarkDotNet.Diagnostics.dotTrace;
 
 namespace EffectiveCSharp.Analyzers.Benchmarks;
 
@@ -11,8 +12,6 @@ public class Ecs1200Benchmarks
 
     private static CompilationWithAnalyzers? TestCompilation { get; set; }
 
-    private static CompilationWithAnalyzers? AlternateCompilation { get; set; }
-
     [IterationSetup]
     [SuppressMessage("Usage", "VSTHRD002:Avoid problematic synchronous waits", Justification = "Async setup not supported in BenchmarkDotNet.See https://github.com/dotnet/BenchmarkDotNet/issues/2442.")]
     public static void SetupCompilation()
@@ -20,7 +19,7 @@ public class Ecs1200Benchmarks
         List<(string Name, string Content)> sources = [];
         for (int index = 0; index < Constants.NumberOfCodeFiles; index++)
         {
-            string name = "TypeName" + index;
+            string name = "TypeName" + index.ToString(CultureInfo.InvariantCulture);
             sources.Add((name, @$"
 internal class {name}
 {{
@@ -34,9 +33,9 @@ internal class {name}
 "));
         }
 
-        (BaselineCompilation, TestCompilation, AlternateCompilation) =
+        (BaselineCompilation, TestCompilation) =
             BenchmarkCSharpCompilationFactory
-            .CreateAsync<PreferDeclarationInitializersToAssignmentStatementsAnalyzer, PreferMemberInitializerAnalyzer>(sources.ToArray())
+            .CreateAsync<PreferMemberInitializerAnalyzer>(sources.ToArray())
             .GetAwaiter()
             .GetResult();
     }
@@ -48,22 +47,6 @@ internal class {name}
             (await TestCompilation!
             .GetAnalysisResultAsync(CancellationToken.None)
             .ConfigureAwait(false))
-            .AssertValidAnalysisResult()
-            .GetAllDiagnostics();
-
-        if (diagnostics.Length != Constants.NumberOfCodeFiles)
-        {
-            throw new InvalidOperationException($"Expected '{Constants.NumberOfCodeFiles:N0}' analyzer diagnostics but found '{diagnostics.Length}'");
-        }
-    }
-
-    [Benchmark]
-    public async Task Ecs1200WithDiagnostics_NEW()
-    {
-        ImmutableArray<Diagnostic> diagnostics =
-            (await AlternateCompilation!
-                .GetAnalysisResultAsync(CancellationToken.None)
-                .ConfigureAwait(false))
             .AssertValidAnalysisResult()
             .GetAllDiagnostics();
 
