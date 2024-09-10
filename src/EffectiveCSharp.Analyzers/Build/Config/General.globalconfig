@@ -33,3 +33,10 @@ csharp_style_prefer_pattern_matching = true:warning
 #
 # Effective C# Item #10 - Use the new modifier only to react to base class Updates
 dotnet_diagnostic.CA1061.severity = warning
+
+# Title:   : Do not initialize unnecessarily
+# Category : Performance
+# Help Link: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1805
+#
+# Effective C# Item #12 - Prefer member initializers to assignment statements
+dotnet_diagnostic.CA1805.severity = warning

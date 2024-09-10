@@ -15,4 +15,5 @@ internal static class DiagnosticIds
     internal const string MinimizeBoxingUnboxing = "ECS0900";
     internal const string BeAwareOfValueTypeCopyInReferenceTypes = "ECS0901";
     internal const string UseSpanInstead = "ECS1000";
+    internal const string PreferDeclarationInitializersToAssignmentStatement = "ECS1200";
 }
