@@ -4,40 +4,6 @@ internal static class DiagnosticExtensions
 {
     [DebuggerStepThrough]
     internal static Diagnostic CreateDiagnostic(
-        this SyntaxNode node,
-        DiagnosticDescriptor rule,
-        params object?[]? messageArgs)
-        => node.CreateDiagnostic(rule, properties: null, messageArgs);
-
-    [DebuggerStepThrough]
-    internal static Diagnostic CreateDiagnostic(
-        this SyntaxNode node,
-        DiagnosticDescriptor rule,
-        ImmutableDictionary<string, string?>? properties,
-        params object?[]? messageArgs)
-        => node.CreateDiagnostic(
-            rule,
-            additionalLocations: null,
-            properties,
-            messageArgs);
-
-    [DebuggerStepThrough]
-    internal static Diagnostic CreateDiagnostic(
-        this SyntaxNode node,
-        DiagnosticDescriptor rule,
-        IEnumerable<Location>? additionalLocations,
-        ImmutableDictionary<string, string?>? properties,
-        params object?[]? messageArgs)
-        => node
-            .GetLocation()
-            .CreateDiagnostic(
-                rule: rule,
-                additionalLocations: additionalLocations,
-                properties: properties,
-                messageArgs: messageArgs);
-
-    [DebuggerStepThrough]
-    internal static Diagnostic CreateDiagnostic(
         this Location location,
         DiagnosticDescriptor rule,
         params object?[]? messageArgs)
