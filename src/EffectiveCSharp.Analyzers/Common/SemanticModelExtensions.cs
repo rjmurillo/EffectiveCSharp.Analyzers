@@ -234,4 +234,10 @@ internal static class SemanticModelExtensions
 
         return false;
     }
+
+    internal static bool IsCompileTimeConstant(this SemanticModel semanticModel, ExpressionSyntax expression)
+    {
+        Optional<object?> constantValue = semanticModel.GetConstantValue(expression);
+        return constantValue.HasValue;
+    }
 }
