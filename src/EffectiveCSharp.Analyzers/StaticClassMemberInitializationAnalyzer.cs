@@ -73,6 +73,10 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         "System.Text.Encoding.UTF32",
         "System.Text.Encoding.ASCII",
 
+        "System.Text.RegularExpressions.Regex",
+
+        "System.Version",
+
         // Guid static fields
         "System.Guid.Empty",
 
@@ -486,23 +490,34 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             return (symbolInfo, false);
         }
 
-        string typeFullname = symbol.ContainingType.ToDisplayString();
-        if (SafeItems.Contains(typeFullname))
+        // Check if the symbol is a type symbol
+        if (symbol is INamedTypeSymbol typeSymbol)
+        {
+            string typeFullName = typeSymbol.ToDisplayString();
+
+            if (SafeItems.Contains(typeFullName))
+            {
+                return (symbolInfo, true);
+            }
+        }
+
+        // Check if the symbol's containing type is in SafeItems
+        string containingTypeFullName = symbol.ContainingType?.ToDisplayString() ?? string.Empty;
+
+        if (SafeItems.Contains(containingTypeFullName))
         {
             return (symbolInfo, true);
         }
 
-        string methodFullName = typeFullname + "." + symbol.Name;
-        if (SafeItems.Contains(methodFullName))
-        {
-            return (symbolInfo, true);
-        }
-
-        // Get the fully qualified name of the symbol
+        // Check if the full symbol name is in SafeItems
         string symbolFullName = symbol.ToDisplayString();
 
-        // Check if the symbol is in the SafeItems list
-        return (symbolInfo, SafeItems.Contains(symbolFullName));
+        if (SafeItems.Contains(symbolFullName))
+        {
+            return (symbolInfo, true);
+        }
+
+        return (symbolInfo, false);
     }
 
     private static bool IsSimpleImplicitArrayCreation(ImplicitArrayCreationExpressionSyntax implicitArrayCreationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo, CancellationToken cancellationToken)

@@ -20,6 +20,20 @@ public class StaticClassMemberInitializationAnalyzerTests
         await Verifier.VerifyAnalyzerAsync(code);
     }
 
+    [Fact]
+    public async Task StaticField_WithRegEx_NoDiagnostic()
+    {
+        const string code = """
+                            using System.Text.RegularExpressions;
+
+                            public class MyClass
+                            {
+                                private static readonly Regex PlaceholderRegex = new(@"\{.*?\}", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+                            }
+                            """;
+        await Verifier.VerifyAnalyzerAsync(code, ReferenceAssemblyCatalog.Latest);
+    }
+
     // Test 1: Static field initialized with a simple constant (No Diagnostic)
     [Fact]
     public async Task StaticField_WithSimpleConstantInitializer_NoDiagnostic()

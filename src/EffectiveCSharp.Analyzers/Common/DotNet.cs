@@ -6,14 +6,12 @@ internal static class DotNet
     /// <remarks>When using this with <see cref="CompilationExtensions.GetVersions"/>.</remarks>
     internal static class Versions
     {
-#pragma warning disable ECS1300
         internal static readonly Version DotNet6 = new(6, 0, 0, 0);
         internal static readonly Version DotNet5 = new(5, 0, 0, 0);
         internal static readonly Version DotNet46 = new(4, 6);
         internal static readonly Version DotNet47 = new(4, 7);
         internal static readonly Version DotNet48 = new(4, 8);
         internal static readonly Version DotNet40 = new(4, 0, 0, 0);
-#pragma warning restore ECS1300
     }
 
     /*
