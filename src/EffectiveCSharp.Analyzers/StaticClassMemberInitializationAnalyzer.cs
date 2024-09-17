@@ -167,8 +167,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             SemanticModel semanticModel = context.SemanticModel;
 
             // Determine if the initializer is complex or may throw exceptions
-            // TODO: Pass in cancellation token
-            if (!IsComplexInitializer(initializer, semanticModel))
+            if (!IsComplexInitializer(initializer, semanticModel, context.CancellationToken))
             {
                 continue;
             }
@@ -179,9 +178,9 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static bool IsComplexInitializer(ExpressionSyntax initializer, SemanticModel semanticModel)
+    private static bool IsComplexInitializer(ExpressionSyntax initializer, SemanticModel semanticModel, CancellationToken cancellationToken)
     {
-        (SymbolInfo symbolInfo, bool safe) = IsSafeSymbol(initializer, semanticModel);
+        (SymbolInfo symbolInfo, bool safe) = IsSafeSymbol(initializer, semanticModel, cancellationToken);
 
         if (safe)
         {
@@ -198,7 +197,8 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
             case BinaryExpressionSyntax binaryExpr:
                 // Check if both sides are literals or simple identifiers
-                return !(IsSimpleExpression(binaryExpr.Left, semanticModel, symbolInfo) && IsSimpleExpression(binaryExpr.Right, semanticModel, symbolInfo));
+                return !(IsSimpleExpression(binaryExpr.Left, semanticModel, symbolInfo, cancellationToken)
+                         && IsSimpleExpression(binaryExpr.Right, semanticModel, symbolInfo, cancellationToken));
 
             case InvocationExpressionSyntax invocationExpr:
                 if (IsNameOfExpression(invocationExpr))
@@ -207,29 +207,29 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 }
 
                 // Check if the method call is safe
-                return !IsSafeMethodCall(invocationExpr, semanticModel, symbolInfo);
+                return !IsSafeMethodCall(invocationExpr, semanticModel, symbolInfo, cancellationToken);
 
             case BaseObjectCreationExpressionSyntax objectCreationExpr:
                 // Handle object creations and collection initializations
-                return !IsSimpleCollectionInitialization(objectCreationExpr, semanticModel, symbolInfo);
+                return !IsSimpleCollectionInitialization(objectCreationExpr, semanticModel, symbolInfo, cancellationToken);
 
             case ArrayCreationExpressionSyntax arrayCreationExpr:
                 // Handle simple array creation
-                return !IsSimpleArrayCreation(arrayCreationExpr, semanticModel, symbolInfo);
+                return !IsSimpleArrayCreation(arrayCreationExpr, semanticModel, symbolInfo, cancellationToken);
 
             case ImplicitArrayCreationExpressionSyntax implicitArrayCreationExpr:
                 // Handle simple implicit array creation
-                return !IsSimpleImplicitArrayCreation(implicitArrayCreationExpr, semanticModel, symbolInfo);
+                return !IsSimpleImplicitArrayCreation(implicitArrayCreationExpr, semanticModel, symbolInfo, cancellationToken);
 
             case ConditionalExpressionSyntax conditionalExpr:
                 // Check if condition, whenTrue, and whenFalse are simple
-                return !(IsSimpleExpression(conditionalExpr.Condition, semanticModel, symbolInfo)
-                         && IsSimpleExpression(conditionalExpr.WhenTrue, semanticModel, symbolInfo)
-                         && IsSimpleExpression(conditionalExpr.WhenFalse, semanticModel, symbolInfo));
+                return !(IsSimpleExpression(conditionalExpr.Condition, semanticModel, symbolInfo, cancellationToken)
+                         && IsSimpleExpression(conditionalExpr.WhenTrue, semanticModel, symbolInfo, cancellationToken)
+                         && IsSimpleExpression(conditionalExpr.WhenFalse, semanticModel, symbolInfo, cancellationToken));
 
             default:
                 // Check if the expression is a compile-time constant
-                bool isConstant = semanticModel.IsCompileTimeConstant(initializer);
+                bool isConstant = semanticModel.IsCompileTimeConstant(initializer, cancellationToken);
 
                 if (isConstant)
                 {
@@ -266,7 +266,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static bool IsSafeMemberAccess(MemberAccessExpressionSyntax memberAccessExpr, SymbolInfo symbolInfo)
+    private static bool IsSafeMemberAccess(SymbolInfo symbolInfo)
     {
         // Get the symbol info for the member access expression
         ISymbol? symbol = symbolInfo.Symbol;
@@ -279,7 +279,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         };
     }
 
-    private static bool IsSafeMethodCall(InvocationExpressionSyntax invocationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo)
+    private static bool IsSafeMethodCall(InvocationExpressionSyntax invocationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo, CancellationToken cancellationToken)
     {
         // Get the symbol info for the invocation expression
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
@@ -297,7 +297,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         for (int i = 0; i < invocationExpr.ArgumentList.Arguments.Count; i++)
         {
             ArgumentSyntax argument = invocationExpr.ArgumentList.Arguments[i];
-            if (!semanticModel.IsCompileTimeConstant(argument.Expression))
+            if (!semanticModel.IsCompileTimeConstant(argument.Expression, cancellationToken))
             {
                 return false; // Argument is not a compile-time constant
             }
@@ -308,12 +308,6 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
     private static bool IsSafeProperty(IPropertySymbol propertySymbol)
     {
-        string propertyFullName = propertySymbol.ContainingType.ToDisplayString() + "." + propertySymbol.Name;
-        if (SafeItems.Contains(propertyFullName))
-        {
-            return true;
-        }
-
         // Allow static properties from the System namespace
         if (propertySymbol.IsStatic)
         {
@@ -338,7 +332,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static bool IsSimpleArrayCreation(ArrayCreationExpressionSyntax arrayCreationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo)
+    private static bool IsSimpleArrayCreation(ArrayCreationExpressionSyntax arrayCreationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo, CancellationToken cancellationToken)
     {
         // Check if the type is an array type
         if (arrayCreationExpr is not { Type: ArrayTypeSyntax, Initializer: not null })
@@ -350,7 +344,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         for (int i = 0; i < arrayCreationExpr.Initializer.Expressions.Count; i++)
         {
             ExpressionSyntax expression = arrayCreationExpr.Initializer.Expressions[i];
-            if (!IsSimpleExpression(expression, semanticModel, symbolInfo))
+            if (!IsSimpleExpression(expression, semanticModel, symbolInfo, cancellationToken))
             {
                 return false;
             }
@@ -359,7 +353,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         return true;
     }
 
-    private static bool IsSimpleCollectionInitialization(BaseObjectCreationExpressionSyntax objectCreationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo)
+    private static bool IsSimpleCollectionInitialization(BaseObjectCreationExpressionSyntax objectCreationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo, CancellationToken cancellationToken)
     {
         // Check if all constructor arguments are simple expressions
         if (objectCreationExpr.ArgumentList != null)
@@ -367,7 +361,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             for (int i = 0; i < objectCreationExpr.ArgumentList.Arguments.Count; i++)
             {
                 ArgumentSyntax argument = objectCreationExpr.ArgumentList.Arguments[i];
-                if (!IsSimpleExpression(argument.Expression, semanticModel, symbolInfo))
+                if (!IsSimpleExpression(argument.Expression, semanticModel, symbolInfo, cancellationToken))
                 {
                     return false;
                 }
@@ -383,7 +377,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         for (int i = 0; i < objectCreationExpr.Initializer.Expressions.Count; i++)
         {
             ExpressionSyntax expression = objectCreationExpr.Initializer.Expressions[i];
-            if (!IsSimpleCollectionInitializerExpression(expression, semanticModel, symbolInfo))
+            if (!IsSimpleCollectionInitializerExpression(expression, semanticModel, symbolInfo, cancellationToken))
             {
                 return false;
             }
@@ -392,13 +386,14 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         return true;
     }
 
-    private static bool IsSimpleCollectionInitializerExpression(ExpressionSyntax expression, SemanticModel semanticModel, SymbolInfo symbolInfo)
+    private static bool IsSimpleCollectionInitializerExpression(ExpressionSyntax expression, SemanticModel semanticModel, SymbolInfo symbolInfo, CancellationToken cancellationToken)
     {
         switch (expression)
         {
             case AssignmentExpressionSyntax assignmentExpr:
                 // For dictionary initializations
-                return IsSimpleExpression(assignmentExpr.Left, semanticModel, symbolInfo) && IsSimpleExpression(assignmentExpr.Right, semanticModel, symbolInfo);
+                return IsSimpleExpression(assignmentExpr.Left, semanticModel, symbolInfo, cancellationToken)
+                       && IsSimpleExpression(assignmentExpr.Right, semanticModel, symbolInfo, cancellationToken);
 
             case InvocationExpressionSyntax:
                 // Method calls are complex
@@ -414,7 +409,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 for (int i = 0; i < initializerExpr.Expressions.Count; i++)
                 {
                     ExpressionSyntax expr = initializerExpr.Expressions[i];
-                    if (!IsSimpleExpression(expr, semanticModel, symbolInfo))
+                    if (!IsSimpleExpression(expr, semanticModel, symbolInfo, cancellationToken))
                     {
                         return false;
                     }
@@ -423,11 +418,11 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 return true;
 
             default:
-                return IsSimpleExpression(expression, semanticModel, symbolInfo);
+                return IsSimpleExpression(expression, semanticModel, symbolInfo, cancellationToken);
         }
     }
 
-    private static bool IsSimpleExpression(ExpressionSyntax expression, SemanticModel semanticModel, SymbolInfo symbolInfo)
+    private static bool IsSimpleExpression(ExpressionSyntax expression, SemanticModel semanticModel, SymbolInfo symbolInfo, CancellationToken cancellationToken)
     {
         switch (expression)
         {
@@ -436,9 +431,9 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             case ElementAccessExpressionSyntax:
                 return true;
 
-            case MemberAccessExpressionSyntax memberAccessExpr:
+            case MemberAccessExpressionSyntax:
                 // Check if the member access is safe
-                return IsSafeMemberAccess(memberAccessExpr, symbolInfo);
+                return IsSafeMemberAccess(symbolInfo);
 
             case InvocationExpressionSyntax invocationExpr:
                 // Check if it's a nameof expression
@@ -448,7 +443,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 }
 
                 // Check if the method call is safe
-                return IsSafeMethodCall(invocationExpr, semanticModel, symbolInfo);
+                return IsSafeMethodCall(invocationExpr, semanticModel, symbolInfo, cancellationToken);
 
             case ObjectCreationExpressionSyntax objectCreationExpr:
                 // Handle object creations with simple constructor arguments
@@ -460,7 +455,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 for (int i = 0; i < objectCreationExpr.ArgumentList.Arguments.Count; i++)
                 {
                     ArgumentSyntax argument = objectCreationExpr.ArgumentList.Arguments[i];
-                    if (!IsSimpleExpression(argument.Expression, semanticModel, symbolInfo))
+                    if (!IsSimpleExpression(argument.Expression, semanticModel, symbolInfo, cancellationToken))
                     {
                         return false;
                     }
@@ -470,17 +465,17 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
             case ConditionalExpressionSyntax conditionalExpr:
                 // Recursively check conditional expressions
-                return IsSimpleExpression(conditionalExpr.Condition, semanticModel, symbolInfo)
-                       && IsSimpleExpression(conditionalExpr.WhenTrue, semanticModel, symbolInfo)
-                       && IsSimpleExpression(conditionalExpr.WhenFalse, semanticModel, symbolInfo);
+                return IsSimpleExpression(conditionalExpr.Condition, semanticModel, symbolInfo, cancellationToken)
+                       && IsSimpleExpression(conditionalExpr.WhenTrue, semanticModel, symbolInfo, cancellationToken)
+                       && IsSimpleExpression(conditionalExpr.WhenFalse, semanticModel, symbolInfo, cancellationToken);
 
             default:
                 // Check if the expression is a compile-time constant
-                return semanticModel.IsCompileTimeConstant(expression);
+                return semanticModel.IsCompileTimeConstant(expression, cancellationToken);
         }
     }
 
-    private static (SymbolInfo Symbol, bool Safe) IsSafeSymbol(ExpressionSyntax expression, SemanticModel semanticModel, CancellationToken cancellationToken = default)
+    private static (SymbolInfo Symbol, bool Safe) IsSafeSymbol(ExpressionSyntax expression, SemanticModel semanticModel, CancellationToken cancellationToken)
     {
         // Get the symbol associated with the expression
         SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(expression, cancellationToken);
@@ -510,12 +505,12 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         return (symbolInfo, SafeItems.Contains(symbolFullName));
     }
 
-    private static bool IsSimpleImplicitArrayCreation(ImplicitArrayCreationExpressionSyntax implicitArrayCreationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo)
+    private static bool IsSimpleImplicitArrayCreation(ImplicitArrayCreationExpressionSyntax implicitArrayCreationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo, CancellationToken cancellationToken)
     {
         for (int i = 0; i < implicitArrayCreationExpr.Initializer.Expressions.Count; i++)
         {
             ExpressionSyntax expression = implicitArrayCreationExpr.Initializer.Expressions[i];
-            if (!IsSimpleExpression(expression, semanticModel, symbolInfo))
+            if (!IsSimpleExpression(expression, semanticModel, symbolInfo, cancellationToken))
             {
                 return false;
             }
