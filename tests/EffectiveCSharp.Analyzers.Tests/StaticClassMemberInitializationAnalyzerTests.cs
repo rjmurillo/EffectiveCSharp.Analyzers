@@ -108,7 +108,6 @@ public class StaticClassMemberInitializationAnalyzerTests
                             }
                             """;
 
-
         await Verifier.VerifyAnalyzerAsync(code);
     }
 
@@ -226,8 +225,6 @@ public class StaticClassMemberInitializationAnalyzerTests
 
         await Verifier.VerifyAnalyzerAsync(code);
     }
-
-
 
     // Test 11: Static field initialized with lambda expression (Diagnostic)
     [Fact]

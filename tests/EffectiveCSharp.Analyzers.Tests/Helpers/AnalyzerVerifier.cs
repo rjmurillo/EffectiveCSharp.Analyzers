@@ -3,7 +3,7 @@
 internal static class AnalyzerVerifier<TAnalyzer>
     where TAnalyzer : DiagnosticAnalyzer, new()
 {
-    public static async Task VerifyAnalyzerAsync(string source) => await VerifyAnalyzerAsync(source, ReferenceAssemblyCatalog.Latest);
+    public static async Task VerifyAnalyzerAsync(string source) => await VerifyAnalyzerAsync(source, ReferenceAssemblyCatalog.Latest).ConfigureAwait(false);
 
     public static async Task VerifyAnalyzerAsync(string source, string referenceAssemblyGroup)
     {

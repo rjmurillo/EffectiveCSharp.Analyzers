@@ -8,7 +8,10 @@ internal static class SemanticModelExtensions
     /// <param name="semanticModel">The semantic model.</param>
     /// <param name="left">The left.</param>
     /// <param name="right">The right.</param>
-    /// <returns><c>true</c> if <paramref name="left"/> is the same <see cref="OperationKind"/>, has a constant value, and the values are the same; otherwise, <c>false</c>.</returns>
+    /// <returns>
+    /// <see langword="true" /> if <paramref name="left"/> is the same <see cref="OperationKind"/>,
+    /// has a constant value, and the values are the same; otherwise, <see langword="false" />.
+    /// </returns>
     internal static bool AreExpressionsEquivalent(this SemanticModel semanticModel, ExpressionSyntax left, ExpressionSyntax right)
     {
         IOperation? leftOperation = semanticModel.GetOperation(left);
@@ -163,6 +166,24 @@ internal static class SemanticModelExtensions
         return semanticModel.GetOperation(right) is IInvocationOperation;
     }
 
+    /// <summary>
+    /// Determines if the <paramref name="node" /> provided has a constant value.
+    /// </summary>
+    /// <param name="semanticModel">The semantic model.</param>
+    /// <param name="node">The node.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// Gets the constant value from the <paramref name="semanticModel" /> and <paramref name="node" />.
+    /// This produces an <see cref="Optional{T}" /> value with <see cref="Optional{T}.HasValue" /> set to
+    /// true and with <see cref="Optional{T}.Value" /> set to the constant. If the optional has a value,
+    /// <see langword="true" /> is returned; otherwise <see langword="false" />.
+    /// </returns>
+    internal static bool IsCompileTimeConstant(this SemanticModel semanticModel, SyntaxNode node, CancellationToken cancellationToken = default)
+    {
+        Optional<object?> constantValue = semanticModel.GetConstantValue(node, cancellationToken);
+        return constantValue.HasValue;
+    }
+
     private static bool IsDefaultValue(object? value, ITypeSymbol fieldType)
     {
         if (value == null)
@@ -211,8 +232,8 @@ internal static class SemanticModelExtensions
     /// <param name="memberReferenceOperation">The member reference operation to evaluate.</param>
     /// <param name="right">The <see cref="ExpressionSyntax"/> to get the containing type.</param>
     /// <returns>
-    /// <c>true</c> if the member referenced by <paramref name="memberReferenceOperation"/> is a non-static member
-    /// of the containing type; otherwise, <c>false</c>.
+    /// <see langword="true" /> if the member referenced by <paramref name="memberReferenceOperation"/> is a non-static member
+    /// of the containing type; otherwise, <see langword="false" />.
     /// </returns>
     /// <remarks>
     /// This method checks if the member being referenced belongs to the same type that contains the operation
@@ -233,11 +254,5 @@ internal static class SemanticModelExtensions
         }
 
         return false;
-    }
-
-    internal static bool IsCompileTimeConstant(this SemanticModel semanticModel, ExpressionSyntax expression)
-    {
-        Optional<object?> constantValue = semanticModel.GetConstantValue(expression);
-        return constantValue.HasValue;
     }
 }

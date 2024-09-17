@@ -1,13 +1,15 @@
 ﻿namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
-/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #13 - Use Proper Initialization for Static Class Members
+/// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #13 - Use Proper Initialization for Static Class Members.
 /// </summary>
 /// <seealso cref="Microsoft.CodeAnalysis.Diagnostics.DiagnosticAnalyzer" />
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 {
-    private static readonly string DiagnosticId = DiagnosticIds.StaticClassMemberInitialization;
+#pragma warning disable ECS1200
+    private const string DiagnosticId = DiagnosticIds.StaticClassMemberInitialization;
+#pragma warning restore ECS1200
     private static readonly LocalizableString Description = "Static fields requiring complex or potentially exception-throwing initialization should be initialized within a static constructor or using Lazy<T>.";
     private static readonly LocalizableString MessageFormat = "Static field '{0}' should be initialized in a static constructor or using Lazy<T>";
     private static readonly LocalizableString Title = "Use proper initialization for static class members";
@@ -17,7 +19,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         Title,
         MessageFormat,
         Categories.Initialization,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: Description,
         helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticId}.md");
@@ -123,7 +125,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
     private static List<string> GetConfiguredSafeMethods(AnalyzerOptions options)
     {
-        List<string> safeMethods = new();
+        List<string> safeMethods = [];
         AnalyzerConfigOptions configOptions = options.AnalyzerConfigOptionsProvider.GlobalOptions;
 
         if (!configOptions.TryGetValue($"dotnet_diagnostic.{DiagnosticId}.safe_methods", out string? methods))
@@ -141,6 +143,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
         return safeMethods;
     }
+
     private static bool IsComplexInitializer(ExpressionSyntax initializer, SemanticModel semanticModel)
     {
         switch (initializer)
@@ -195,6 +198,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 return true;
         }
     }
+
     private static bool IsNameOfExpression(InvocationExpressionSyntax invocationExpr)
     {
         if (invocationExpr.Expression is IdentifierNameSyntax identifierName)
@@ -230,7 +234,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         {
             IPropertySymbol propertySymbol => IsSafeProperty(propertySymbol),
             IFieldSymbol fieldSymbol => IsSafeField(fieldSymbol),
-            _ => false
+            _ => false,
         };
     }
 
@@ -285,10 +289,10 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         else
         {
             // For instance properties, check if the containing type is considered safe
-            var containingTypeName = propertySymbol.ContainingType.ToDisplayString();
+            string containingTypeName = propertySymbol.ContainingType.ToDisplayString() + "." + propertySymbol.Name;
 
             // For example, DateTime.Now.Hour
-            if (containingTypeName == "System.DateTime")
+            if (string.Equals(containingTypeName, "System.DateTime", StringComparison.Ordinal))
             {
                 return true;
             }
