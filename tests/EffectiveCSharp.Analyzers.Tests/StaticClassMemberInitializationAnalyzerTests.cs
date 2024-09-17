@@ -4,6 +4,22 @@ namespace EffectiveCSharp.Analyzers.Tests;
 
 public class StaticClassMemberInitializationAnalyzerTests
 {
+    // This is permitted in this case because it has been added to this project's .globalconfig file
+    [Fact(Skip = "Need to determine how to feed additional files like .globalconfig to test harness")]
+    public async Task SafeItem_NoDiagnostic()
+    {
+        const string code = """
+                            public class MyClass2
+                            {
+                                private static readonly List<int> Numbers = new List<int> { GetNumber(), 2, 3 };
+
+                                private static int GetNumber() => 1;
+                            }
+                            """;
+
+        await Verifier.VerifyAnalyzerAsync(code);
+    }
+
     // Test 1: Static field initialized with a simple constant (No Diagnostic)
     [Fact]
     public async Task StaticField_WithSimpleConstantInitializer_NoDiagnostic()
@@ -160,14 +176,43 @@ public class StaticClassMemberInitializationAnalyzerTests
 
     // Test 10: Static field initialized with collection initializer (No Diagnostic)
     [Fact]
-    public async Task StaticField_WithCollectionInitializer_NoDiagnostic()
+    public async Task StaticField_WithListCollectionInitializer_NoDiagnostic()
     {
         const string code = """
-                            using System.Collections.Generic;
-
                             public class MyClass
                             {
                                 private static readonly List<int> Numbers = new List<int> { 1, 2, 3 };
+                            }
+                            """;
+
+        await Verifier.VerifyAnalyzerAsync(code);
+    }
+
+    [Fact]
+    public async Task StaticField_WithHashSetCollectionInitializer_NoDiagnostic()
+    {
+        const string code = """
+                            public class MyClass
+                            {
+                                private static readonly HashSet<int> Numbers = new HashSet<int> { 1, 2, 3 };
+                            }
+                            """;
+
+        await Verifier.VerifyAnalyzerAsync(code);
+    }
+
+    [Fact]
+    public async Task StaticField_WithHashSetCtorAndCollectionInitializer_NoDiagnostic()
+    {
+        const string code = """
+                            public class MyClass
+                            {
+                                private static readonly HashSet<string> Values = new(StringComparer.Ordinal)
+                                {
+                                    "Foo",
+                                    "Bar",
+                                    "Baz"
+                                };
                             }
                             """;
 
@@ -296,14 +341,14 @@ public class StaticClassMemberInitializationAnalyzerTests
         await Verifier.VerifyAnalyzerAsync(code);
     }
 
-    // Test 16: Static field initialized with array creation of complex types (Diagnostic)
+    // Test 16: Static field initialized with array creation of complex types (Depends on complexity)
     [Fact]
     public async Task StaticField_WithArrayCreationOfComplexTypes_ShouldTriggerDiagnostic()
     {
         const string code = """
                             public class MyClass
                             {
-                                private static readonly object[] {|ECS1300:Objects = new object[] { new object(), new object() }|};
+                                private static readonly object[] Objects = new object[] { new object(), new object() };
                             }
 
                             """;

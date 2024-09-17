@@ -24,9 +24,9 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         description: Description,
         helpLinkUri: $"https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/{ThisAssembly.GitCommitId}/docs/rules/{DiagnosticId}.md");
 
-    private static readonly HashSet<string> SafeMethods = new(StringComparer.Ordinal)
+    private static readonly HashSet<string> SafeItems = new(StringComparer.Ordinal)
     {
-        "System.DateTime.Now",
+        // Math
         "System.Math.Abs",
         "System.Math.Max",
         "System.Math.Min",
@@ -41,19 +41,74 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         "System.Math.Sin",
         "System.Math.Cos",
         "System.Math.Tan",
+        "System.Math.PI",
+        "System.Math.E",
+
+        // String
         "System.String.IsNullOrEmpty",
         "System.String.IsNullOrWhiteSpace",
+
+        // Enum
         "System.Enum.GetValues",
-        "System.BitConverter.ToInt32",
-        "System.BitConverter.GetBytes",
-        "System.TimeSpan.Zero",
-        "System.TimeSpan.MaxValue",
-        "System.TimeSpan.MinValue",
-        "System.Guid.Empty",
+
+        // StringComparer static properties
+        "System.StringComparer.Ordinal",
+        "System.StringComparer.OrdinalIgnoreCase",
+        "System.StringComparer.InvariantCulture",
+        "System.StringComparer.InvariantCultureIgnoreCase",
+        "System.StringComparer.CurrentCulture",
+        "System.StringComparer.CurrentCultureIgnoreCase",
+
+        // CultureInfo static properties
+        "System.Globalization.CultureInfo.InvariantCulture",
+        "System.Globalization.CultureInfo.CurrentCulture",
+        "System.Globalization.CultureInfo.CurrentUICulture",
+
+        // Encoding static properties
+        "System.Text.Encoding.Unicode",
+        "System.Text.Encoding.BigEndianUnicode",
+        "System.Text.Encoding.UTF7",
         "System.Text.Encoding.UTF8",
         "System.Text.Encoding.UTF16",
         "System.Text.Encoding.UTF32",
         "System.Text.Encoding.ASCII",
+
+        // Guid static fields
+        "System.Guid.Empty",
+
+        // Date and Time
+        "System.DateTime.Now",
+
+        // TimeSpan static fields
+        "System.TimeSpan.Zero",
+        "System.TimeSpan.MaxValue",
+        "System.TimeSpan.MinValue",
+
+        // DateTime static fields and properties
+        "System.DateTime.MinValue",
+        "System.DateTime.MaxValue",
+        "System.DateTime.UtcNow", // Use caution if you consider this safe
+
+        // Environment static properties (use with caution)
+        "System.Environment.NewLine",
+        "System.Environment.MachineName",
+        "System.Environment.Is64BitOperatingSystem",
+
+        // Path static fields (use with caution)
+        "System.IO.Path.DirectorySeparatorChar",
+        "System.IO.Path.AltDirectorySeparatorChar",
+        "System.IO.Path.PathSeparator",
+        "System.IO.Path.VolumeSeparatorChar",
+
+        // Threading static fields
+        "System.Threading.Timeout.InfiniteTimeSpan",
+        "System.Threading.Timeout.Infinite",
+
+        // String constants
+        "System.String.Empty",
+
+        // Version static property
+        "System.Environment.Version",
     };
 
     /// <inheritdoc />
@@ -63,15 +118,15 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
     public override void Initialize(AnalysisContext context)
     {
         // Ensure thread-safety and performance
-        context.EnableConcurrentExecution();
+        //context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 
         // Read configuration options
         context.RegisterCompilationStartAction(
             compilationContext =>
             {
-                IEnumerable<string> additionalSafeMethods = GetConfiguredSafeMethods(compilationContext.Options);
-                SafeMethods.UnionWith(additionalSafeMethods);
+                IEnumerable<string> additionalSafeMethods = AnalyzerConfigurationHelper.GetConfiguredSafeItems(compilationContext.Options);
+                SafeItems.UnionWith(additionalSafeMethods);
 
                 // Register action to analyze field declarations
                 compilationContext.RegisterSyntaxNodeAction(AnalyzeFieldDeclaration, SyntaxKind.FieldDeclaration);
@@ -112,6 +167,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             SemanticModel semanticModel = context.SemanticModel;
 
             // Determine if the initializer is complex or may throw exceptions
+            // TODO: Pass in cancellation token
             if (!IsComplexInitializer(initializer, semanticModel))
             {
                 continue;
@@ -123,29 +179,13 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static List<string> GetConfiguredSafeMethods(AnalyzerOptions options)
-    {
-        List<string> safeMethods = [];
-        AnalyzerConfigOptions configOptions = options.AnalyzerConfigOptionsProvider.GlobalOptions;
-
-        if (!configOptions.TryGetValue($"dotnet_diagnostic.{DiagnosticId}.safe_methods", out string? methods))
-        {
-            return safeMethods;
-        }
-
-        string[] methodNames = methods.Split([','], StringSplitOptions.RemoveEmptyEntries);
-
-        for (int i = 0; i < methodNames.Length; i++)
-        {
-            string methodName = methodNames[i];
-            safeMethods.Add(methodName.Trim());
-        }
-
-        return safeMethods;
-    }
-
     private static bool IsComplexInitializer(ExpressionSyntax initializer, SemanticModel semanticModel)
     {
+        if (IsSafeSymbol(initializer, semanticModel))
+        {
+            return false;
+        }
+
         switch (initializer)
         {
             // Simple initializers are literals or simple binary expressions
@@ -167,6 +207,10 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 // Check if the method call is safe
                 return !IsSafeMethodCall(invocationExpr, semanticModel);
 
+            case BaseObjectCreationExpressionSyntax objectCreationExpr:
+                // Handle object creations and collection initializations
+                return !IsSimpleCollectionInitialization(objectCreationExpr, semanticModel);
+
             case ArrayCreationExpressionSyntax arrayCreationExpr:
                 // Handle simple array creation
                 return !IsSimpleArrayCreation(arrayCreationExpr, semanticModel);
@@ -174,10 +218,6 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             case ImplicitArrayCreationExpressionSyntax implicitArrayCreationExpr:
                 // Handle simple implicit array creation
                 return !IsSimpleImplicitArrayCreation(implicitArrayCreationExpr, semanticModel);
-
-            case ObjectCreationExpressionSyntax objectCreationExpr:
-                // Handle collection initializations
-                return !IsSimpleCollectionInitialization(objectCreationExpr, semanticModel);
 
             case ConditionalExpressionSyntax conditionalExpr:
                 // Check if condition, whenTrue, and whenFalse are simple
@@ -257,7 +297,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         // Get the fully qualified method name and check against the allow list
         string methodFullName = methodSymbol.ContainingType.ToDisplayString() + "." + methodSymbol.Name;
 
-        if (SafeMethods.Contains(methodFullName))
+        if (SafeItems.Contains(methodFullName))
         {
             return true;
         }
@@ -277,6 +317,12 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
     private static bool IsSafeProperty(IPropertySymbol propertySymbol)
     {
+        string propertyFullName = propertySymbol.ContainingType.ToDisplayString() + "." + propertySymbol.Name;
+        if (SafeItems.Contains(propertyFullName))
+        {
+            return true;
+        }
+
         // Allow static properties from the System namespace
         if (propertySymbol.IsStatic)
         {
@@ -322,8 +368,21 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         return true;
     }
 
-    private static bool IsSimpleCollectionInitialization(ObjectCreationExpressionSyntax objectCreationExpr, SemanticModel semanticModel)
+    private static bool IsSimpleCollectionInitialization(BaseObjectCreationExpressionSyntax objectCreationExpr, SemanticModel semanticModel)
     {
+        // Check if all constructor arguments are simple expressions
+        if (objectCreationExpr.ArgumentList != null)
+        {
+            for (int i = 0; i < objectCreationExpr.ArgumentList.Arguments.Count; i++)
+            {
+                ArgumentSyntax argument = objectCreationExpr.ArgumentList.Arguments[i];
+                if (!IsSimpleExpression(argument.Expression, semanticModel))
+                {
+                    return false;
+                }
+            }
+        }
+
         // Check if the type is a collection type (e.g., List<T>, Dictionary<TKey, TValue>)
         if (objectCreationExpr.Initializer == null)
         {
@@ -332,7 +391,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
         for (int i = 0; i < objectCreationExpr.Initializer.Expressions.Count; i++)
         {
-            ExpressionSyntax? expression = objectCreationExpr.Initializer.Expressions[i];
+            ExpressionSyntax expression = objectCreationExpr.Initializer.Expressions[i];
             if (!IsSimpleCollectionInitializerExpression(expression, semanticModel))
             {
                 return false;
@@ -356,6 +415,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
             case LiteralExpressionSyntax:
             case IdentifierNameSyntax:
+            case MemberAccessExpressionSyntax:
                 return true;
 
             case InitializerExpressionSyntax initializerExpr:
@@ -385,6 +445,10 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             case ElementAccessExpressionSyntax:
                 return true;
 
+            case MemberAccessExpressionSyntax memberAccessExpr:
+                // Check if the member access is safe
+                return IsSafeMemberAccess(memberAccessExpr, semanticModel);
+
             case InvocationExpressionSyntax invocationExpr:
                 // Check if it's a nameof expression
                 if (IsNameOfExpression(invocationExpr))
@@ -395,20 +459,64 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 // Check if the method call is safe
                 return IsSafeMethodCall(invocationExpr, semanticModel);
 
+            case ObjectCreationExpressionSyntax objectCreationExpr:
+                // Handle object creations with simple constructor arguments
+                if (objectCreationExpr.ArgumentList == null)
+                {
+                    return true;
+                }
+
+                for (int i = 0; i < objectCreationExpr.ArgumentList.Arguments.Count; i++)
+                {
+                    ArgumentSyntax argument = objectCreationExpr.ArgumentList.Arguments[i];
+                    if (!IsSimpleExpression(argument.Expression, semanticModel))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
             case ConditionalExpressionSyntax conditionalExpr:
                 // Recursively check conditional expressions
                 return IsSimpleExpression(conditionalExpr.Condition, semanticModel)
                        && IsSimpleExpression(conditionalExpr.WhenTrue, semanticModel)
                        && IsSimpleExpression(conditionalExpr.WhenFalse, semanticModel);
 
-            case MemberAccessExpressionSyntax memberAccessExpr:
-                // Check if the member access is safe
-                return IsSafeMemberAccess(memberAccessExpr, semanticModel);
-
             default:
                 // Check if the expression is a compile-time constant
                 return semanticModel.IsCompileTimeConstant(expression);
         }
+    }
+
+    private static bool IsSafeSymbol(ExpressionSyntax expression, SemanticModel semanticModel, CancellationToken cancellationToken = default)
+    {
+        // Get the symbol associated with the expression
+        SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(expression, cancellationToken);
+        ISymbol? symbol = symbolInfo.Symbol;
+
+        if (symbol == null)
+        {
+            return false;
+        }
+
+        string typeFullname = symbol.ContainingType.ToDisplayString();
+        if (SafeItems.Contains(typeFullname))
+        {
+            return true;
+        }
+
+        string methodFullName = typeFullname + "." + symbol.Name;
+        if (SafeItems.Contains(methodFullName))
+        {
+            return true;
+        }
+
+        // Get the fully qualified name of the symbol
+        string symbolFullName = symbol.ToDisplayString();
+
+        // Check if the symbol is in the SafeItems list
+        return SafeItems.Contains(symbolFullName);
     }
 
     private static bool IsSimpleImplicitArrayCreation(ImplicitArrayCreationExpressionSyntax implicitArrayCreationExpr, SemanticModel semanticModel)
