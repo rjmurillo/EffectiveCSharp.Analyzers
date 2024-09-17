@@ -7,9 +7,9 @@
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 {
-#pragma warning disable ECS1200
+#pragma warning disable ECS0200
     private const string DiagnosticId = DiagnosticIds.StaticClassMemberInitialization;
-#pragma warning restore ECS1200
+#pragma warning restore ECS0200
     private static readonly LocalizableString Description = "Static fields requiring complex or potentially exception-throwing initialization should be initialized within a static constructor or using Lazy<T>.";
     private static readonly LocalizableString MessageFormat = "Static field '{0}' should be initialized in a static constructor or using Lazy<T>";
     private static readonly LocalizableString Title = "Use proper initialization for static class members";
