@@ -275,12 +275,26 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         // Get the symbol info for the member access expression
         ISymbol? symbol = symbolInfo.Symbol;
 
-        return symbol switch
+        switch (symbol)
         {
-            IPropertySymbol propertySymbol => IsSafeProperty(propertySymbol),
-            IFieldSymbol fieldSymbol => IsSafeField(fieldSymbol),
-            _ => false,
-        };
+            case IPropertySymbol propertySymbol:
+                return IsSafeProperty(propertySymbol);
+
+            case IFieldSymbol fieldSymbol:
+                return IsSafeField(fieldSymbol);
+
+            case IMethodSymbol { MethodKind: MethodKind.PropertyGet } methodSymbol:
+                // Handle property getter methods
+                if (methodSymbol.AssociatedSymbol is IPropertySymbol associatedProperty)
+                {
+                    return IsSafeProperty(associatedProperty);
+                }
+
+                return false;
+
+            default:
+                return false;
+        }
     }
 
     private static bool IsSafeMethodCall(InvocationExpressionSyntax invocationExpr, SemanticModel semanticModel, SymbolInfo symbolInfo, CancellationToken cancellationToken)
@@ -312,6 +326,11 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
     private static bool IsSafeProperty(IPropertySymbol propertySymbol)
     {
+        if (SafeItems.Contains(propertySymbol.ToDisplayString()))
+        {
+            return true;
+        }
+
         // Allow static properties from the System namespace
         if (propertySymbol.IsStatic)
         {
@@ -348,7 +367,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         for (int i = 0; i < arrayCreationExpr.Initializer.Expressions.Count; i++)
         {
             ExpressionSyntax expression = arrayCreationExpr.Initializer.Expressions[i];
-            if (!IsSimpleExpression(expression, semanticModel, symbolInfo, cancellationToken))
+            if (!IsSimpleExpression(expression, semanticModel, semanticModel.GetSymbolInfo(expression, cancellationToken), cancellationToken))
             {
                 return false;
             }
@@ -365,7 +384,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             for (int i = 0; i < objectCreationExpr.ArgumentList.Arguments.Count; i++)
             {
                 ArgumentSyntax argument = objectCreationExpr.ArgumentList.Arguments[i];
-                if (!IsSimpleExpression(argument.Expression, semanticModel, symbolInfo, cancellationToken))
+                if (!IsSimpleExpression(argument.Expression, semanticModel, semanticModel.GetSymbolInfo(argument.Expression, cancellationToken), cancellationToken))
                 {
                     return false;
                 }
@@ -373,17 +392,15 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         }
 
         // Check if the type is a collection type (e.g., List<T>, Dictionary<TKey, TValue>)
-        if (objectCreationExpr.Initializer == null)
+        if (objectCreationExpr.Initializer != null)
         {
-            return false;
-        }
-
-        for (int i = 0; i < objectCreationExpr.Initializer.Expressions.Count; i++)
-        {
-            ExpressionSyntax expression = objectCreationExpr.Initializer.Expressions[i];
-            if (!IsSimpleCollectionInitializerExpression(expression, semanticModel, symbolInfo, cancellationToken))
+            for (int i = 0; i < objectCreationExpr.Initializer.Expressions.Count; i++)
             {
-                return false;
+                ExpressionSyntax expression = objectCreationExpr.Initializer.Expressions[i];
+                if (!IsSimpleCollectionInitializerExpression(expression, semanticModel, semanticModel.GetSymbolInfo(expression, cancellationToken), cancellationToken))
+                {
+                    return false;
+                }
             }
         }
 
@@ -435,13 +452,22 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             case ElementAccessExpressionSyntax:
                 return true;
 
-            case MemberAccessExpressionSyntax:
+            case MemberAccessExpressionSyntax memberAccessExpr:
+
                 // Check if the member access is safe
                 return IsSafeMemberAccess(symbolInfo);
 
             case InvocationExpressionSyntax invocationExpr:
                 // Check if it's a nameof expression
                 if (IsNameOfExpression(invocationExpr))
+                {
+                    return true;
+                }
+
+                // Check if the method call is safe
+                (_, bool isSafe) = IsSafeSymbol(invocationExpr, semanticModel, cancellationToken);
+
+                if (isSafe)
                 {
                     return true;
                 }
@@ -473,6 +499,10 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                        && IsSimpleExpression(conditionalExpr.WhenTrue, semanticModel, symbolInfo, cancellationToken)
                        && IsSimpleExpression(conditionalExpr.WhenFalse, semanticModel, symbolInfo, cancellationToken);
 
+            case BinaryExpressionSyntax binaryExpr:
+                return IsSimpleExpression(binaryExpr.Left, semanticModel, symbolInfo, cancellationToken)
+                       && IsSimpleExpression(binaryExpr.Right, semanticModel, symbolInfo, cancellationToken);
+
             default:
                 // Check if the expression is a compile-time constant
                 return semanticModel.IsCompileTimeConstant(expression, cancellationToken);
@@ -501,18 +531,27 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             }
         }
 
-        // Check if the symbol's containing type is in SafeItems
-        string containingTypeFullName = symbol.ContainingType?.ToDisplayString() ?? string.Empty;
-
-        if (SafeItems.Contains(containingTypeFullName))
-        {
-            return (symbolInfo, true);
-        }
-
         // Check if the full symbol name is in SafeItems
         string symbolFullName = symbol.ToDisplayString();
 
         if (SafeItems.Contains(symbolFullName))
+        {
+            return (symbolInfo, true);
+        }
+
+        // Get the containing type's full name
+        string containingTypeFullName = symbol.ContainingType?.ToDisplayString() ?? string.Empty;
+
+        // Get the member's full name (TypeName.MemberName)
+        string memberFullName = $"{containingTypeFullName}.{symbol.Name}";
+
+        // Check if the member's full name is in SafeItems
+        if (SafeItems.Contains(memberFullName))
+        {
+            return (symbolInfo, true);
+        }
+
+        if (SafeItems.Contains(containingTypeFullName))
         {
             return (symbolInfo, true);
         }
