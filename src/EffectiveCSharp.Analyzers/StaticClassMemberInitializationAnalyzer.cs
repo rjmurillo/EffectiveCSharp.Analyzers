@@ -122,7 +122,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
     public override void Initialize(AnalysisContext context)
     {
         // Ensure thread-safety and performance
-        //context.EnableConcurrentExecution();
+        context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 
         // Read configuration options
