@@ -1,4 +1,6 @@
-﻿namespace EffectiveCSharp.Analyzers;
+﻿using System.Text;
+
+namespace EffectiveCSharp.Analyzers;
 
 /// <summary>
 /// A <see cref="DiagnosticAnalyzer"/> for Effective C# Item #13 - Use Proper Initialization for Static Class Members.
@@ -545,7 +547,11 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static (SymbolInfo Symbol, bool Safe) IsSafeSymbol(ExpressionSyntax expression, ImmutableHashSet<string> safeItems, SemanticModel semanticModel, CancellationToken cancellationToken)
+    private static (SymbolInfo Symbol, bool Safe) IsSafeSymbol(
+    ExpressionSyntax expression,
+    ImmutableHashSet<string> safeItems,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken)
     {
         // Get the symbol associated with the expression
         SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(expression, cancellationToken);
@@ -556,44 +562,85 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             return (symbolInfo, false);
         }
 
-        // Check if the symbol is a type symbol
-        if (symbol is INamedTypeSymbol typeSymbol)
-        {
-            string typeFullName = typeSymbol.ToDisplayString();
+        // Use a local StringBuilder to build symbol names
+        StringBuilder builder = new StringBuilder();
 
-            if (safeItems.Contains(typeFullName))
-            {
-                return (symbolInfo, true);
-            }
-        }
-
-        // Check if the full symbol name is in SafeItems
-        string symbolFullName = symbol.ToDisplayString();
+        // Build the fully qualified name of the symbol
+        BuildFullName(symbol, builder);
+        string symbolFullName = builder.ToString();
 
         if (safeItems.Contains(symbolFullName))
         {
             return (symbolInfo, true);
         }
 
-        // Get the containing type's full name
-        string containingTypeFullName = symbol.ContainingType?.ToDisplayString() ?? string.Empty;
+        // Clear the builder for reuse
+        builder.Clear();
 
-        // Get the member's full name (TypeName.MemberName)
-        string memberFullName = $"{containingTypeFullName}.{symbol.Name}";
-
-        // Check if the member's full name is in SafeItems
-        if (safeItems.Contains(memberFullName))
+        // If the symbol is a type, check if the type name is in SafeItems
+        if (symbol is INamedTypeSymbol typeSymbol)
         {
-            return (symbolInfo, true);
+            BuildFullName(typeSymbol, builder);
+            string typeFullName = builder.ToString();
+
+            if (safeItems.Contains(typeFullName))
+            {
+                return (symbolInfo, true);
+            }
         }
-
-        if (safeItems.Contains(containingTypeFullName))
+        else if (symbol.ContainingType != null)
         {
-            return (symbolInfo, true);
+            // Build the containing type's full name
+            builder.Clear();
+            BuildFullName(symbol.ContainingType, builder);
+            string containingTypeFullName = builder.ToString();
+
+            if (safeItems.Contains(containingTypeFullName))
+            {
+                return (symbolInfo, true);
+            }
+
+            // Append the member name to get the full member name
+            builder.Append('.');
+            builder.Append(symbol.Name);
+            string memberFullName = builder.ToString();
+
+            if (safeItems.Contains(memberFullName))
+            {
+                return (symbolInfo, true);
+            }
         }
 
         return (symbolInfo, false);
     }
+
+    private static void BuildFullName(ISymbol symbol, StringBuilder builder)
+    {
+        if (symbol.ContainingNamespace is { IsGlobalNamespace: false })
+        {
+            BuildNamespaceName(symbol.ContainingNamespace, builder);
+            builder.Append('.');
+        }
+        else if (symbol.ContainingType != null)
+        {
+            BuildFullName(symbol.ContainingType, builder);
+            builder.Append('.');
+        }
+
+        builder.Append(symbol.MetadataName);
+    }
+
+    private static void BuildNamespaceName(INamespaceSymbol namespaceSymbol, StringBuilder builder)
+    {
+        if (namespaceSymbol.ContainingNamespace is { IsGlobalNamespace: false })
+        {
+            BuildNamespaceName(namespaceSymbol.ContainingNamespace, builder);
+            builder.Append('.');
+        }
+
+        builder.Append(namespaceSymbol.Name);
+    }
+
 
     private static bool IsSimpleImplicitArrayCreation(
         ImplicitArrayCreationExpressionSyntax implicitArrayCreationExpr,
