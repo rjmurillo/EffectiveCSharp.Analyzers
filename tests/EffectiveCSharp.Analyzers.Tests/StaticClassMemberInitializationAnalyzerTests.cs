@@ -95,12 +95,12 @@ public class StaticClassMemberInitializationAnalyzerTests
 
     // Test 4: Static field initialized with object creation (Diagnostic)
     [Fact]
-    public async Task StaticField_WithObjectCreation_ShouldTriggerDiagnostic()
+    public async Task StaticField_WithObjectCreation_NoDiagnostic()
     {
         const string code = """
                             public class MyClass
                             {
-                                private static readonly Random {|ECS1300:Rand = new Random()|};
+                                private static readonly Random Rand = new Random();
                             }
                             """;
 

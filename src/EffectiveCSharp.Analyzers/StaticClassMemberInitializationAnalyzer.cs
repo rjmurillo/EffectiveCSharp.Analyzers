@@ -396,7 +396,14 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             for (int i = 0; i < objectCreationExpr.ArgumentList.Arguments.Count; i++)
             {
                 ArgumentSyntax argument = objectCreationExpr.ArgumentList.Arguments[i];
-                if (!IsSimpleExpression(argument.Expression, safeItems, semanticModel, semanticModel.GetSymbolInfo(argument.Expression, cancellationToken), cancellationToken))
+                (SymbolInfo symbolInfo, bool safe) = IsSafeSymbol(argument.Expression, safeItems, semanticModel, cancellationToken);
+
+                if (safe)
+                {
+                    continue;
+                }
+
+                if (!IsSimpleExpression(argument.Expression, safeItems, semanticModel, symbolInfo, cancellationToken))
                 {
                     return false;
                 }
@@ -409,7 +416,14 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
             for (int i = 0; i < objectCreationExpr.Initializer.Expressions.Count; i++)
             {
                 ExpressionSyntax expression = objectCreationExpr.Initializer.Expressions[i];
-                if (!IsSimpleCollectionInitializerExpression(expression, safeItems, semanticModel, semanticModel.GetSymbolInfo(expression, cancellationToken), cancellationToken))
+                (SymbolInfo symbolInfo, bool safe) = IsSafeSymbol(expression, safeItems, semanticModel, cancellationToken);
+
+                if (safe)
+                {
+                    continue;
+                }
+
+                if (!IsSimpleCollectionInitializerExpression(expression, safeItems, semanticModel, symbolInfo, cancellationToken))
                 {
                     return false;
                 }
