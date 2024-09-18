@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace EffectiveCSharp.Analyzers;
 
@@ -255,6 +256,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsNameOfExpression(InvocationExpressionSyntax invocationExpr)
     {
         if (invocationExpr.Expression is IdentifierNameSyntax identifierName)
@@ -265,6 +267,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsSafeField(IFieldSymbol fieldSymbol)
     {
         // Allow static fields from the System namespace
@@ -334,35 +337,10 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsSafeProperty(IPropertySymbol propertySymbol, ImmutableHashSet<string> safeItems)
     {
-        if (safeItems.Contains(propertySymbol.ToDisplayString()))
-        {
-            return true;
-        }
-
-        // Allow static properties from the System namespace
-        if (propertySymbol.IsStatic)
-        {
-            string containingNamespace = propertySymbol.ContainingType.ContainingNamespace.ToDisplayString();
-            if (containingNamespace.StartsWith("System", StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-        else
-        {
-            // For instance properties, check if the containing type is considered safe
-            string containingTypeName = propertySymbol.ContainingType.ToDisplayString() + "." + propertySymbol.Name;
-
-            // For example, DateTime.Now.Hour
-            if (string.Equals(containingTypeName, "System.DateTime", StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return safeItems.Contains(propertySymbol.ToDisplayString());
     }
 
     private static bool IsSimpleArrayCreation(ArrayCreationExpressionSyntax arrayCreationExpr, ImmutableHashSet<string> safeItems, SemanticModel semanticModel, CancellationToken cancellationToken)
@@ -476,6 +454,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
         }
     }
 
+#pragma warning disable MA0051 // Method is too long
     private static bool IsSimpleExpression(
         ExpressionSyntax expression,
         ImmutableHashSet<string> safeItems,
@@ -546,6 +525,7 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
                 return semanticModel.IsCompileTimeConstant(expression, cancellationToken);
         }
     }
+#pragma warning restore MA0051 // Method is too long
 
     private static (SymbolInfo Symbol, bool Safe) IsSafeSymbol(
     ExpressionSyntax expression,
@@ -640,7 +620,6 @@ public class StaticClassMemberInitializationAnalyzer : DiagnosticAnalyzer
 
         builder.Append(namespaceSymbol.Name);
     }
-
 
     private static bool IsSimpleImplicitArrayCreation(
         ImplicitArrayCreationExpressionSyntax implicitArrayCreationExpr,
