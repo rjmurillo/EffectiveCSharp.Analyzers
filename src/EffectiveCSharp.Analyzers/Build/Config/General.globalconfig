@@ -40,3 +40,10 @@ dotnet_diagnostic.CA1061.severity = warning
 #
 # Effective C# Item #12 - Prefer member initializers to assignment statements
 dotnet_diagnostic.CA1805.severity = warning
+
+# Title:   : Implement the standard Dispose pattern
+# Category : Design
+# Help Link: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1063
+#
+# Effective C# Item #17 - Implement the standard Dispose pattern
+dotnet_diagnostic.CA1063.severity = warning
