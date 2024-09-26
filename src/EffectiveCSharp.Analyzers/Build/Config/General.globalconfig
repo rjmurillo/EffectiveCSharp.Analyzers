@@ -40,3 +40,10 @@ dotnet_diagnostic.CA1061.severity = warning
 #
 # Effective C# Item #12 - Prefer member initializers to assignment statements
 dotnet_diagnostic.CA1805.severity = warning
+
+# Title:   : Do not call overridable methods in constructors
+# Category : Usage
+# Help Link: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca2214
+#
+# Effective C# Item #16 - Never call virtual functions in constructors
+dotnet_diagnostic.CA2214.severity = warning
