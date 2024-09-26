@@ -1,10 +1,10 @@
 is_global = true
 # We need to be careful with the global_level value:
 # - In .NET 5: A compiler warning is reported and both entries are ignored
-# - In .NET 6+: The entry from the file with a higher value for global_level takes precedence. 
+# - In .NET 6+: The entry from the file with a higher value for global_level takes precedence.
 #               If the global_level is equal in two files and the values configured conflict,
 #               a compiler warning is reported and BOTH entries are ignored.
-global_level = -12  
+global_level = -12
 
 # Title    : Use implicit type
 # Category : Style
@@ -47,3 +47,10 @@ dotnet_diagnostic.CA1805.severity = warning
 #
 # Effective C# Item #16 - Never call virtual functions in constructors
 dotnet_diagnostic.CA2214.severity = warning
+
+# Title:   : Implement the standard Dispose pattern
+# Category : Design
+# Help Link: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1063
+#
+# Effective C# Item #17 - Implement the standard Dispose pattern
+dotnet_diagnostic.CA1063.severity = warning
