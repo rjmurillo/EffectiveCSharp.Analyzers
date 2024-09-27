@@ -89,4 +89,89 @@ public class MinimizeDuplicateInitializationLogicTests
 
         await Verifier.VerifyAnalyzerAsync(testCode);
     }
+
+    [Fact]
+    public async Task DoesNotDetectInDerivedClass()
+    {
+        const string testCode = """
+                                public class BaseClass
+                                {
+                                    protected int _value;
+
+                                    public BaseClass(int value)
+                                    {
+                                        _value = value;
+                                    }
+                                }
+
+                                public class DerivedClass : BaseClass
+                                {
+                                    public DerivedClass(int value) : base(value)
+                                    {
+                                        _value = value;
+                                    }
+
+                                    public DerivedClass() : base(10)
+                                    {
+                                        _value = 10;
+                                    }
+                                }
+                                """;
+
+        await Verifier.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task DoesNotDetectInInstanceAndStaticCtor()
+    {
+        const string testCode = """
+                                public class TestClass
+                                {
+                                    private static int _staticValue;
+
+                                    static TestClass()
+                                    {
+                                        _staticValue = 10;
+                                    }
+
+                                    public TestClass()
+                                    {
+                                        _staticValue = 10;
+                                    }
+                                }
+                                """;
+
+        await Verifier.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task DetectsComplexInitializationLogic()
+    {
+        const string testCode = """
+                                public class TestClass
+                                {
+                                    private int _value;
+                                    private int _otherValue;
+
+                                    public {|ECS1400:TestClass|}()
+                                    {
+                                        _value = ComputeValue();
+                                        _otherValue = 20;
+                                    }
+
+                                    public {|ECS1400:TestClass|}(int value)
+                                    {
+                                        _value = ComputeValue();
+                                        _otherValue = 20;
+                                    }
+
+                                    private int ComputeValue()
+                                    {
+                                        return 42;
+                                    }
+                                }
+                                """;
+
+        await Verifier.VerifyAnalyzerAsync(testCode);
+    }
 }
