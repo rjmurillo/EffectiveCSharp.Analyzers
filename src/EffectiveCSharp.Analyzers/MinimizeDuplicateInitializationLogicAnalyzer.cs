@@ -108,7 +108,6 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
 
 #pragma warning disable MA0051
     private static List<InitializationStatement> GetInitializationStatements(
-#pragma warning restore MA0051
         ConstructorDeclarationSyntax? constructor,
         SemanticModel semanticModel,
         CancellationToken cancellationToken)
@@ -187,6 +186,7 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
 
         return statements;
     }
+#pragma warning restore MA0051
 
     private static bool InitializationStatementsAreEqual(
         List<InitializationStatement> first,
@@ -203,7 +203,9 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
         return firstSet.SetEquals(secondSet) && firstSet.Count > 0;
     }
 
+#pragma warning disable SA1201
     private enum InitializationKind
+#pragma warning restore SA1201
     {
         Assignment,
         MethodCall,
@@ -212,11 +214,6 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
 
     private sealed class InitializationStatement : IEquatable<InitializationStatement>
     {
-        private InitializationStatement(InitializationKind kind)
-        {
-            Kind = kind;
-        }
-
         public InitializationStatement(InitializationKind kind, ISymbol leftSymbol, ISymbol rightSymbol)
             : this(kind)
         {
@@ -228,6 +225,11 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
             : this(kind)
         {
             MethodSymbol = methodSymbol;
+        }
+
+        private InitializationStatement(InitializationKind kind)
+        {
+            Kind = kind;
         }
 
         public InitializationKind Kind { get; }
