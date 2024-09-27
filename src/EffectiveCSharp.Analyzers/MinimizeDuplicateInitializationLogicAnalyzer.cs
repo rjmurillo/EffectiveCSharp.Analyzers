@@ -247,7 +247,7 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
                 return false;
             }
 
-            SymbolEqualityComparer comparer = SymbolEqualityComparer.Default;
+            SymbolEqualityComparer comparer = SymbolEqualityComparer.IncludeNullability;
 
             return Kind switch
             {
