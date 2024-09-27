@@ -308,6 +308,7 @@
 - {Id: ECS0900, Title: Minimize boxing and unboxing, Category: Performance, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: ECS1200, Title: Prefer member initializers to assignment statements, Category: Maintainability, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: ECS1300, Title: Use proper initialization for static class members, Category: Initialization, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: ECS1400, Title: Minimize duplicate initialization logic, Category: Initialization, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: EM0001, Title: Switch on Enum Not Exhaustive, Category: Logic, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: EM0002, Title: Switch on Nullable Enum Not Exhaustive, Category: Logic, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: EM0003, Title: Switch on Closed Type Not Exhaustive, Category: Logic, DefaultSeverity: Error, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -614,8 +615,8 @@
 - {Id: RCS1020, Title: 'Simplify Nullable<T> to T?', Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1021, Title: Convert lambda expression body to expression body, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1021FadeOut, Title: Convert lambda expression body to expression body, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
-- {Id: RCS1031, Title: Remove unnecessary braces in switch section, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
-- {Id: RCS1031FadeOut, Title: Remove unnecessary braces in switch section, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
+- {Id: RCS1031, Title: Remove unnecessary braces in switch section, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: true}
+- {Id: RCS1031FadeOut, Title: Remove unnecessary braces in switch section, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: true}
 - {Id: RCS1032, Title: Remove redundant parentheses, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1032FadeOut, Title: Remove redundant parentheses, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
 - {Id: RCS1033, Title: Remove redundant boolean literal, Category: Roslynator, DefaultSeverity: Note, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
@@ -863,7 +864,7 @@
 - {Id: RS1027, Title: Types marked with DiagnosticAnalyzerAttribute(s) should inherit from DiagnosticAnalyzer, Category: MicrosoftCodeAnalysisCorrectness, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: RS1028, Title: Provide non-null 'customTags' value to diagnostic descriptor constructor, Category: MicrosoftCodeAnalysisDocumentation, DefaultSeverity: Warning, IsEnabledByDefault: false, EffectiveSeverities: [None], IsEverSuppressed: true}
 - {Id: RS1029, Title: Do not use reserved diagnostic IDs, Category: MicrosoftCodeAnalysisDesign, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: RS1030, Title: Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer, Category: MicrosoftCodeAnalysisCorrectness, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: RS1030, Title: Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer, Category: MicrosoftCodeAnalysisCorrectness, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
 - {Id: RS1031, Title: Define diagnostic title correctly, Category: MicrosoftCodeAnalysisDesign, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: RS1032, Title: Define diagnostic message correctly, Category: MicrosoftCodeAnalysisDesign, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: RS1033, Title: Define diagnostic description correctly, Category: MicrosoftCodeAnalysisDesign, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -1381,7 +1382,7 @@
 - {Id: SA1027, Title: Use tabs correctly, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1028, Title: Code should not contain trailing whitespace, Category: StyleCop.CSharp.SpacingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1100, Title: Do not prefix calls with base unless local implementation exists, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: SA1101, Title: Prefix local calls with this, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: false}
+- {Id: SA1101, Title: Prefix local calls with this, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Note], IsEverSuppressed: true}
 - {Id: SA1102, Title: Query clause should follow previous clause, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1103, Title: Query clauses should be on separate lines or all on one line, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1104, Title: Query clause should begin on new line when previous clause spans multiple lines, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
@@ -1423,7 +1424,7 @@
 - {Id: SA1141, Title: Use tuple syntax, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1142, Title: Refer to tuple fields by name, Category: StyleCop.CSharp.ReadabilityRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1200, Title: Using directives should be placed correctly, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
-- {Id: SA1201, Title: Elements should appear in the correct order, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
+- {Id: SA1201, Title: Elements should appear in the correct order, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: true}
 - {Id: SA1202, Title: Elements should be ordered by access, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1203, Title: Constants should appear before fields, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
 - {Id: SA1204, Title: Static elements should appear before instance elements, Category: StyleCop.CSharp.OrderingRules, DefaultSeverity: Warning, IsEnabledByDefault: true, EffectiveSeverities: [Error], IsEverSuppressed: false}
