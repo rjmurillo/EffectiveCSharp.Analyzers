@@ -80,6 +80,11 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
         }
 
         // Compare initialization statements between constructors
+        CompareConstructors(context, constructorInitStatements);
+    }
+
+    private static void CompareConstructors(SymbolAnalysisContext context, Dictionary<IMethodSymbol, List<InitializationStatement>> constructorInitStatements)
+    {
         foreach (KeyValuePair<IMethodSymbol, List<InitializationStatement>> ctor in constructorInitStatements)
         {
             foreach (KeyValuePair<IMethodSymbol, List<InitializationStatement>> otherCtor in constructorInitStatements)
@@ -101,7 +106,9 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
         }
     }
 
+#pragma warning disable MA0051
     private static List<InitializationStatement> GetInitializationStatements(
+#pragma warning restore MA0051
         ConstructorDeclarationSyntax? constructor,
         SemanticModel semanticModel,
         CancellationToken cancellationToken)
@@ -115,8 +122,7 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
 
         for (int i = 0; i < constructor.Body.Statements.Count; i++)
         {
-            StatementSyntax statement = constructor.Body.Statements[i];
-            switch (statement)
+            switch (constructor.Body.Statements[i])
             {
                 // Handle assignments and method calls
                 case ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assignment }:
