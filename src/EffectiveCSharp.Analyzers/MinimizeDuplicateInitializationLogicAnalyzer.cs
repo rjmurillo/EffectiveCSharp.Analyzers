@@ -29,75 +29,93 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSyntaxNodeAction(AnalyzeConstructor, SyntaxKind.ConstructorDeclaration);
+        context.RegisterSymbolAction(AnalyzeNamedType, SymbolKind.NamedType);
     }
 
-    private static void AnalyzeConstructor(SyntaxNodeAnalysisContext context)
+    private static void AnalyzeNamedType(SymbolAnalysisContext context)
     {
-        ConstructorDeclarationSyntax constructor = (ConstructorDeclarationSyntax)context.Node;
+        INamedTypeSymbol namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
 
-        // Skip if the constructor uses chaining
-        if (constructor.Initializer != null)
-        {
-            return;
-        }
-
-        if (constructor.Parent is not ClassDeclarationSyntax classDeclaration)
-        {
-            return;
-        }
-
-        SemanticModel semanticModel = context.SemanticModel;
-
-        // Collect other constructors that do not use chaining
-        List<ConstructorDeclarationSyntax> constructors = classDeclaration.Members
-            .OfType<ConstructorDeclarationSyntax>()
-            .Where(c => c != constructor && c.Initializer == null)
+        // Collect constructors that are instance constructors and do not use chaining
+        var constructors = namedTypeSymbol.Constructors
+            .Where(c => !c.IsStatic && c.DeclaringSyntaxReferences.Length > 0)
+            .Select(c => new
+            {
+                ConstructorSymbol = c,
+                Declaration = c.DeclaringSyntaxReferences[0].GetSyntax(context.CancellationToken) as ConstructorDeclarationSyntax,
+            })
+            .Where(c => c.Declaration is { Initializer: null })
             .ToList();
 
-        List<InitializationStatement> currentInitStatements = GetInitializationStatements(constructor, semanticModel, context.CancellationToken);
-
-        // Skip if no initialization statements are found
-        if (currentInitStatements.Count == 0)
+        if (constructors.Count < 2)
         {
             return;
         }
 
-        foreach (ConstructorDeclarationSyntax? otherConstructor in constructors)
+        SyntaxTree? syntaxTree = constructors[0].Declaration?.SyntaxTree;
+        if (syntaxTree == null)
         {
-            List<InitializationStatement> otherInitStatements = GetInitializationStatements(otherConstructor, semanticModel, context.CancellationToken);
+            return;
+        }
 
-            if (otherInitStatements.Count == 0)
+#pragma warning disable RS1030
+        SemanticModel semanticModel = context.Compilation.GetSemanticModel(syntaxTree);
+#pragma warning restore RS1030
+
+        // Compute initialization statements for all constructors once
+        Dictionary<IMethodSymbol, List<InitializationStatement>> constructorInitStatements = new(SymbolEqualityComparer.IncludeNullability);
+
+        for (int i = 0; i < constructors.Count; i++)
+        {
+            var ctor = constructors[i];
+            List<InitializationStatement> initStatements = GetInitializationStatements(
+                ctor.Declaration,
+                semanticModel,
+                context.CancellationToken);
+
+            if (initStatements.Count > 0)
             {
-                continue;
+                constructorInitStatements[ctor.ConstructorSymbol] = initStatements;
             }
+        }
 
-            // Compare the sets of initialization statements
-            if (!InitializationStatementsAreEqual(currentInitStatements, otherInitStatements))
+        // Compare initialization statements between constructors
+        foreach (KeyValuePair<IMethodSymbol, List<InitializationStatement>> ctor in constructorInitStatements)
+        {
+            foreach (KeyValuePair<IMethodSymbol, List<InitializationStatement>> otherCtor in constructorInitStatements)
             {
-                continue;
-            }
+                if (ctor.Key.Equals(otherCtor.Key, SymbolEqualityComparer.Default))
+                {
+                    continue;
+                }
 
-            Diagnostic diagnostic = constructor.Identifier.GetLocation().CreateDiagnostic(Rule, constructor.Identifier.Text);
-            context.ReportDiagnostic(diagnostic);
-            break;
+                if (!InitializationStatementsAreEqual(ctor.Value, otherCtor.Value))
+                {
+                    continue;
+                }
+
+                Diagnostic diagnostic = ctor.Key.Locations[0].CreateDiagnostic(Rule, ctor.Key.Name);
+                context.ReportDiagnostic(diagnostic);
+                break;
+            }
         }
     }
 
     private static List<InitializationStatement> GetInitializationStatements(
-        ConstructorDeclarationSyntax constructor,
+        ConstructorDeclarationSyntax? constructor,
         SemanticModel semanticModel,
         CancellationToken cancellationToken)
     {
         List<InitializationStatement> statements = [];
 
-        if (constructor.Body == null)
+        if (constructor?.Body == null)
         {
             return statements;
         }
 
-        foreach (StatementSyntax statement in constructor.Body.Statements)
+        for (int i = 0; i < constructor.Body.Statements.Count; i++)
         {
+            StatementSyntax statement = constructor.Body.Statements[i];
             switch (statement)
             {
                 // Handle assignments and method calls
@@ -143,7 +161,9 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
                             }
 
                             ISymbol? symbol = semanticModel.GetDeclaredSymbol(variable, cancellationToken);
-                            ITypeSymbol? initializerType = semanticModel.GetTypeInfo(variable.Initializer.Value, cancellationToken).Type;
+                            ITypeSymbol? initializerType = semanticModel.GetTypeInfo(
+                                variable.Initializer.Value,
+                                cancellationToken).Type;
                             if (symbol != null && initializerType != null)
                             {
                                 statements.Add(
@@ -163,9 +183,14 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
     }
 
     private static bool InitializationStatementsAreEqual(
-        IEnumerable<InitializationStatement> first,
-        IEnumerable<InitializationStatement> second)
+        List<InitializationStatement> first,
+        List<InitializationStatement> second)
     {
+        if (first.Count != second.Count || first.Count == 0)
+        {
+            return false;
+        }
+
         HashSet<InitializationStatement> firstSet = [.. first];
         HashSet<InitializationStatement> secondSet = [.. second];
 
@@ -234,7 +259,7 @@ public class MinimizeDuplicateInitializationLogicAnalyzer : DiagnosticAnalyzer
 
         public override int GetHashCode()
         {
-            HashCode hashCode = new();
+            HashCode hashCode = default;
             hashCode.Add(Kind);
             SymbolEqualityComparer comparer = SymbolEqualityComparer.IncludeNullability;
 
