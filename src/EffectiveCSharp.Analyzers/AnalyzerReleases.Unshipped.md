@@ -5,4 +5,4 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-ECS1400 | Initialization | Info | MinimizeDuplicateInitializationLogicAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/9144e7c2240d02021734e67795adc2f4096d15ce/docs/rules/ECS1400.md)
+ECS1400 | Initialization | Info | MinimizeDuplicateInitializationLogicAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/4f481355aaf72846c9ff201c6ccd8551bf7874f5/docs/rules/ECS1400.md)
