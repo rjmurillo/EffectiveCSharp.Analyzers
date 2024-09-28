@@ -17,4 +17,5 @@ internal static class DiagnosticIds
     internal const string UseSpanInstead = "ECS1000";
     internal const string PreferDeclarationInitializersToAssignmentStatement = "ECS1200";
     internal const string StaticClassMemberInitialization = "ECS1300";
+    internal const string MinimizeDuplicateInitializationLogic = "ECS1400";
 }
