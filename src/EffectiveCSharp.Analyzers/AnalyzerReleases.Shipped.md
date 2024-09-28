@@ -23,3 +23,4 @@ Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
 ECS1200 | Maintainability | Info | PreferMemberInitializerAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/75e6c1b724be72db803fef4ebc99f07bdee4bf61/docs/rules/ECS1200.md)
 ECS1300 | Initialization | Info | StaticClassMemberInitializationAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/9144e7c2240d02021734e67795adc2f4096d15ce/docs/rules/ECS1300.md)
+ECS1400 | Initialization | Info | MinimizeDuplicateInitializationLogicAnalyzer, [Documentation](https://github.com/rjmurillo/EffectiveCSharp.Analyzers/blob/de327e45776ce4195db07e6624a7d493c9400fb9/docs/rules/ECS1400.md)
