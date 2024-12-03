@@ -13,11 +13,11 @@ on:
       - main
       - 'releases/**'
       - 'release/**'
-      - 'feature/**'      
+      - 'feature/**'
   merge_group:
     branches:
       - main
-    
+
   workflow_call: # Allow to be called from the release workflow
   schedule:
     - cron: '31 15 * * 0' # Run periodically to keep CodeQL database updated
@@ -84,6 +84,14 @@ jobs:
     - name: Test
       run: dotnet test --no-build --configuration Release --settings ./build/targets/tests/test.runsettings
 
+    - name: Upload binlogs
+      uses: actions/upload-artifact@v4
+      if: success() || failure()
+      with:
+        name: binlogs-${{ matrix.os }}
+        path: ./artifacts/logs
+        if-no-files-found: error
+
     - name: Upload *.received.* files
       uses: actions/upload-artifact@v4
       if: failure()
@@ -91,6 +99,14 @@ jobs:
         name: verify-test-results
         path: |
           **/*.received.*
+
+    - name: Upload *.SquiggleCop.* files
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: squigglecop-results
+        path: |
+          **/SquiggleCop.*.*
 
     - name: Upload SARIF files
       uses: actions/upload-artifact@v4
@@ -118,24 +134,15 @@ jobs:
       run: cat artifacts/TestResults/coverage/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
       shell: bash
 
-    - name: Upload coverage data to Codacy      
+    - name: Upload coverage data to Codacy
       if: ${{ runner.os == 'Linux' && env.IS_COVERAGE_ALLOWED == 'true' }}
       uses: codacy/codacy-coverage-reporter-action@v1.3.0
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: ${{ github.workspace }}/artifacts/TestResults/coverage/Cobertura.xml
 
-    - name: Upload binlogs
-      uses: actions/upload-artifact@v4
-      if: success() || failure()
-      with:
-        name: binlogs-${{ matrix.os }}
-        path: ./artifacts/logs
-        if-no-files-found: error
-
     - name: Upload packages
       uses: actions/upload-artifact@v4
-      if: success()
       with:
         name: packages-${{ matrix.os }}
         path: |
@@ -145,7 +152,7 @@ jobs:
     - name: Validate performance
       shell: pwsh
       # Uses ETL which needs Windows
-      if: ${{ runner.os == 'Windows' }} 
+      if: ${{ runner.os == 'Windows' }}
       run: ${{ github.workspace }}/build/scripts/perf/PerfCore.ps1 -v diag -diff -ci
 
     - name: Perform CodeQL Analysis
