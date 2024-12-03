@@ -5,6 +5,8 @@
     <IsTestProject>true</IsTestProject>
     <!-- The CompositeAnalyzer triggers RS1036 -->
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <!-- There are transitive dependencies that need to be updated -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
   </PropertyGroup>
