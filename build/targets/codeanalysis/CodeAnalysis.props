@@ -7,12 +7,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors Condition=" '$(ContinuousIntegrationBuild)' == 'true' ">true</TreatWarningsAsErrors>
     <MSBuildTreatWarningsAsErrors Condition=" '$(ContinuousIntegrationBuild)' == 'true' ">true</MSBuildTreatWarningsAsErrors>
-
-    <!--
-    SquiggleCop is disabled because of bug https://github.com/dotnet/roslyn/issues/76004
-    When it is fixed, we should re-enable it.
-    -->
-    <SquiggleCop_Enabled>false</SquiggleCop_Enabled>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,10 +29,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="SonarAnalyzer.CSharp">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="SquiggleCop.Tasks">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
