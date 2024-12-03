@@ -100,6 +100,14 @@ jobs:
         path: |
           **/*.received.*
 
+    - name: Upload *.SquiggleCop.* files
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: squigglecop-results
+        path: |
+          **/SquiggleCop.*.*
+
     - name: Upload SARIF files
       uses: actions/upload-artifact@v4
       if: success() || failure()
