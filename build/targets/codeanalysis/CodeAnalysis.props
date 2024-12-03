@@ -7,6 +7,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors Condition=" '$(ContinuousIntegrationBuild)' == 'true' ">true</TreatWarningsAsErrors>
     <MSBuildTreatWarningsAsErrors Condition=" '$(ContinuousIntegrationBuild)' == 'true' ">true</MSBuildTreatWarningsAsErrors>
+
+    <!--
+    SquiggleCop is disabled because of bug https://github.com/dotnet/roslyn/issues/76004
+    When it is fixed, we should re-enable it.
+    -->
+    <SquiggleCop_Enabled>false</SquiggleCop_Enabled>
   </PropertyGroup>
 
   <ItemGroup>
