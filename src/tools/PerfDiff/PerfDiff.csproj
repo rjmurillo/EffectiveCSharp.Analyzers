@@ -13,8 +13,8 @@
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="BenchmarkDotNet" />
-    <PackageReference Include="Perfolizer" />
+    <PackageReference Include="BenchmarkDotNet" VersionOverride="1.2.4" />
+    <PackageReference Include="Perfolizer" VersionOverride="0.2.1" />
   </ItemGroup>
 
 </Project>
