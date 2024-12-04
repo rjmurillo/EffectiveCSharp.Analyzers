@@ -7,16 +7,13 @@ internal static class TestDataExtensions
         TheoryData<string, string> retVal = [];
         predicate ??= _ => true;
 
-        foreach (object[]? theoryDataItem in data)
+        foreach (string? theoryDataItem in data)
         {
-            foreach (object entry in theoryDataItem)
+            foreach (string referenceAssembly in ReferenceAssemblyCatalog.Catalog.Keys)
             {
-                foreach (string referenceAssembly in ReferenceAssemblyCatalog.Catalog.Keys)
+                if (predicate(referenceAssembly))
                 {
-                    if (predicate(referenceAssembly))
-                    {
-                        retVal.Add(referenceAssembly, (string)entry);
-                    }
+                    retVal.Add(referenceAssembly, theoryDataItem);
                 }
             }
         }
