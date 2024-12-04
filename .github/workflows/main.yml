@@ -13,11 +13,11 @@ on:
       - main
       - 'releases/**'
       - 'release/**'
-      - 'feature/**'      
+      - 'feature/**'
   merge_group:
     branches:
       - main
-    
+
   workflow_call: # Allow to be called from the release workflow
   schedule:
     - cron: '31 15 * * 0' # Run periodically to keep CodeQL database updated
@@ -134,7 +134,7 @@ jobs:
       run: cat artifacts/TestResults/coverage/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
       shell: bash
 
-    - name: Upload coverage data to Codacy      
+    - name: Upload coverage data to Codacy
       if: ${{ runner.os == 'Linux' && env.IS_COVERAGE_ALLOWED == 'true' }}
       uses: codacy/codacy-coverage-reporter-action@v1.3.0
       with:
@@ -152,7 +152,7 @@ jobs:
     - name: Validate performance
       shell: pwsh
       # Uses ETL which needs Windows
-      if: ${{ runner.os == 'Windows' }} 
+      if: ${{ runner.os == 'Windows' }}
       run: ${{ github.workspace }}/build/scripts/perf/PerfCore.ps1 -v diag -diff -ci
 
     - name: Perform CodeQL Analysis

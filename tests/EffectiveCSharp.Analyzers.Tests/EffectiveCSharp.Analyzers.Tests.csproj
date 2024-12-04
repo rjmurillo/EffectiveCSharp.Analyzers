@@ -1,20 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <!-- The CompositeAnalyzer triggers RS1036 -->
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <!-- There are transitive dependencies that need to be updated -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Optimize>false</Optimize>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="GetPackFromProject">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -27,5 +25,4 @@
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/EffectiveCSharp.Analyzers/EffectiveCSharp.Analyzers.csproj" AddPackageAsOutput="true" />
   </ItemGroup>
-
 </Project>
