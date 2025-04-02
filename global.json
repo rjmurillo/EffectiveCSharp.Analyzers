@@ -1,7 +1,7 @@
 {
   "sdk": {
     "version": "9.0.100",
-    "rollForward": "disable" /* setup-dotnet is broken and we don't want to have differences in CI vs local, so make this disabled */
+    "rollForward": "patch" /* setup-dotnet is broken and we don't want to have differences in CI vs local, so make this disabled */
   },
   "msbuild-sdks": {
     "DotNet.ReproducibleBuilds.Isolated": "1.2.4"
