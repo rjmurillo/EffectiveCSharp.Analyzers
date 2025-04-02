@@ -32,7 +32,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
 
