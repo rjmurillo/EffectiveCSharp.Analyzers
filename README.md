@@ -10,4 +10,6 @@ Code analyzers and code fixes will be named and numbered similarly to the book. 
 
 Where possible, documentation will be provided as a derivative work of the book, including test cases. 
 
+To see which Effective C# items have a rule, see the [Effective C# item map](docs/effective-csharp-item-map.md).
+
 For a list of rules, see [shipped](src/EffectiveCSharp.Analyzers/AnalyzerReleases.Shipped.md) and [unshipped](src/EffectiveCSharp.Analyzers/AnalyzerReleases.Unshipped.md).
