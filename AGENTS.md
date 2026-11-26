@@ -13,4 +13,6 @@ Standing facts for coding agents in this repo. Read before changing build files.
 - Tests, benchmarks, and `src/tools/PerfDiff` target `net10.0`.
 - Move those three together when the repo moves to a new .NET major.
 - `global.json` also pins the `DotNet.ReproducibleBuilds.Isolated` MSBuild SDK.
-- Version 1.2.4 broke .NET 10 restore with `NETSDK1226`. Do not go below 1.2.39.
+- Keep that MSBuild SDK at 1.2.39 or later. Version 1.2.4 broke .NET 10 restore (PR #81).
+- This floor is only for the `.Isolated` SDK in `global.json`.
+- The `DotNet.ReproducibleBuilds` NuGet package in `build/targets/reproducible/Packages.props` versions on its own.
